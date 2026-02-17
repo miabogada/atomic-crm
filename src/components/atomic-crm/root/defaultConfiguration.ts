@@ -3,7 +3,7 @@ import { Mars, NonBinary, Venus } from "lucide-react";
 export const defaultDarkModeLogo = "./logos/logo_atomic_crm_dark.svg";
 export const defaultLightModeLogo = "./logos/logo_atomic_crm_light.svg";
 
-export const defaultTitle = "Atomic CRM";
+export const defaultTitle = "Clarklaw CRM";
 
 export const defaultCompanySectors = [
   "Communication Services",
@@ -48,13 +48,49 @@ export const defaultNoteStatuses = [
 export const defaultTaskTypes = [
   "None",
   "Email",
-  "Demo",
-  "Lunch",
+  "Call",
   "Meeting",
   "Follow-up",
-  "Thank you",
-  "Ship",
-  "Call",
+  "Document Review",
+  "Filing",
+  "Court Date",
+  "Client Request",
+];
+
+export const defaultCaseTypes = [
+  "Adjustment of Status",
+  "Consular Processing",
+  "Naturalization",
+  "Removal Defense",
+  "Asylum",
+  "VAWA",
+  "U-Visa",
+  "T-Visa",
+  "DACA",
+  "TPS",
+  "Employment Authorization",
+  "Family Petition",
+  "Labor Certification",
+  "H-1B",
+  "L-1",
+  "O-1",
+  "Other",
+];
+
+export const defaultActivityTypes = [
+  "call",
+  "email",
+  "meeting",
+  "document",
+  "note",
+  "payment",
+];
+
+export const defaultAccountCategories = [
+  "In Process",
+  "Closed",
+  "Archived",
+  "Consultation Only",
 ];
 
 export const defaultContactGender = [

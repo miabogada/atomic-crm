@@ -225,3 +225,99 @@ export interface ContactGender {
   label: string;
   icon: ComponentType<{ className?: string }>;
 }
+
+// Clarklaw immigration law office types
+
+export type Account = {
+  account_number: string;
+  name: string;
+  phone?: string;
+  email?: string;
+  attorney_id?: Identifier | null;
+  law_clerk_id?: Identifier | null;
+  legal_assistant_id?: Identifier | null;
+  date_opened?: string;
+  date_closed?: string;
+  date_first_consult?: string;
+  categories?: string;
+  referred_by?: string;
+  notes?: string;
+  archived: boolean;
+  archive_year?: number;
+  stripe_customer_id?: string;
+  created_at: string;
+  updated_at: string;
+  sales_id?: Identifier | null;
+  // From accounts_summary view
+  billing_street?: string;
+  billing_city?: string;
+  billing_state?: string;
+  billing_postal_code?: string;
+  billing_country?: string;
+  billing_contact_name?: string;
+  nb_contacts?: number;
+  nb_contracts?: number;
+  nb_open_tasks?: number;
+} & Pick<RaRecord, "id">;
+
+export type ContactType = {
+  name: string;
+} & Pick<RaRecord, "id">;
+
+export type AccountContact = {
+  account_id: Identifier;
+  contact_type_id?: Identifier | null;
+  is_billing_contact: boolean;
+  full_name: string;
+  email?: string;
+  phone?: string;
+  address_street?: string;
+  address_city?: string;
+  address_state?: string;
+  address_postal_code?: string;
+  address_country?: string;
+  created_at: string;
+  sales_id?: Identifier | null;
+} & Pick<RaRecord, "id">;
+
+export type AccountContract = {
+  account_id: Identifier;
+  contract_number?: string;
+  case_type?: string;
+  fee?: number;
+  retainer?: number;
+  monthly_payment?: number;
+  num_payments?: number;
+  date_opened?: string;
+  date_retainer?: string;
+  date_first_payment?: string;
+  work_description?: string;
+  created_at: string;
+  sales_id?: Identifier | null;
+} & Pick<RaRecord, "id">;
+
+export type AccountTask = {
+  account_id: Identifier;
+  parent_type?: string;
+  parent_id?: Identifier;
+  subject: string;
+  body?: string;
+  due_date?: string;
+  done_date?: string;
+  assigned_to?: Identifier | null;
+  created_at: string;
+  sales_id?: Identifier | null;
+} & Pick<RaRecord, "id">;
+
+export type AccountActivity = {
+  account_id: Identifier;
+  parent_type?: string;
+  parent_id?: Identifier;
+  type?: string;
+  subject: string;
+  body?: string;
+  date?: string;
+  attachments?: AttachmentNote[];
+  created_at: string;
+  sales_id?: Identifier | null;
+} & Pick<RaRecord, "id">;
