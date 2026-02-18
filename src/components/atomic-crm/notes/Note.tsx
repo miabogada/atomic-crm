@@ -101,7 +101,7 @@ export const Note = ({
           <ReferenceField
             record={note}
             resource={resource}
-            source="sales_id"
+            source="user_id"
             reference="users"
             link={false}
           >

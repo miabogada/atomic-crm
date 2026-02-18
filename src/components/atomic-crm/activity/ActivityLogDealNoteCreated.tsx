@@ -40,7 +40,7 @@ export function ActivityLogDealNoteCreated({
 
           <span className="text-muted-foreground text-sm flex-grow">
             <ReferenceField
-              source="sales_id"
+              source="user_id"
               reference="users"
               record={activity}
               link={false}

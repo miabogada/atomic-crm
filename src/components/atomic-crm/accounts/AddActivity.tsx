@@ -79,7 +79,7 @@ export const AddActivity = ({
           account_id,
           parent_type: parent_type ?? null,
           parent_id: parent_id ?? null,
-          sales_id: identity.id,
+          user_id: identity.id,
           date: new Date().toISOString(),
         }}
         mutationOptions={{ onSuccess: handleSuccess }}

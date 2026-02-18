@@ -129,7 +129,7 @@ const exporter: Exporter<Contact> = async (records, fetchRelatedRecords) => {
     "company_id",
     "companies",
   );
-  const sales = await fetchRelatedRecords<Sale>(records, "sales_id", "users");
+  const sales = await fetchRelatedRecords<Sale>(records, "user_id", "users");
   const tags = await fetchRelatedRecords<Tag>(records, "tags", "tags");
 
   const contacts = records.map((contact) => {
@@ -139,8 +139,8 @@ const exporter: Exporter<Contact> = async (records, fetchRelatedRecords) => {
         contact.company_id != null
           ? companies[contact.company_id].name
           : undefined,
-      sales: `${sales[contact.sales_id].first_name} ${
-        sales[contact.sales_id].last_name
+      sales: `${sales[contact.user_id].first_name} ${
+        sales[contact.user_id].last_name
       }`,
       tags: contact.tags.map((tagId) => tags[tagId].name).join(", "),
       email_work: contact.email_jsonb?.find((email) => email.type === "Work")

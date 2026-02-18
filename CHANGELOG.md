@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-02-19 — Rename `sales_id` column to `user_id` everywhere
+
+Completes the `sales` → `users` rename. The table was renamed earlier but FK columns stayed as `sales_id`, which was confusing — `sales_id` on a task actually means "assigned user."
+
+### Migration: `20260219000002_rename_sales_id_to_user_id.sql`
+- Renamed `sales_id` → `user_id` on 10 tables: accounts, account_contacts, account_contracts, account_activities, companies, contacts, contact_notes, deals, deal_notes, tasks
+- Dropped `set_sales_id_default()` (CASCADE removed 6 triggers), recreated as `set_user_id_default()`
+- Recreated `merge_contacts()` function with `user_id`
+- Recreated 3 views: `contacts_summary`, `companies_summary`, `accounts_summary`
+- Renamed 9 FK constraints (`*_sales_id_fkey` → `*_user_id_fkey`)
+
+### Source code (~57 files)
+- Bulk `sales_id` → `user_id` across ~53 `src/` files and 4 edge function files
+- **Bug fix:** `postmark/addNoteToContact.ts` still queried `.from("sales")` instead of `.from("users")` — now fixed
+
 ## 2026-02-19 — Add /tasks page with status field
 
 ### New files

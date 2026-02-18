@@ -83,7 +83,7 @@ export const AccountCreate = () => {
                     address_country:
                       billingData.billing_address_country || null,
                     created_at: new Date().toISOString(),
-                    sales_id: identity?.id,
+                    user_id: identity?.id,
                   },
                 },
                 { returnPromise: true },
@@ -105,7 +105,7 @@ export const AccountCreate = () => {
         <div className="flex-1">
           <Form
             defaultValues={{
-              sales_id: identity?.id,
+              user_id: identity?.id,
               account_number: accountNumber,
               categories: "In Process",
               archived: false,

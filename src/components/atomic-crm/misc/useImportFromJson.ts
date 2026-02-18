@@ -231,8 +231,8 @@ export const useImportFromJson = (): [
             address: dataToImport.address?.trim(),
             zipcode: dataToImport.zipcode?.trim(),
             state_abbr: dataToImport.state_abbr?.trim(),
-            sales_id: dataToImport.sales_id
-              ? idsMaps.users[dataToImport.sales_id]
+            user_id: dataToImport.user_id
+              ? idsMaps.users[dataToImport.user_id]
               : currentSale.id,
             created_at: dataToImport.created_at,
           },
@@ -321,8 +321,8 @@ export const useImportFromJson = (): [
             phone_jsonb: Array.isArray(dataToImport.phones)
               ? dataToImport.phones
               : undefined,
-            sales_id: dataToImport.sales_id
-              ? idsMaps.users[dataToImport.sales_id]
+            user_id: dataToImport.user_id
+              ? idsMaps.users[dataToImport.user_id]
               : currentSale.id,
             tags: tagsIds,
             first_seen: dataToImport.created_at,
@@ -376,9 +376,9 @@ export const useImportFromJson = (): [
         return;
       }
       try {
-        if (idsMaps.users[dataToImport.sales_id] == null) {
+        if (idsMaps.users[dataToImport.user_id] == null) {
           console.error(
-            `note ${dataToImport.text} has an invalid user ID: ${dataToImport.sales_id}. Fallback to default user`,
+            `note ${dataToImport.text} has an invalid user ID: ${dataToImport.user_id}. Fallback to default user`,
           );
         }
         if (idsMaps.contacts[dataToImport.contact_id] == null) {
@@ -421,7 +421,7 @@ export const useImportFromJson = (): [
         await dataProvider.create("contact_notes", {
           data: {
             contact_id: idsMaps.contacts[dataToImport.contact_id],
-            sales_id: idsMaps.users[dataToImport.sales_id] ?? currentSale.id,
+            user_id: idsMaps.users[dataToImport.user_id] ?? currentSale.id,
             text: dataToImport.text,
             date: dataToImport.date,
             attachments,
@@ -472,9 +472,9 @@ export const useImportFromJson = (): [
         return;
       }
       try {
-        if (idsMaps.users[dataToImport.sales_id] == null) {
+        if (idsMaps.users[dataToImport.user_id] == null) {
           console.error(
-            `task ${dataToImport.text} has an invalid user ID: ${dataToImport.sales_id}. Fallback to default user`,
+            `task ${dataToImport.text} has an invalid user ID: ${dataToImport.user_id}. Fallback to default user`,
           );
         }
         if (idsMaps.contacts[dataToImport.contact_id] == null) {
@@ -499,7 +499,7 @@ export const useImportFromJson = (): [
         await dataProvider.create("tasks", {
           data: {
             contact_id: idsMaps.contacts[dataToImport.contact_id],
-            sales_id: idsMaps.users[dataToImport.sales_id] ?? currentSale.id,
+            user_id: idsMaps.users[dataToImport.user_id] ?? currentSale.id,
             text: dataToImport.text,
             due_date: dataToImport.due_date || undefined,
             done_date: dataToImport.done_date || undefined,
@@ -655,7 +655,7 @@ const isSale = (data: any): data is SaleImport =>
 type CompanyImport = {
   id: number;
   name: string;
-  sales_id?: number;
+  user_id?: number;
   description?: string;
   city?: string;
   country?: string;
@@ -675,7 +675,7 @@ const isCompany = (data: any): data is CompanyImport =>
 
 type ContactImport = {
   id: number;
-  sales_id: number;
+  user_id: number;
   company_id?: number;
   first_name: string;
   last_name: string;
@@ -698,7 +698,7 @@ const isContact = (data: any): data is ContactImport =>
 
 type NoteImport = {
   contact_id: number;
-  sales_id: number;
+  user_id: number;
   text: string;
   date: string;
   attachments: Array<{ url: string; name: string }>;
@@ -710,14 +710,14 @@ const isNote = (data: any): data is NoteImport =>
   data != null &&
   typeof data === "object" &&
   !Array.isArray(data) &&
-  data.sales_id != null &&
+  data.user_id != null &&
   data.contact_id != null &&
   data.text != null &&
   data.date != null;
 
 type TaskImport = {
   contact_id: number;
-  sales_id: number;
+  user_id: number;
   text: string;
   due_date?: string;
   done_date?: string;
@@ -729,6 +729,6 @@ const isTask = (data: any): data is TaskImport =>
   data != null &&
   typeof data === "object" &&
   !Array.isArray(data) &&
-  data.sales_id != null &&
+  data.user_id != null &&
   data.contact_id != null &&
   data.text != null;

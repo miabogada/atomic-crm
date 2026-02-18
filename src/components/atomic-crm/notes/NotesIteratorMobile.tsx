@@ -72,7 +72,7 @@ export const NoteMobile = ({
         <ReferenceField
           record={note}
           resource="contact_notes"
-          source="sales_id"
+          source="user_id"
           reference="users"
           link={false}
         >

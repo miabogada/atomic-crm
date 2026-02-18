@@ -141,7 +141,7 @@ const dataProviderWithCustomMethods = {
     }>("users", {
       method: "PATCH",
       body: {
-        sales_id: id,
+        user_id: id,
         email,
         first_name,
         last_name,
@@ -163,7 +163,7 @@ const dataProviderWithCustomMethods = {
       await supabase.functions.invoke<boolean>("update_password", {
         method: "PATCH",
         body: {
-          sales_id: id,
+          user_id: id,
         },
       });
 

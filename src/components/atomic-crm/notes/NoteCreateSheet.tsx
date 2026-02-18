@@ -68,12 +68,12 @@ export const NoteCreateSheet = ({
         </h1>
       }
       redirect={false}
-      defaultValues={{ sales_id: identity?.id }}
+      defaultValues={{ user_id: identity?.id }}
       transform={(data: any) => ({
         ...data,
         [foreignKeyMapping["contacts"]]:
           contact_id ?? data[foreignKeyMapping["contacts"]],
-        sales_id: identity.id,
+        user_id: identity.id,
         date: new Date(data.date || getCurrentDate()).toISOString(),
       })}
       mutationOptions={{

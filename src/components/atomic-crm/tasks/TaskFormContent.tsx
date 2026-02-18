@@ -71,7 +71,7 @@ export const TaskFormContent = ({
         />
       </div>
       <ReferenceInput
-        source="sales_id"
+        source="user_id"
         reference="users"
         sort={{ field: "last_name", order: "ASC" }}
         filter={{ "disabled@neq": true }}

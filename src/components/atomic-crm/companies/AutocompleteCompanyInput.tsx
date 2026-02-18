@@ -16,7 +16,7 @@ export const AutocompleteCompanyInput = ({
         {
           data: {
             name,
-            sales_id: identity?.id,
+            user_id: identity?.id,
             created_at: new Date().toISOString(),
           },
         },

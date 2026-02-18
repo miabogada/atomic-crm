@@ -13,7 +13,7 @@ export const generateDealNotes = (db: Db) => {
       date: randomDate(
         new Date(db.deals[deal.id as number].created_at),
       ).toISOString(),
-      sales_id: deal.sales_id,
+      user_id: deal.user_id,
     };
   });
 };

@@ -151,7 +151,7 @@ export const AddressInfo = ({ record }: { record: Company }) => {
 export const AdditionalInfo = ({ record }: { record: Company }) => {
   if (
     !record.created_at &&
-    !record.sales_id &&
+    !record.user_id &&
     !record.description &&
     !record.context_links
   ) {
@@ -185,10 +185,10 @@ export const AdditionalInfo = ({ record }: { record: Company }) => {
           )}
         </div>
       )}
-      {record.sales_id !== null && (
+      {record.user_id !== null && (
         <div className="inline-flex text-sm text-muted-foreground mb-1">
           Followed by&nbsp;
-          <ReferenceField source="sales_id" reference="users" record={record}>
+          <ReferenceField source="user_id" reference="users" record={record}>
             <UserName />
           </ReferenceField>
         </div>

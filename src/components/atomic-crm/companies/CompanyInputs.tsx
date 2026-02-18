@@ -140,7 +140,7 @@ const CompanyAccountManagerInput = () => {
     <div className="flex flex-col gap-4">
       <h6 className="text-lg font-semibold">Account manager</h6>
       <ReferenceInput
-        source="sales_id"
+        source="user_id"
         reference="users"
         filter={{
           "disabled@neq": true,

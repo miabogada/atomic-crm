@@ -87,9 +87,9 @@ const TaskItemContent = ({ task }: { task: TaskType }) => {
               <TextField source="last_name" />
             </ReferenceField>
           )}
-          {task.sales_id && (
+          {task.user_id && (
             <ReferenceField<TaskType, Sale>
-              source="sales_id"
+              source="user_id"
               reference="users"
               record={task}
               link={false}

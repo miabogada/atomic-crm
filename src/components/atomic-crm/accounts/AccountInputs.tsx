@@ -145,7 +145,7 @@ const AccountTeamInputs = () => {
       </ReferenceInput>
       <ReferenceInput
         reference="users"
-        source="sales_id"
+        source="user_id"
         sort={{ field: "last_name", order: "ASC" }}
         filter={{ "disabled@neq": true }}
       >

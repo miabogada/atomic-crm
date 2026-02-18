@@ -66,7 +66,7 @@ export const AccountEdit = () => {
                   billingData.billing_address_postal_code || null,
                 address_country:
                   billingData.billing_address_country || null,
-                sales_id: identity?.id,
+                user_id: identity?.id,
               };
 
               if (existingContact) {

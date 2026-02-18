@@ -36,7 +36,7 @@ const DealList = () => {
       label={false}
       choices={dealCategories.map((type) => ({ id: type, name: type }))}
     />,
-    <OnlyMineInput source="sales_id" alwaysOn />,
+    <OnlyMineInput source="user_id" alwaysOn />,
   ];
 
   return (

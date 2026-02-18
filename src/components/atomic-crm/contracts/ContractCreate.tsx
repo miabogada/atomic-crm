@@ -25,7 +25,7 @@ export const ContractCreate = () => {
   if (accountId && accountPending) return null;
 
   const defaultValues: Record<string, any> = {
-    sales_id: identity.id,
+    user_id: identity.id,
     date_opened: today(),
     date_retainer: today(),
   };

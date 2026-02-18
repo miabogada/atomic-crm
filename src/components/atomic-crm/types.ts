@@ -60,7 +60,7 @@ export type Company = {
   zipcode: string;
   city: string;
   state_abbr: string;
-  sales_id?: Identifier | null;
+  user_id?: Identifier | null;
   created_at: string;
   description: string;
   revenue: string;
@@ -94,7 +94,7 @@ export type Contact = {
   has_newsletter: boolean;
   tags: Identifier[];
   gender: string;
-  sales_id?: Identifier | null;
+  user_id?: Identifier | null;
   status: string;
   background: string;
   phone_jsonb: PhoneNumberAndType[];
@@ -106,7 +106,7 @@ export type ContactNote = {
   contact_id: Identifier;
   text: string;
   date: string;
-  sales_id: Identifier;
+  user_id: Identifier;
   status: string;
   attachments?: AttachmentNote[];
 } & Pick<RaRecord, "id">;
@@ -123,7 +123,7 @@ export type Deal = {
   updated_at: string;
   archived_at?: string;
   expected_closing_date: string;
-  sales_id: Identifier;
+  user_id: Identifier;
   index: number;
 } & Pick<RaRecord, "id">;
 
@@ -131,7 +131,7 @@ export type DealNote = {
   deal_id: Identifier;
   text: string;
   date: string;
-  sales_id: Identifier;
+  user_id: Identifier;
   attachments?: AttachmentNote[];
 
   // This is defined for compatibility with `ContactNote`
@@ -151,7 +151,7 @@ export type Task = {
   due_date: string;
   done_date?: string | null;
   status?: string;
-  sales_id?: Identifier;
+  user_id?: Identifier;
   account_id?: Identifier | null;
   parent_type?: string | null;
   parent_id?: Identifier | null;
@@ -161,21 +161,21 @@ export type ActivityCompanyCreated = {
   type: typeof COMPANY_CREATED;
   company_id: Identifier;
   company: Company;
-  sales_id: Identifier;
+  user_id: Identifier;
   date: string;
 } & Pick<RaRecord, "id">;
 
 export type ActivityContactCreated = {
   type: typeof CONTACT_CREATED;
   company_id: Identifier;
-  sales_id?: Identifier;
+  user_id?: Identifier;
   contact: Contact;
   date: string;
 } & Pick<RaRecord, "id">;
 
 export type ActivityContactNoteCreated = {
   type: typeof CONTACT_NOTE_CREATED;
-  sales_id?: Identifier;
+  user_id?: Identifier;
   contactNote: ContactNote;
   date: string;
 } & Pick<RaRecord, "id">;
@@ -183,14 +183,14 @@ export type ActivityContactNoteCreated = {
 export type ActivityDealCreated = {
   type: typeof DEAL_CREATED;
   company_id: Identifier;
-  sales_id?: Identifier;
+  user_id?: Identifier;
   deal: Deal;
   date: string;
 };
 
 export type ActivityDealNoteCreated = {
   type: typeof DEAL_NOTE_CREATED;
-  sales_id?: Identifier;
+  user_id?: Identifier;
   dealNote: DealNote;
   date: string;
 };
@@ -251,7 +251,7 @@ export type Account = {
   stripe_customer_id?: string;
   created_at: string;
   updated_at: string;
-  sales_id?: Identifier | null;
+  user_id?: Identifier | null;
   // From accounts_summary view
   billing_street?: string;
   billing_city?: string;
@@ -281,7 +281,7 @@ export type AccountContact = {
   address_postal_code?: string;
   address_country?: string;
   created_at: string;
-  sales_id?: Identifier | null;
+  user_id?: Identifier | null;
 } & Pick<RaRecord, "id">;
 
 export type AccountContract = {
@@ -297,7 +297,7 @@ export type AccountContract = {
   date_first_payment?: string;
   work_description?: string;
   created_at: string;
-  sales_id?: Identifier | null;
+  user_id?: Identifier | null;
 } & Pick<RaRecord, "id">;
 
 
@@ -311,5 +311,5 @@ export type AccountActivity = {
   date?: string;
   attachments?: AttachmentNote[];
   created_at: string;
-  sales_id?: Identifier | null;
+  user_id?: Identifier | null;
 } & Pick<RaRecord, "id">;

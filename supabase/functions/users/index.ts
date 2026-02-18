@@ -180,7 +180,7 @@ async function inviteUser(req: Request, currentUserSale: any) {
 
 async function patchUser(req: Request, currentUserSale: any) {
   const {
-    sales_id,
+    user_id,
     email,
     first_name,
     last_name,
@@ -191,7 +191,7 @@ async function patchUser(req: Request, currentUserSale: any) {
   const { data: sale } = await supabaseAdmin
     .from("users")
     .select("*")
-    .eq("id", sales_id)
+    .eq("id", user_id)
     .single();
 
   if (!sale) {
@@ -224,7 +224,7 @@ async function patchUser(req: Request, currentUserSale: any) {
     const { data: new_sale } = await supabaseAdmin
       .from("users")
       .select("*")
-      .eq("id", sales_id)
+      .eq("id", user_id)
       .single();
     return new Response(
       JSON.stringify({

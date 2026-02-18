@@ -15,7 +15,7 @@ export const TasksListEmpty = () => {
     "tasks",
     {
       pagination: { page: 1, perPage: 1 },
-      filter: isAdmin ? {} : { sales_id: identity?.id },
+      filter: isAdmin ? {} : { user_id: identity?.id },
     },
     { enabled: !!identity },
   );

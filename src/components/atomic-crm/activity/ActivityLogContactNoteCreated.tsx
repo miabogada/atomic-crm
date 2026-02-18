@@ -42,7 +42,7 @@ export function ActivityLogContactNoteCreated({
 
           <span className="text-muted-foreground text-sm flex-grow">
             <ReferenceField
-              source="sales_id"
+              source="user_id"
               reference="users"
               record={activity}
             >

@@ -274,7 +274,7 @@ export const dataProvider = withLifecycleCallbacks(
 
         const [companies, contacts, contactNotes, deals] = await Promise.all([
           dataProvider.getList("companies", {
-            filter: { sales_id: params.id },
+            filter: { user_id: params.id },
             pagination: {
               page: 1,
               perPage: 10_000,
@@ -282,7 +282,7 @@ export const dataProvider = withLifecycleCallbacks(
             sort: { field: "id", order: "ASC" },
           }),
           dataProvider.getList("contacts", {
-            filter: { sales_id: params.id },
+            filter: { user_id: params.id },
             pagination: {
               page: 1,
               perPage: 10_000,
@@ -290,7 +290,7 @@ export const dataProvider = withLifecycleCallbacks(
             sort: { field: "id", order: "ASC" },
           }),
           dataProvider.getList("contact_notes", {
-            filter: { sales_id: params.id },
+            filter: { user_id: params.id },
             pagination: {
               page: 1,
               perPage: 10_000,
@@ -298,7 +298,7 @@ export const dataProvider = withLifecycleCallbacks(
             sort: { field: "id", order: "ASC" },
           }),
           dataProvider.getList("deals", {
-            filter: { sales_id: params.id },
+            filter: { user_id: params.id },
             pagination: {
               page: 1,
               perPage: 10_000,
@@ -311,25 +311,25 @@ export const dataProvider = withLifecycleCallbacks(
           dataProvider.updateMany("companies", {
             ids: companies.data.map((company) => company.id),
             data: {
-              sales_id: newSaleId,
+              user_id: newSaleId,
             },
           }),
           dataProvider.updateMany("contacts", {
             ids: contacts.data.map((company) => company.id),
             data: {
-              sales_id: newSaleId,
+              user_id: newSaleId,
             },
           }),
           dataProvider.updateMany("contact_notes", {
             ids: contactNotes.data.map((company) => company.id),
             data: {
-              sales_id: newSaleId,
+              user_id: newSaleId,
             },
           }),
           dataProvider.updateMany("deals", {
             ids: deals.data.map((company) => company.id),
             data: {
-              sales_id: newSaleId,
+              user_id: newSaleId,
             },
           }),
         ]);

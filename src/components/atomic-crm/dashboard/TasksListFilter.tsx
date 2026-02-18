@@ -45,7 +45,7 @@ export const TasksListFilter = ({
           ? { contact_id: filterByContact }
           : isAdmin
             ? {}
-            : { sales_id: identity?.id }),
+            : { user_id: identity?.id }),
       },
     },
     { enabled: filterByContact != null ? true : !!identity },

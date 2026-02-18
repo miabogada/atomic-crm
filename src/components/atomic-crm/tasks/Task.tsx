@@ -163,9 +163,9 @@ export const Task = ({
                   }}
                 />
               )}
-              {task.sales_id && (
+              {task.user_id && (
                 <ReferenceField<TData, Sale>
-                  source="sales_id"
+                  source="user_id"
                   reference="users"
                   record={task}
                   link={false}
