@@ -7,6 +7,7 @@ import { required } from "ra-core";
 
 import { contactOptionText } from "../misc/ContactOption";
 import { useConfigurationContext } from "../root/ConfigurationContext";
+import type { Sale } from "../types";
 
 export const TaskFormContent = ({
   selectContact,
@@ -60,6 +61,22 @@ export const TaskFormContent = ({
           helperText={false}
         />
       </div>
+      <ReferenceInput
+        source="sales_id"
+        reference="sales"
+        sort={{ field: "last_name", order: "ASC" }}
+        filter={{ "disabled@neq": true }}
+      >
+        <SelectInput
+          label="Assignee"
+          optionText={saleOptionRenderer}
+          helperText={false}
+          validate={required()}
+        />
+      </ReferenceInput>
     </div>
   );
 };
+
+const saleOptionRenderer = (choice: Sale) =>
+  `${choice.first_name} ${choice.last_name}`;
