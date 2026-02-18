@@ -5,9 +5,12 @@ import {
   RecordRepresentation,
   useDataProvider,
   useGetIdentity,
+  useGetOne,
   useNotify,
   useRecordContext,
+  useRefresh,
   useUpdate,
+  type Identifier,
 } from "ra-core";
 import { useState } from "react";
 import { SaveButton } from "@/components/admin/form";
@@ -27,20 +30,35 @@ import {
 } from "@/components/ui/tooltip";
 
 import { TaskFormContent } from "./TaskFormContent";
+import type { Account } from "../types";
 
 export const AddTask = ({
   selectContact,
   display = "chip",
+  account_id,
+  parent_type,
+  parent_id,
 }: {
   selectContact?: boolean;
   display?: "chip" | "icon";
+  account_id?: Identifier;
+  parent_type?: string;
+  parent_id?: Identifier;
 }) => {
   const { identity } = useGetIdentity();
   const dataProvider = useDataProvider();
   const [update] = useUpdate();
   const notify = useNotify();
+  const refresh = useRefresh();
   const contact = useRecordContext();
   const [open, setOpen] = useState(false);
+
+  const { data: account } = useGetOne<Account>(
+    "accounts",
+    { id: account_id! },
+    { enabled: account_id != null },
+  );
+
   const handleOpen = () => {
     setOpen(true);
   };
@@ -59,10 +77,20 @@ export const AddTask = ({
         });
       }
     }
+    if (data.account_id) {
+      refresh();
+    }
     notify("Task added");
   };
 
   if (!identity) return null;
+
+  const isAccountTask = account_id != null;
+  const title = isAccountTask
+    ? `Create a new task for ${account?.name ?? "account"}`
+    : !selectContact
+      ? "Create a new task for "
+      : "Create a new task";
 
   return (
     <>
@@ -100,7 +128,10 @@ export const AddTask = ({
         resource="tasks"
         record={{
           type: "None",
-          contact_id: contact?.id,
+          contact_id: isAccountTask ? null : contact?.id,
+          account_id: account_id ?? null,
+          parent_type: parent_type ?? null,
+          parent_id: parent_id ?? null,
           due_date: new Date().toISOString().slice(0, 10),
           sales_id: identity.id,
         }}
@@ -119,10 +150,8 @@ export const AddTask = ({
             <Form className="flex flex-col gap-4">
               <DialogHeader>
                 <DialogTitle>
-                  {!selectContact
-                    ? "Create a new task for "
-                    : "Create a new task"}
-                  {!selectContact && (
+                  {title}
+                  {!isAccountTask && !selectContact && (
                     <RecordRepresentation
                       record={contact}
                       resource="contacts"

@@ -1,19 +1,16 @@
-import { useState } from "react";
 import { RecordRepresentation, ShowBase, useListContext, useRecordContext, useShowContext } from "ra-core";
-import { Plus } from "lucide-react";
 import { ReferenceManyField } from "@/components/admin/reference-many-field";
 import { ReferenceManyCount } from "@/components/admin/reference-many-count";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 
 import { AccountAside } from "./AccountAside";
 import { AccountContactsList } from "./AccountContactsList";
 import { AccountContractsList } from "./AccountContractsList";
 import { AccountActivitiesList } from "./AccountActivitiesList";
 import { Task } from "../tasks/Task";
-import { TaskCreateSheet } from "../tasks/TaskCreateSheet";
+import { AddTask } from "../tasks/AddTask";
 import type { Account, Task as TaskType } from "../types";
 
 export const AccountShow = () => {
@@ -160,7 +157,6 @@ const AccountShowContent = () => {
 const AccountTasksTab = () => {
   const { data, isPending } = useListContext<TaskType>();
   const account = useRecordContext<Account>();
-  const [sheetOpen, setSheetOpen] = useState(false);
 
   if (isPending) return null;
 
@@ -168,19 +164,7 @@ const AccountTasksTab = () => {
     <div>
       {account && (
         <div className="flex justify-end mb-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setSheetOpen(true)}
-          >
-            <Plus className="w-4 h-4 mr-1" />
-            Add Task
-          </Button>
-          <TaskCreateSheet
-            open={sheetOpen}
-            onOpenChange={setSheetOpen}
-            account_id={account.id}
-          />
+          <AddTask account_id={account.id} />
         </div>
       )}
 

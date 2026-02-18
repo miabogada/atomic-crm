@@ -8,7 +8,7 @@ import {
   useGetList,
 } from "ra-core";
 import { Link } from "react-router";
-import { ClipboardPlus, Activity } from "lucide-react";
+import { Activity } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,7 @@ import { EditButton } from "@/components/admin/edit-button";
 import { DeleteButton } from "@/components/admin";
 
 import { AsideSection } from "../misc/AsideSection";
-import { TaskCreateSheet } from "../tasks/TaskCreateSheet";
+import { AddTask } from "../tasks/AddTask";
 import { Task } from "../tasks/Task";
 import { AccountActivityCreateSheet } from "../accounts/AccountActivityCreateSheet";
 import type {
@@ -181,7 +181,6 @@ const Field = ({ label, value }: { label: string; value?: string }) => (
 
 export const ContractAside = () => {
   const record = useRecordContext<AccountContract>();
-  const [taskSheetOpen, setTaskSheetOpen] = useState(false);
   const [activitySheetOpen, setActivitySheetOpen] = useState(false);
 
   if (!record) return null;
@@ -195,15 +194,11 @@ export const ContractAside = () => {
       <AccountInfo accountId={record.account_id} />
 
       <div className="mt-6 pt-6 border-t flex flex-col gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          className="justify-start"
-          onClick={() => setTaskSheetOpen(true)}
-        >
-          <ClipboardPlus className="w-4 h-4 mr-1" />
-          Add Task
-        </Button>
+        <AddTask
+          account_id={record.account_id}
+          parent_type="account_contract"
+          parent_id={record.id}
+        />
         <Button
           variant="outline"
           size="sm"
@@ -213,13 +208,6 @@ export const ContractAside = () => {
           <Activity className="w-4 h-4 mr-1" />
           Add Activity
         </Button>
-        <TaskCreateSheet
-          open={taskSheetOpen}
-          onOpenChange={setTaskSheetOpen}
-          account_id={record.account_id}
-          parent_type="account_contract"
-          parent_id={record.id}
-        />
         <AccountActivityCreateSheet
           open={activitySheetOpen}
           onOpenChange={setActivitySheetOpen}
