@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import type { Account, Contact, Task as TData } from "../types";
+import type { Account, Contact, Sale, Task as TData } from "../types";
 import { TaskEdit } from "./TaskEdit";
 import { TaskEditSheet } from "./TaskEditSheet";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -137,6 +137,24 @@ export const Task = ({
                         {" "}
                         (Re:&nbsp;
                         {referenceRecord?.name})
+                      </>
+                    );
+                  }}
+                />
+              )}
+              {task.sales_id && (
+                <ReferenceField<TData, Sale>
+                  source="sales_id"
+                  reference="sales"
+                  record={task}
+                  link={false}
+                  className="inline text-sm text-muted-foreground"
+                  render={({ referenceRecord }) => {
+                    if (!referenceRecord) return null;
+                    return (
+                      <>
+                        {" \u00b7 "}
+                        {referenceRecord.first_name} {referenceRecord.last_name}
                       </>
                     );
                   }}
