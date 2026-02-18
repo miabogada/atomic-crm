@@ -1,12 +1,9 @@
-import { useState } from "react";
 import { formatRelative } from "date-fns";
 import { useListContext, useRecordContext } from "ra-core";
-import { Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 
 import type { Account, AccountActivity } from "../types";
-import { AccountActivityCreateSheet } from "./AccountActivityCreateSheet";
+import { AddActivity } from "./AddActivity";
 
 const formatParentType = (t: string) =>
   t.replace("account_", "").replace(/^\w/, (c) => c.toUpperCase());
@@ -14,7 +11,6 @@ const formatParentType = (t: string) =>
 export const AccountActivitiesList = () => {
   const { data, isPending } = useListContext<AccountActivity>();
   const account = useRecordContext<Account>();
-  const [sheetOpen, setSheetOpen] = useState(false);
 
   if (isPending) return null;
 
@@ -24,19 +20,7 @@ export const AccountActivitiesList = () => {
     <div>
       {account && (
         <div className="flex justify-end mb-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setSheetOpen(true)}
-          >
-            <Plus className="w-4 h-4 mr-1" />
-            Add Activity
-          </Button>
-          <AccountActivityCreateSheet
-            open={sheetOpen}
-            onOpenChange={setSheetOpen}
-            accountId={account.id}
-          />
+          <AddActivity account_id={account.id} />
         </div>
       )}
 
