@@ -119,7 +119,7 @@ const UsersMenu = () => {
   }
   return (
     <DropdownMenuItem asChild onClick={userMenuContext.onClose}>
-      <Link to="/sales" className="flex items-center gap-2">
+      <Link to="/users" className="flex items-center gap-2">
         <User /> Users
       </Link>
     </DropdownMenuItem>
