@@ -616,6 +616,34 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/contracts/index.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/contracts/ContractShow.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/contracts/ContractListContent.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/contracts/ContractList.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/contracts/ContractInputs.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/contracts/ContractEdit.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/contracts/ContractCreate.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/contacts/useContactImport.tsx",
           "type": "registry:component"
         },
@@ -804,10 +832,6 @@
           "type": "registry:component"
         },
         {
-          "path": "src/components/atomic-crm/accounts/AccountTasksList.tsx",
-          "type": "registry:component"
-        },
-        {
           "path": "src/components/atomic-crm/accounts/AccountShow.tsx",
           "type": "registry:component"
         },
@@ -841,6 +865,10 @@
         },
         {
           "path": "src/components/atomic-crm/accounts/AccountAside.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/accounts/AccountActivityCreateSheet.tsx",
           "type": "registry:component"
         },
         {
