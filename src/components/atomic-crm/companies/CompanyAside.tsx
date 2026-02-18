@@ -10,7 +10,7 @@ import { UrlField } from "@/components/admin/url-field";
 import { SelectField } from "@/components/admin/select-field";
 
 import { AsideSection } from "../misc/AsideSection";
-import { SaleName } from "../sales/SaleName";
+import { UserName } from "../users/UserName";
 import type { Company } from "../types";
 import { sizes } from "./sizes";
 
@@ -188,8 +188,8 @@ export const AdditionalInfo = ({ record }: { record: Company }) => {
       {record.sales_id !== null && (
         <div className="inline-flex text-sm text-muted-foreground mb-1">
           Followed by&nbsp;
-          <ReferenceField source="sales_id" reference="sales" record={record}>
-            <SaleName />
+          <ReferenceField source="sales_id" reference="users" record={record}>
+            <UserName />
           </ReferenceField>
         </div>
       )}

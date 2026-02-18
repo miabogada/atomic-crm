@@ -141,7 +141,7 @@ const CompanyAccountManagerInput = () => {
       <h6 className="text-lg font-semibold">Account manager</h6>
       <ReferenceInput
         source="sales_id"
-        reference="sales"
+        reference="users"
         filter={{
           "disabled@neq": true,
         }}

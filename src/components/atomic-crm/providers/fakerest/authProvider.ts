@@ -21,7 +21,7 @@ export const USER_STORAGE_KEY = "user";
 localStorage.setItem(USER_STORAGE_KEY, JSON.stringify({ ...DEFAULT_USER }));
 
 async function getUser(email: string) {
-  const sales = await dataProvider.getList("sales", {
+  const sales = await dataProvider.getList("users", {
     pagination: { page: 1, perPage: 200 },
     sort: { field: "name", order: "ASC" },
   });

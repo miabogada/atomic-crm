@@ -14,7 +14,7 @@ import { Card, CardContent } from "@/components/ui/card";
 
 import type { CrmDataProvider } from "../providers/types";
 import type { Sale, SalesFormData } from "../types";
-import { SalesInputs } from "./SalesInputs";
+import { UsersInputs } from "./UsersInputs";
 
 function EditToolbar() {
   return (
@@ -25,7 +25,7 @@ function EditToolbar() {
   );
 }
 
-export function SalesEdit() {
+export function UsersEdit() {
   const { record } = useEditController();
 
   const dataProvider = useDataProvider<CrmDataProvider>();
@@ -41,7 +41,7 @@ export function SalesEdit() {
       return dataProvider.salesUpdate(record.id, data);
     },
     onSuccess: () => {
-      redirect("/sales");
+      redirect("/users");
       notify("User updated successfully");
     },
     onError: () => {
@@ -62,8 +62,8 @@ export function SalesEdit() {
             onSubmit={onSubmit as SubmitHandler<any>}
             record={record}
           >
-            <SaleEditTitle />
-            <SalesInputs />
+            <UserEditTitle />
+            <UsersInputs />
           </SimpleForm>
         </CardContent>
       </Card>
@@ -71,7 +71,7 @@ export function SalesEdit() {
   );
 }
 
-const SaleEditTitle = () => {
+const UserEditTitle = () => {
   const record = useRecordContext<Sale>();
   if (!record) return null;
   return (

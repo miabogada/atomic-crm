@@ -188,7 +188,7 @@ const ContactMiscInputs = () => {
       />
       <BooleanInput source="has_newsletter" helperText={false} />
       <ReferenceInput
-        reference="sales"
+        reference="users"
         source="sales_id"
         sort={{ field: "last_name", order: "ASC" }}
         filter={{

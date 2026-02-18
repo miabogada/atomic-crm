@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 import { RelativeDate } from "../misc/RelativeDate";
 import { Status } from "../misc/Status";
-import { SaleName } from "../sales/SaleName";
+import { UserName } from "../users/UserName";
 import type { ContactNote } from "../types";
 
 export const NotesIteratorMobile = ({
@@ -73,10 +73,10 @@ export const NoteMobile = ({
           record={note}
           resource="contact_notes"
           source="sales_id"
-          reference="sales"
+          reference="users"
           link={false}
         >
-          <WithRecord render={(record) => <SaleName sale={record} />} />
+          <WithRecord render={(record) => <UserName sale={record} />} />
         </ReferenceField>
         {showStatus && note.status && (
           <Status className="ml-2" status={note.status} />

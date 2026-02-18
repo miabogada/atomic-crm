@@ -23,7 +23,7 @@ import { CompanyAvatar } from "../companies/CompanyAvatar";
 import { Markdown } from "../misc/Markdown";
 import { RelativeDate } from "../misc/RelativeDate";
 import { Status } from "../misc/Status";
-import { SaleName } from "../sales/SaleName";
+import { UserName } from "../users/UserName";
 import type { ContactNote, DealNote } from "../types";
 import { NoteAttachments } from "./NoteAttachments";
 import { NoteInputs } from "./NoteInputs";
@@ -102,10 +102,10 @@ export const Note = ({
             record={note}
             resource={resource}
             source="sales_id"
-            reference="sales"
+            reference="users"
             link={false}
           >
-            <WithRecord render={(record) => <SaleName sale={record} />} />
+            <WithRecord render={(record) => <UserName sale={record} />} />
           </ReferenceField>{" "}
           added a note{" "}
           {showStatus && note.status && (

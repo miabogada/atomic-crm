@@ -145,7 +145,7 @@ export const Task = ({
               {task.sales_id && (
                 <ReferenceField<TData, Sale>
                   source="sales_id"
-                  reference="sales"
+                  reference="users"
                   record={task}
                   link={false}
                   className="inline text-sm text-muted-foreground"

@@ -2,7 +2,7 @@ import { useGetIdentity, useRecordContext } from "ra-core";
 
 import type { Sale } from "../types";
 
-export const SaleName = ({ sale }: { sale?: Sale }) => {
+export const UserName = ({ sale }: { sale?: Sale }) => {
   const { identity, isPending } = useGetIdentity();
   const saleFromContext = useRecordContext<Sale>();
   const finalSale = sale || saleFromContext;

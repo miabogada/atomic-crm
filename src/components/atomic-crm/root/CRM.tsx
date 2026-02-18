@@ -32,7 +32,7 @@ import {
   authProvider as defaultAuthProvider,
   dataProvider as defaultDataProvider,
 } from "../providers/supabase";
-import sales from "../sales";
+import users from "../users";
 import { SettingsPage } from "../settings/SettingsPage";
 import type { ConfigurationContextValue } from "./ConfigurationContext";
 import { ConfigurationProvider } from "./ConfigurationContext";
@@ -201,7 +201,7 @@ const DesktopAdmin = (props: CoreAdminProps) => {
       <Resource name="contact_notes" />
       <Resource name="deal_notes" />
       <Resource name="tasks" />
-      <Resource name="sales" {...sales} />
+      <Resource name="users" {...users} />
       <Resource name="tags" />
     </Admin>
   );

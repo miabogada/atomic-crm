@@ -15,7 +15,7 @@ export interface Db {
   contact_notes: ContactNote[];
   deals: Deal[];
   deal_notes: DealNote[];
-  sales: Sale[];
+  users: Sale[];
   tags: Tag[];
   tasks: Task[];
 }

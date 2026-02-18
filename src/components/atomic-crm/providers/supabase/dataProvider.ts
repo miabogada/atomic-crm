@@ -246,7 +246,7 @@ const lifeCycleCallbacks: ResourceCallbacks[] = [
     },
   },
   {
-    resource: "sales",
+    resource: "users",
     beforeSave: async (data: Sale, _, __) => {
       if (data.avatar) {
         await uploadToBucket(data.avatar);

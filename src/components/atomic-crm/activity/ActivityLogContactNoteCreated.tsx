@@ -5,7 +5,7 @@ import { TextField } from "@/components/admin/text-field";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Avatar } from "../contacts/Avatar";
 import { RelativeDate } from "../misc/RelativeDate";
-import { SaleName } from "../sales/SaleName";
+import { UserName } from "../users/UserName";
 import type { ActivityContactNoteCreated, Contact } from "../types";
 import { useActivityLogContext } from "./ActivityLogContext";
 import { ActivityLogNote } from "./ActivityLogNote";
@@ -43,10 +43,10 @@ export function ActivityLogContactNoteCreated({
           <span className="text-muted-foreground text-sm flex-grow">
             <ReferenceField
               source="sales_id"
-              reference="sales"
+              reference="users"
               record={activity}
             >
-              <SaleName />
+              <UserName />
             </ReferenceField>{" "}
             added a note about{" "}
             <ReferenceField

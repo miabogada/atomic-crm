@@ -108,7 +108,7 @@ const AccountTeamInputs = () => {
     <div className="flex flex-col gap-4">
       <h6 className="text-lg font-semibold">Team</h6>
       <ReferenceInput
-        reference="sales"
+        reference="users"
         source="attorney_id"
         sort={{ field: "last_name", order: "ASC" }}
         filter={{ "disabled@neq": true }}
@@ -120,7 +120,7 @@ const AccountTeamInputs = () => {
         />
       </ReferenceInput>
       <ReferenceInput
-        reference="sales"
+        reference="users"
         source="law_clerk_id"
         sort={{ field: "last_name", order: "ASC" }}
         filter={{ "disabled@neq": true }}
@@ -132,7 +132,7 @@ const AccountTeamInputs = () => {
         />
       </ReferenceInput>
       <ReferenceInput
-        reference="sales"
+        reference="users"
         source="legal_assistant_id"
         sort={{ field: "last_name", order: "ASC" }}
         filter={{ "disabled@neq": true }}
@@ -144,7 +144,7 @@ const AccountTeamInputs = () => {
         />
       </ReferenceInput>
       <ReferenceInput
-        reference="sales"
+        reference="users"
         source="sales_id"
         sort={{ field: "last_name", order: "ASC" }}
         filter={{ "disabled@neq": true }}

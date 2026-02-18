@@ -129,7 +129,7 @@ const exporter: Exporter<Contact> = async (records, fetchRelatedRecords) => {
     "company_id",
     "companies",
   );
-  const sales = await fetchRelatedRecords<Sale>(records, "sales_id", "sales");
+  const sales = await fetchRelatedRecords<Sale>(records, "sales_id", "users");
   const tags = await fetchRelatedRecords<Tag>(records, "tags", "tags");
 
   const contacts = records.map((contact) => {

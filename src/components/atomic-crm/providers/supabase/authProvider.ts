@@ -65,7 +65,7 @@ const getSale = async () => {
   }
 
   const { data: dataSale, error: errorSale } = await supabase
-    .from("sales")
+    .from("users")
     .select("id, first_name, last_name, avatar, administrator")
     .match({ user_id: dataSession?.session?.user.id })
     .single();

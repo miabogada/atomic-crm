@@ -52,7 +52,7 @@ export const AccountAside = ({
               <span className="text-muted-foreground">Attorney:</span>{" "}
               <ReferenceField
                 source="attorney_id"
-                reference="sales"
+                reference="users"
                 link={false}
               >
                 <TextField source="first_name" />{" "}
@@ -65,7 +65,7 @@ export const AccountAside = ({
               <span className="text-muted-foreground">Law Clerk:</span>{" "}
               <ReferenceField
                 source="law_clerk_id"
-                reference="sales"
+                reference="users"
                 link={false}
               >
                 <TextField source="first_name" />{" "}
@@ -78,7 +78,7 @@ export const AccountAside = ({
               <span className="text-muted-foreground">Legal Asst:</span>{" "}
               <ReferenceField
                 source="legal_assistant_id"
-                reference="sales"
+                reference="users"
                 link={false}
               >
                 <TextField source="first_name" />{" "}

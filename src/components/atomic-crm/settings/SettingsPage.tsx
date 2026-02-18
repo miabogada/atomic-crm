@@ -28,7 +28,7 @@ import type { Sale, SalesFormData } from "../types";
 export const SettingsPage = () => {
   const [isEditMode, setEditMode] = useState(false);
   const { identity, refetch: refetchIdentity } = useGetIdentity();
-  const { data, refetch: refetchUser } = useGetOne("sales", {
+  const { data, refetch: refetchUser } = useGetOne("users", {
     id: identity?.id,
   });
   const notify = useNotify();

@@ -61,7 +61,7 @@ const ImportFromJsonIdle = ({
   <>
     <div className="mb-4">
       <p className="text-sm">
-        You can import sales, companies, contacts, companies, notes, and tasks.
+        You can import users, companies, contacts, companies, notes, and tasks.
       </p>
       <p className="text-sm">
         Data must be in a JSON file matching the following sample:{" "}
@@ -162,7 +162,7 @@ const ImportFromJsonSuccess = ({
 
 const hasFailedImports = (failedImports: ImportFromJsonFailures) => {
   return (
-    failedImports.sales.length > 0 ||
+    failedImports.users.length > 0 ||
     failedImports.companies.length > 0 ||
     failedImports.contacts.length > 0 ||
     failedImports.notes.length > 0 ||
@@ -198,9 +198,9 @@ const ImportStats = ({
 }) => {
   const data = [
     {
-      entity: "sales",
-      imported: stats.sales,
-      failed: failedImports.sales.length,
+      entity: "users",
+      imported: stats.users,
+      failed: failedImports.users.length,
     },
     {
       entity: "companies",

@@ -7,7 +7,7 @@ import { getUserSale } from "../_shared/getUserSale.ts";
 
 async function updateSaleDisabled(user_id: string, disabled: boolean) {
   return await supabaseAdmin
-    .from("sales")
+    .from("users")
     .update({ disabled: disabled ?? false })
     .eq("user_id", user_id);
 }
@@ -17,7 +17,7 @@ async function updateSaleAdministrator(
   administrator: boolean,
 ) {
   const { data: sales, error: salesError } = await supabaseAdmin
-    .from("sales")
+    .from("users")
     .update({ administrator })
     .eq("user_id", user_id)
     .select("*");
@@ -41,7 +41,7 @@ async function createSale(
   },
 ) {
   const { data: sales, error: salesError } = await supabaseAdmin
-    .from("sales")
+    .from("users")
     .insert({ ...data, user_id })
     .select("*");
 
@@ -54,7 +54,7 @@ async function createSale(
 
 async function updateSaleAvatar(user_id: string, avatar: string) {
   const { data: sales, error: salesError } = await supabaseAdmin
-    .from("sales")
+    .from("users")
     .update({ avatar })
     .eq("user_id", user_id)
     .select("*");
@@ -99,7 +99,7 @@ async function inviteUser(req: Request, currentUserSale: any) {
     user = data[0];
     try {
       const { data: existingSale, error: salesError } = await supabaseAdmin
-        .from("sales")
+        .from("users")
         .select("*")
         .eq("user_id", user.id);
       if (salesError) {
@@ -110,7 +110,7 @@ async function inviteUser(req: Request, currentUserSale: any) {
       if (existingSale.length > 0) {
         return createErrorResponse(
           400,
-          "A sales for this email already exists",
+          "A user for this email already exists",
         );
       }
 
@@ -189,7 +189,7 @@ async function patchUser(req: Request, currentUserSale: any) {
     disabled,
   } = await req.json();
   const { data: sale } = await supabaseAdmin
-    .from("sales")
+    .from("users")
     .select("*")
     .eq("id", sales_id)
     .single();
@@ -222,7 +222,7 @@ async function patchUser(req: Request, currentUserSale: any) {
   // Only administrators can update the administrator and disabled status
   if (!currentUserSale.administrator) {
     const { data: new_sale } = await supabaseAdmin
-      .from("sales")
+      .from("users")
       .select("*")
       .eq("id", sales_id)
       .single();

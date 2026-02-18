@@ -145,7 +145,7 @@ const dataProviderWithCustomMethod: CrmDataProvider = {
     first_name,
     last_name,
   }: SignUpData): Promise<{ id: string; email: string; password: string }> => {
-    const user = await baseDataProvider.create("sales", {
+    const user = await baseDataProvider.create("users", {
       data: {
         email,
         first_name,
@@ -159,7 +159,7 @@ const dataProviderWithCustomMethod: CrmDataProvider = {
     };
   },
   salesCreate: async ({ ...data }: SalesFormData): Promise<Sale> => {
-    const response = await dataProvider.create("sales", {
+    const response = await dataProvider.create("users", {
       data: {
         ...data,
         password: "new_password",
@@ -172,7 +172,7 @@ const dataProviderWithCustomMethod: CrmDataProvider = {
     id: Identifier,
     data: Partial<Omit<SalesFormData, "password">>,
   ): Promise<Sale> => {
-    const { data: previousData } = await dataProvider.getOne<Sale>("sales", {
+    const { data: previousData } = await dataProvider.getOne<Sale>("users", {
       id,
     });
 
@@ -180,7 +180,7 @@ const dataProviderWithCustomMethod: CrmDataProvider = {
       throw new Error("User not found");
     }
 
-    const { data: sale } = await dataProvider.update<Sale>("sales", {
+    const { data: sale } = await dataProvider.update<Sale>("users", {
       id,
       data,
       previousData,
@@ -188,7 +188,7 @@ const dataProviderWithCustomMethod: CrmDataProvider = {
     return { ...sale, user_id: sale.id.toString() };
   },
   isInitialized: async (): Promise<boolean> => {
-    const sales = await dataProvider.getList<Sale>("sales", {
+    const sales = await dataProvider.getList<Sale>("users", {
       filter: {},
       pagination: { page: 1, perPage: 1 },
       sort: { field: "id", order: "ASC" },
@@ -203,7 +203,7 @@ const dataProviderWithCustomMethod: CrmDataProvider = {
     if (!currentUser) {
       throw new Error("User not found");
     }
-    const { data: previousData } = await dataProvider.getOne<Sale>("sales", {
+    const { data: previousData } = await dataProvider.getOne<Sale>("users", {
       id: currentUser.id,
     });
 
@@ -211,7 +211,7 @@ const dataProviderWithCustomMethod: CrmDataProvider = {
       throw new Error("User not found");
     }
 
-    await dataProvider.update("sales", {
+    await dataProvider.update("users", {
       id,
       data: {
         password: "demo_newPassword",
@@ -247,7 +247,7 @@ export const dataProvider = withLifecycleCallbacks(
   withSupabaseFilterAdapter(dataProviderWithCustomMethod),
   [
     {
-      resource: "sales",
+      resource: "users",
       beforeCreate: async (params) => {
         const { data } = params;
         // If administrator role is not set, we simply set it to false

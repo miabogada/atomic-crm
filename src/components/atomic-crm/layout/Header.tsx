@@ -77,7 +77,7 @@ const Header = () => {
                 <RefreshButton />
                 <UserMenu>
                   <ConfigurationMenu />
-                  <CanAccess resource="sales" action="list">
+                  <CanAccess resource="users" action="list">
                     <UsersMenu />
                   </CanAccess>
                   <ImportFromJsonMenuItem />

@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 
 import { TopToolbar } from "../layout/TopToolbar";
 
-const SalesListActions = () => (
+const UsersListActions = () => (
   <TopToolbar>
     <ExportButton />
     <CreateButton label="New user" />
@@ -42,11 +42,11 @@ const OptionsField = (_props: { label?: string | boolean }) => {
   );
 };
 
-export function SalesList() {
+export function UsersList() {
   return (
     <List
       filters={filters}
-      actions={<SalesListActions />}
+      actions={<UsersListActions />}
       sort={{ field: "first_name", order: "ASC" }}
     >
       <DataTable>

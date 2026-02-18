@@ -11,7 +11,7 @@ import { Markdown } from "../misc/Markdown";
 import { MobileBackButton } from "../misc/MobileBackButton";
 import { RelativeDate } from "../misc/RelativeDate";
 import { Status } from "../misc/Status";
-import { SaleName } from "../sales/SaleName";
+import { UserName } from "../users/UserName";
 import type { ContactNote } from "../types";
 import { NoteAttachments } from "./NoteAttachments";
 import { NoteEditSheet } from "./NoteEditSheet";
@@ -74,10 +74,10 @@ export const NoteShowPage = () => {
                 record={note}
                 resource="contact_notes"
                 source="sales_id"
-                reference="sales"
+                reference="users"
                 link={false}
               >
-                <WithRecord render={(record) => <SaleName sale={record} />} />
+                <WithRecord render={(record) => <UserName sale={record} />} />
               </ReferenceField>
             </span>
             {note.status && <Status status={note.status} />}

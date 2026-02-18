@@ -4,7 +4,7 @@ import { TextInput } from "@/components/admin/text-input";
 
 import type { Sale } from "../types";
 
-export function SalesInputs() {
+export function UsersInputs() {
   const { identity } = useGetIdentity();
   const record = useRecordContext<Sale>();
   return (

@@ -6,9 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import type { CrmDataProvider } from "../providers/types";
 import type { SalesFormData } from "../types";
-import { SalesInputs } from "./SalesInputs";
+import { UsersInputs } from "./UsersInputs";
 
-export function SalesCreate() {
+export function UsersCreate() {
   const dataProvider = useDataProvider<CrmDataProvider>();
   const notify = useNotify();
   const redirect = useRedirect();
@@ -22,7 +22,7 @@ export function SalesCreate() {
       notify(
         "User created. They will soon receive an email to set their password.",
       );
-      redirect("/sales");
+      redirect("/users");
     },
     onError: (error) => {
       notify(error.message || "An error occurred while creating the user.", {
@@ -42,7 +42,7 @@ export function SalesCreate() {
         </CardHeader>
         <CardContent>
           <SimpleForm onSubmit={onSubmit as SubmitHandler<any>}>
-            <SalesInputs />
+            <UsersInputs />
           </SimpleForm>
         </CardContent>
       </Card>
