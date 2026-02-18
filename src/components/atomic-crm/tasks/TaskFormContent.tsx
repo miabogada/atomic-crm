@@ -10,8 +10,10 @@ import { useConfigurationContext } from "../root/ConfigurationContext";
 
 export const TaskFormContent = ({
   selectContact,
+  selectAccount,
 }: {
   selectContact?: boolean;
+  selectAccount?: boolean;
 }) => {
   const { taskTypes } = useConfigurationContext();
   return (
@@ -30,6 +32,16 @@ export const TaskFormContent = ({
           <AutocompleteInput
             label="Contact"
             optionText={contactOptionText}
+            helperText={false}
+            validate={required()}
+          />
+        </ReferenceInput>
+      )}
+      {selectAccount && (
+        <ReferenceInput source="account_id" reference="accounts">
+          <AutocompleteInput
+            label="Account"
+            optionText="name"
             helperText={false}
             validate={required()}
           />

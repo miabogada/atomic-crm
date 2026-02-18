@@ -47,17 +47,18 @@ export const AddTask = ({
 
   const handleSuccess = async (data: any) => {
     setOpen(false);
-    const contact = await dataProvider.getOne("contacts", {
-      id: data.contact_id,
-    });
-    if (!contact.data) return;
-
-    await update("contacts", {
-      id: contact.data.id,
-      data: { last_seen: new Date().toISOString() },
-      previousData: contact.data,
-    });
-
+    if (data.contact_id) {
+      const contact = await dataProvider.getOne("contacts", {
+        id: data.contact_id,
+      });
+      if (contact.data) {
+        await update("contacts", {
+          id: contact.data.id,
+          data: { last_seen: new Date().toISOString() },
+          previousData: contact.data,
+        });
+      }
+    }
     notify("Task added");
   };
 

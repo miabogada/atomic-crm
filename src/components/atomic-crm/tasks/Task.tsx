@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import type { Contact, Task as TData } from "../types";
+import type { Account, Contact, Task as TData } from "../types";
 import { TaskEdit } from "./TaskEdit";
 import { TaskEditSheet } from "./TaskEditSheet";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -103,7 +103,7 @@ export const Task = ({
             <div className="text-sm text-muted-foreground">
               due&nbsp;
               <DateField source="due_date" record={task} />
-              {showContact && (
+              {showContact && task.contact_id && (
                 <ReferenceField<TData, Contact>
                   source="contact_id"
                   reference="contacts"
@@ -118,6 +118,25 @@ export const Task = ({
                         (Re:&nbsp;
                         {referenceRecord?.first_name}{" "}
                         {referenceRecord?.last_name})
+                      </>
+                    );
+                  }}
+                />
+              )}
+              {showContact && task.account_id && !task.contact_id && (
+                <ReferenceField<TData, Account>
+                  source="account_id"
+                  reference="accounts"
+                  record={task}
+                  link="show"
+                  className="inline text-sm text-muted-foreground"
+                  render={({ referenceRecord }) => {
+                    if (!referenceRecord) return null;
+                    return (
+                      <>
+                        {" "}
+                        (Re:&nbsp;
+                        {referenceRecord?.name})
                       </>
                     );
                   }}

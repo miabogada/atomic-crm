@@ -1,16 +1,20 @@
-import { RecordRepresentation, ShowBase, useShowContext } from "ra-core";
+import { useState } from "react";
+import { RecordRepresentation, ShowBase, useListContext, useRecordContext, useShowContext } from "ra-core";
+import { Plus } from "lucide-react";
 import { ReferenceManyField } from "@/components/admin/reference-many-field";
 import { ReferenceManyCount } from "@/components/admin/reference-many-count";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 import { AccountAside } from "./AccountAside";
 import { AccountContactsList } from "./AccountContactsList";
 import { AccountContractsList } from "./AccountContractsList";
-import { AccountTasksList } from "./AccountTasksList";
 import { AccountActivitiesList } from "./AccountActivitiesList";
-import type { Account } from "../types";
+import { Task } from "../tasks/Task";
+import { TaskCreateSheet } from "../tasks/TaskCreateSheet";
+import type { Account, Task as TaskType } from "../types";
 
 export const AccountShow = () => {
   return (
@@ -91,7 +95,7 @@ const AccountShowContent = () => {
                 <TabsTrigger value="tasks">
                   <ReferenceManyCount
                     target="account_id"
-                    reference="account_tasks"
+                    reference="tasks"
                     filter={{ "done_date@is": null }}
                   />{" "}
                   Tasks
@@ -106,6 +110,7 @@ const AccountShowContent = () => {
                   target="account_id"
                   reference="account_contacts"
                   sort={{ field: "created_at", order: "DESC" }}
+                  empty={false}
                 >
                   <AccountContactsList />
                 </ReferenceManyField>
@@ -116,6 +121,7 @@ const AccountShowContent = () => {
                   target="account_id"
                   reference="account_contracts"
                   sort={{ field: "created_at", order: "DESC" }}
+                  empty={false}
                 >
                   <AccountContractsList />
                 </ReferenceManyField>
@@ -124,10 +130,11 @@ const AccountShowContent = () => {
               <TabsContent value="tasks" className="mt-4">
                 <ReferenceManyField
                   target="account_id"
-                  reference="account_tasks"
+                  reference="tasks"
                   sort={{ field: "due_date", order: "ASC" }}
+                  empty={false}
                 >
-                  <AccountTasksList />
+                  <AccountTasksTab />
                 </ReferenceManyField>
               </TabsContent>
 
@@ -136,6 +143,7 @@ const AccountShowContent = () => {
                   target="account_id"
                   reference="account_activities"
                   sort={{ field: "date", order: "DESC" }}
+                  empty={false}
                 >
                   <AccountActivitiesList />
                 </ReferenceManyField>
@@ -145,6 +153,50 @@ const AccountShowContent = () => {
         </Card>
       </div>
       <AccountAside />
+    </div>
+  );
+};
+
+const AccountTasksTab = () => {
+  const { data, isPending } = useListContext<TaskType>();
+  const account = useRecordContext<Account>();
+  const [sheetOpen, setSheetOpen] = useState(false);
+
+  if (isPending) return null;
+
+  return (
+    <div>
+      {account && (
+        <div className="flex justify-end mb-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setSheetOpen(true)}
+          >
+            <Plus className="w-4 h-4 mr-1" />
+            Add Task
+          </Button>
+          <TaskCreateSheet
+            open={sheetOpen}
+            onOpenChange={setSheetOpen}
+            account_id={account.id}
+          />
+        </div>
+      )}
+
+      {!data?.length ? (
+        <div className="text-center text-muted-foreground py-8">
+          No tasks yet
+        </div>
+      ) : (
+        <div className="divide-y">
+          {data.map((task) => (
+            <div key={task.id} className="py-1">
+              <Task task={task} />
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

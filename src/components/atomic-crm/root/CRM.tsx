@@ -19,6 +19,7 @@ import { OAuthConsentPage } from "@/components/supabase/oauth-consent-page";
 import accounts from "../accounts";
 import companies from "../companies";
 import contacts from "../contacts";
+import contractViews from "../contracts";
 import { Dashboard } from "../dashboard/Dashboard";
 import { MobileDashboard } from "../dashboard/MobileDashboard";
 import deals from "../deals";
@@ -191,8 +192,7 @@ const DesktopAdmin = (props: CoreAdminProps) => {
       </CustomRoutes>
       <Resource name="accounts" {...accounts} />
       <Resource name="account_contacts" />
-      <Resource name="account_contracts" />
-      <Resource name="account_tasks" />
+      <Resource name="account_contracts" {...contractViews} />
       <Resource name="account_activities" />
       <Resource name="contact_types" />
       <Resource name="deals" {...deals} />

@@ -59,7 +59,9 @@ export const Dashboard = () => {
       </div>
 
       <div className="md:col-span-3">
-        <TasksList />
+        <div className="flex flex-col gap-6">
+          <TasksList />
+        </div>
       </div>
     </div>
   );

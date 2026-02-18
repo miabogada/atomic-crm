@@ -145,12 +145,15 @@ export type Tag = {
 };
 
 export type Task = {
-  contact_id: Identifier;
+  contact_id?: Identifier | null;
   type: string;
   text: string;
   due_date: string;
   done_date?: string | null;
   sales_id?: Identifier;
+  account_id?: Identifier | null;
+  parent_type?: string | null;
+  parent_id?: Identifier | null;
 } & Pick<RaRecord, "id">;
 
 export type ActivityCompanyCreated = {
@@ -296,18 +299,6 @@ export type AccountContract = {
   sales_id?: Identifier | null;
 } & Pick<RaRecord, "id">;
 
-export type AccountTask = {
-  account_id: Identifier;
-  parent_type?: string;
-  parent_id?: Identifier;
-  subject: string;
-  body?: string;
-  due_date?: string;
-  done_date?: string;
-  assigned_to?: Identifier | null;
-  created_at: string;
-  sales_id?: Identifier | null;
-} & Pick<RaRecord, "id">;
 
 export type AccountActivity = {
   account_id: Identifier;
