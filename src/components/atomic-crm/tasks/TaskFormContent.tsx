@@ -16,7 +16,7 @@ export const TaskFormContent = ({
   selectContact?: boolean;
   selectAccount?: boolean;
 }) => {
-  const { taskTypes } = useConfigurationContext();
+  const { taskTypes, taskStatuses } = useConfigurationContext();
   return (
     <div className="flex flex-col gap-4">
       <TextInput
@@ -49,7 +49,7 @@ export const TaskFormContent = ({
         </ReferenceInput>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <DateInput source="due_date" helperText={false} validate={required()} />
         <SelectInput
           source="type"
@@ -57,6 +57,15 @@ export const TaskFormContent = ({
           choices={taskTypes.map((type) => ({
             id: type,
             name: type,
+          }))}
+          helperText={false}
+        />
+        <SelectInput
+          source="status"
+          validate={required()}
+          choices={taskStatuses.map((status) => ({
+            id: status,
+            name: status,
           }))}
           helperText={false}
         />

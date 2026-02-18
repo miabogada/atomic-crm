@@ -20,6 +20,7 @@ import accounts from "../accounts";
 import companies from "../companies";
 import contacts from "../contacts";
 import contractViews from "../contracts";
+import taskViews from "../tasks";
 import { Dashboard } from "../dashboard/Dashboard";
 import { MobileDashboard } from "../dashboard/MobileDashboard";
 import deals from "../deals";
@@ -45,6 +46,7 @@ import {
   defaultDealStages,
   defaultLightModeLogo,
   defaultNoteStatuses,
+  defaultTaskStatuses,
   defaultTaskTypes,
   defaultTitle,
 } from "./defaultConfiguration";
@@ -112,6 +114,7 @@ export const CRM = ({
   darkModeLogo = defaultDarkModeLogo,
   lightModeLogo = defaultLightModeLogo,
   noteStatuses = defaultNoteStatuses,
+  taskStatuses = defaultTaskStatuses,
   taskTypes = defaultTaskTypes,
   title = defaultTitle,
   dataProvider = defaultDataProvider,
@@ -150,6 +153,7 @@ export const CRM = ({
       darkModeLogo={darkModeLogo}
       lightModeLogo={lightModeLogo}
       noteStatuses={noteStatuses}
+      taskStatuses={taskStatuses}
       taskTypes={taskTypes}
       title={title}
       googleWorkplaceDomain={googleWorkplaceDomain}
@@ -200,7 +204,7 @@ const DesktopAdmin = (props: CoreAdminProps) => {
       <Resource name="companies" {...companies} />
       <Resource name="contact_notes" />
       <Resource name="deal_notes" />
-      <Resource name="tasks" />
+      <Resource name="tasks" {...taskViews} />
       <Resource name="users" {...users} />
       <Resource name="tags" />
     </Admin>

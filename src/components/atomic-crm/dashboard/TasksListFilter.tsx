@@ -4,10 +4,12 @@ import {
   ResourceContextProvider,
   useGetIdentity,
   useGetList,
+  useGetOne,
   useList,
 } from "ra-core";
 
 import { TasksIterator } from "../tasks/TasksIterator";
+import type { Sale } from "../types";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 export const TasksListFilter = ({
@@ -21,6 +23,12 @@ export const TasksListFilter = ({
 }) => {
   const { identity } = useGetIdentity();
   const isMobile = useIsMobile();
+  const { data: currentUser } = useGetOne<Sale>(
+    "users",
+    { id: identity?.id! },
+    { enabled: !!identity },
+  );
+  const isAdmin = !!currentUser?.administrator;
 
   const {
     data: tasks,
@@ -35,7 +43,9 @@ export const TasksListFilter = ({
         ...filter,
         ...(filterByContact != null
           ? { contact_id: filterByContact }
-          : { sales_id: identity?.id }),
+          : isAdmin
+            ? {}
+            : { sales_id: identity?.id }),
       },
     },
     { enabled: filterByContact != null ? true : !!identity },

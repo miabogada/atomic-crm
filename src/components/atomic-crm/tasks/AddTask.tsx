@@ -128,6 +128,7 @@ export const AddTask = ({
         resource="tasks"
         record={{
           type: "None",
+          status: "To do",
           contact_id: isAccountTask ? null : contact?.id,
           account_id: account_id ?? null,
           parent_type: parent_type ?? null,

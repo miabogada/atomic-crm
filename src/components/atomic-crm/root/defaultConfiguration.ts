@@ -77,6 +77,13 @@ export const defaultCaseTypes = [
   "Other",
 ];
 
+export const defaultTaskStatuses = [
+  "To do",
+  "In Process",
+  "Blocked",
+  "Done",
+];
+
 export const defaultActivityTypes = [
   "call",
   "email",

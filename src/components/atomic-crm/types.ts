@@ -150,6 +150,7 @@ export type Task = {
   text: string;
   due_date: string;
   done_date?: string | null;
+  status?: string;
   sales_id?: Identifier;
   account_id?: Identifier | null;
   parent_type?: string | null;

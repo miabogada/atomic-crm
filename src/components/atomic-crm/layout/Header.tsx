@@ -18,10 +18,12 @@ const Header = () => {
     currentPath = "/";
   } else if (matchPath("/accounts/*", location.pathname)) {
     currentPath = "/accounts";
-  } else if (matchPath("/contacts/*", location.pathname)) {
-    currentPath = "/contacts";
   } else if (matchPath("/account_contracts/*", location.pathname)) {
     currentPath = "/account_contracts";
+  } else if (matchPath("/tasks/*", location.pathname)) {
+    currentPath = "/tasks";
+  } else if (matchPath("/contacts/*", location.pathname)) {
+    currentPath = "/contacts";
   } else {
     currentPath = false;
   }
@@ -61,14 +63,19 @@ const Header = () => {
                     isActive={currentPath === "/accounts"}
                   />
                   <NavigationTab
-                    label="Contacts"
-                    to="/contacts"
-                    isActive={currentPath === "/contacts"}
-                  />
-                  <NavigationTab
                     label="Contracts"
                     to="/account_contracts"
                     isActive={currentPath === "/account_contracts"}
+                  />
+                  <NavigationTab
+                    label="Tasks"
+                    to="/tasks"
+                    isActive={currentPath === "/tasks"}
+                  />
+                  <NavigationTab
+                    label="Contacts"
+                    to="/contacts"
+                    isActive={currentPath === "/contacts"}
                   />
                 </nav>
               </div>
