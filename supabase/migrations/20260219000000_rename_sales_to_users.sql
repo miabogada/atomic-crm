@@ -94,3 +94,9 @@ limit 1;
 -- 7. Grant permissions on renamed table
 -- ============================================================
 -- ALTER TABLE RENAME preserves grants, so no action needed.
+
+-- ============================================================
+-- 8. Reload PostgREST schema cache
+-- ============================================================
+
+notify pgrst, 'reload schema';
