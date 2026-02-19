@@ -4,6 +4,7 @@ import {
   endOfWeek,
   getDay,
   startOfToday,
+  subDays,
 } from "date-fns";
 
 const today = new Date();
@@ -32,4 +33,13 @@ export const taskFilters = {
     "due_date@lte": endOfWeekDateISO,
   },
   later: { "done_date@is": null, "due_date@gt": endOfWeekDateISO },
+};
+
+const thirtyDaysAgoISO = subDays(today, 30).toISOString();
+
+export const completedTaskFilters = {
+  recentlyCompleted: {
+    "done_date@not.is": null,
+    "done_date@gte": thirtyDaysAgoISO,
+  },
 };

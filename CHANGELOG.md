@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-02-18 — Dashboard: Completed Tasks section
+
+Added a "Completed Tasks" section on the Dashboard, displayed underneath the existing Upcoming Tasks list in the right column. Shows tasks completed in the last 30 days, sorted by done date (newest first). Respects the same role-based filtering (admins see all, regular users see only their own) and has the same "Load more" pagination.
+
+### New files
+- `dashboard/CompletedTasksList.tsx` — Dashboard wrapper with a `CheckCheck` icon and "Completed Tasks" heading, mirrors `TasksList` layout
+- `tasks/CompletedTasksListContent.tsx` — Renders a single `TasksListFilter` for tasks completed in the last 30 days, sorted by `done_date` descending
+
+### Modified files
+- `tasks/taskFilters.ts` — Added `completedTaskFilters.recentlyCompleted` filter (`done_date@not.is: null` + `done_date@gte: 30 days ago`)
+- `dashboard/TasksListFilter.tsx` — Added optional `sortField`, `sortOrder`, and `showCompleted` props (defaults preserve existing behavior)
+- `tasks/TasksIterator.tsx` — Added optional `showCompleted` prop to skip the 5-minute done-task filter when displaying completed tasks
+- `dashboard/Dashboard.tsx` — Added `<CompletedTasksList />` below `<TasksList />` in the right column
+
 ## 2026-02-18 — Dashboard task creation: Account selector instead of Contact
 
 Dashboard > Upcoming Tasks > "Create a new task" dialog now shows an **Account** selector instead of a Contact selector, matching the law office workflow where tasks are normally related to accounts.

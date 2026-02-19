@@ -108,6 +108,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/tasks/CompletedTasksListContent.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/tasks/AddTask.tsx",
           "type": "registry:component"
         },
@@ -625,6 +629,10 @@
         },
         {
           "path": "src/components/atomic-crm/dashboard/Dashboard.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/dashboard/CompletedTasksList.tsx",
           "type": "registry:component"
         },
         {

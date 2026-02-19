@@ -16,10 +16,16 @@ export const TasksListFilter = ({
   title,
   filter,
   filterByContact,
+  sortField = "due_date",
+  sortOrder = "ASC",
+  showCompleted,
 }: {
   title: string;
   filter: any;
   filterByContact?: Identifier;
+  sortField?: string;
+  sortOrder?: "ASC" | "DESC";
+  showCompleted?: boolean;
 }) => {
   const { identity } = useGetIdentity();
   const isMobile = useIsMobile();
@@ -38,7 +44,7 @@ export const TasksListFilter = ({
     "tasks",
     {
       pagination: { page: 1, perPage: 100 },
-      sort: { field: "due_date", order: "ASC" },
+      sort: { field: sortField, order: sortOrder },
       filter: {
         ...filter,
         ...(filterByContact != null
@@ -67,7 +73,7 @@ export const TasksListFilter = ({
       </p>
       <ResourceContextProvider value="tasks">
         <ListContextProvider value={listContext}>
-          <TasksIterator showContact={filterByContact == null} />
+          <TasksIterator showContact={filterByContact == null} showCompleted={showCompleted} />
         </ListContextProvider>
       </ResourceContextProvider>
       {total > listContext.perPage && (
