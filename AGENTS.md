@@ -121,7 +121,7 @@ Complex queries are handled via database views to simplify frontend code and red
 
 #### Database Triggers
 
-User data syncs between Supabase's `auth.users` table and the CRM's `sales` table via triggers (see `supabase/migrations/20240730075425_init_triggers.sql`).
+User data syncs between Supabase's `auth.users` table and the CRM's `users` table via triggers (see `supabase/migrations/20240730075425_init_triggers.sql`).
 
 #### Edge Functions
 
@@ -185,3 +185,15 @@ Import `test-data/contacts.csv` via the Contacts page → Import button.
 - Unit tests can be added in the `src/` directory (test files are named `*.test.ts` or `*.test.tsx`)
 - User deletion is not supported to avoid data loss; use account disabling instead
 - Filter operators must be supported by the `supabaseAdapter` when using FakeRest
+
+### Migration Notes
+
+#### `sales` → `users` rename (migrations `20260219000000` through `20260219000002`)
+
+The original upstream table `sales` was renamed to `users`, and all `sales_id` FK columns were renamed to `user_id`. This was a three-part migration:
+
+1. `20260219000000_rename_sales_to_users.sql` — Renames the `sales` table to `users`
+2. `20260219000001_task_status.sql` — Adds `status` column to tasks
+3. `20260219000002_rename_sales_id_to_user_id.sql` — Renames `sales_id` → `user_id` on all tables, recreates triggers, views, and FK constraints
+
+**Important:** After adding new migrations, run `npx supabase migration up` (or `npx supabase db reset` for a full rebuild) to apply them to the running local database. Migrations are not auto-applied to an already-running instance — only on initial `supabase start` or explicit reset/up.
