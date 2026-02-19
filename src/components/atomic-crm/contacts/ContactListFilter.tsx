@@ -1,22 +1,23 @@
 import { endOfYesterday, startOfMonth, startOfWeek, subMonths } from "date-fns";
-import { CheckSquare, Clock, Tag, TrendingUp, Users } from "lucide-react";
+import { CheckSquare, Clock, Contact, Tag, Users } from "lucide-react";
 import { useGetIdentity, useGetList, useListContext } from "ra-core";
 import { ToggleFilterButton } from "@/components/admin/toggle-filter-button";
 import { Badge } from "@/components/ui/badge";
 
 import { FilterCategory } from "../filters/FilterCategory";
-import { Status } from "../misc/Status";
-import { useConfigurationContext } from "../root/ConfigurationContext";
 import { ResponsiveFilters } from "../misc/ResponsiveFilters";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ActiveFilterButton } from "../misc/ActiveFilterButton";
 
 export const ContactListFilter = () => {
-  const { noteStatuses } = useConfigurationContext();
   const isMobile = useIsMobile();
   const { identity } = useGetIdentity();
   const { data } = useGetList("tags", {
     pagination: { page: 1, perPage: 10 },
+    sort: { field: "name", order: "ASC" },
+  });
+  const { data: contactTypes } = useGetList("contact_types", {
+    pagination: { page: 1, perPage: 50 },
     sort: { field: "name", order: "ASC" },
   });
 
@@ -73,20 +74,17 @@ export const ContactListFilter = () => {
         />
       </FilterCategory>
 
-      <FilterCategory label="Status" icon={<TrendingUp />}>
-        {noteStatuses.map((status) => (
-          <ToggleFilterButton
-            key={status.value}
-            className="w-auto md:w-full justify-between h-10 md:h-8"
-            label={
-              <span>
-                {status.label} <Status status={status.value} />
-              </span>
-            }
-            value={{ status: status.value }}
-            size={isMobile ? "lg" : undefined}
-          />
-        ))}
+      <FilterCategory label="Contact Type" icon={<Contact />}>
+        {contactTypes &&
+          contactTypes.map((contactType) => (
+            <ToggleFilterButton
+              key={contactType.id}
+              className="w-auto md:w-full justify-between h-10 md:h-8"
+              label={contactType.name}
+              value={{ contact_type_id: contactType.id }}
+              size={isMobile ? "lg" : undefined}
+            />
+          ))}
       </FilterCategory>
 
       <FilterCategory label="Tags" icon={<Tag />}>
@@ -134,10 +132,13 @@ export const ContactListFilter = () => {
 };
 
 export const ContactListFilterSummary = () => {
-  const { noteStatuses } = useConfigurationContext();
   const { identity } = useGetIdentity();
   const { data } = useGetList("tags", {
     pagination: { page: 1, perPage: 10 },
+    sort: { field: "name", order: "ASC" },
+  });
+  const { data: contactTypes } = useGetList("contact_types", {
+    pagination: { page: 1, perPage: 50 },
     sort: { field: "name", order: "ASC" },
   });
   const { filterValues } = useListContext();
@@ -192,18 +193,15 @@ export const ContactListFilterSummary = () => {
         }}
       />
 
-      {noteStatuses.map((status) => (
-        <ActiveFilterButton
-          key={status.value}
-          className="w-auto justify-between h-8"
-          label={
-            <span>
-              {status.label} <Status status={status.value} />
-            </span>
-          }
-          value={{ status: status.value }}
-        />
-      ))}
+      {contactTypes &&
+        contactTypes.map((contactType) => (
+          <ActiveFilterButton
+            key={contactType.id}
+            className="w-auto justify-between h-8"
+            label={contactType.name}
+            value={{ contact_type_id: contactType.id }}
+          />
+        ))}
 
       {data &&
         data.map((record) => (

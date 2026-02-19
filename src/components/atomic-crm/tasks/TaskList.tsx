@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { TopToolbar } from "../layout/TopToolbar";
 import { AddTask } from "./AddTask";
 import { TaskListContent } from "./TaskListContent";
+import { TaskListFilter } from "./TaskListFilter";
 
 export const TaskList = () => {
   return (
@@ -21,11 +22,13 @@ export const TaskList = () => {
 };
 
 const TaskListLayout = () => {
-  const { data, isPending } = useListContext();
+  const { data, isPending, filterValues } = useListContext();
+
+  const hasFilters = filterValues && Object.keys(filterValues).length > 0;
 
   if (isPending) return null;
 
-  if (!data?.length)
+  if (!data?.length && !hasFilters)
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
         <p className="text-muted-foreground mb-4">No tasks yet</p>
@@ -34,10 +37,13 @@ const TaskListLayout = () => {
     );
 
   return (
-    <div className="w-full flex flex-col gap-4">
-      <Card className="py-0">
-        <TaskListContent />
-      </Card>
+    <div className="flex flex-row gap-8">
+      <TaskListFilter />
+      <div className="w-full flex flex-col gap-4">
+        <Card className="py-0">
+          <TaskListContent />
+        </Card>
+      </div>
     </div>
   );
 };

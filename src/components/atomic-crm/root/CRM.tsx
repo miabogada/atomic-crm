@@ -38,6 +38,8 @@ import { SettingsPage } from "../settings/SettingsPage";
 import type { ConfigurationContextValue } from "./ConfigurationContext";
 import { ConfigurationProvider } from "./ConfigurationContext";
 import {
+  defaultAccountCategories,
+  defaultCaseTypes,
   defaultCompanySectors,
   defaultContactGender,
   defaultDarkModeLogo,
@@ -106,6 +108,8 @@ export type CRMProps = {
  * export default App;
  */
 export const CRM = ({
+  accountCategories = defaultAccountCategories,
+  caseTypes = defaultCaseTypes,
   contactGender = defaultContactGender,
   companySectors = defaultCompanySectors,
   dealCategories = defaultDealCategories,
@@ -145,6 +149,8 @@ export const CRM = ({
 
   return (
     <ConfigurationProvider
+      accountCategories={accountCategories}
+      caseTypes={caseTypes}
       contactGender={contactGender}
       companySectors={companySectors}
       dealCategories={dealCategories}

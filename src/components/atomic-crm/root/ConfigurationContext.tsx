@@ -2,6 +2,8 @@ import { createContext, useContext, type ReactNode } from "react";
 
 import type { ContactGender, DealStage, NoteStatus } from "../types";
 import {
+  defaultAccountCategories,
+  defaultCaseTypes,
   defaultCompanySectors,
   defaultContactGender,
   defaultDarkModeLogo,
@@ -17,6 +19,8 @@ import {
 
 // Define types for the context value
 export interface ConfigurationContextValue {
+  accountCategories: string[];
+  caseTypes: string[];
   companySectors: string[];
   dealCategories: string[];
   dealPipelineStatuses: string[];
@@ -39,6 +43,8 @@ export interface ConfigurationProviderProps extends ConfigurationContextValue {
 // Create context with default value
 // eslint-disable-next-line react-refresh/only-export-components
 export const ConfigurationContext = createContext<ConfigurationContextValue>({
+  accountCategories: defaultAccountCategories,
+  caseTypes: defaultCaseTypes,
   companySectors: defaultCompanySectors,
   dealCategories: defaultDealCategories,
   dealPipelineStatuses: defaultDealPipelineStatuses,
@@ -55,6 +61,8 @@ export const ConfigurationContext = createContext<ConfigurationContextValue>({
 
 export const ConfigurationProvider = ({
   children,
+  accountCategories,
+  caseTypes,
   companySectors,
   dealCategories,
   dealPipelineStatuses,
@@ -71,6 +79,8 @@ export const ConfigurationProvider = ({
 }: ConfigurationProviderProps) => (
   <ConfigurationContext.Provider
     value={{
+      accountCategories,
+      caseTypes,
       companySectors,
       dealCategories,
       dealPipelineStatuses,
