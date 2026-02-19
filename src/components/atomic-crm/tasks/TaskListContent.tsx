@@ -61,7 +61,11 @@ const TaskItemContent = ({ task }: { task: TaskType }) => {
           {task.text}
         </div>
         <div className="text-sm text-muted-foreground">
-          due <DateField source="due_date" record={task} />
+          {task.done_date ? "done" : "due"}{" "}
+          <DateField
+            source={task.done_date ? "done_date" : "due_date"}
+            record={task}
+          />
           {task.account_id && (
             <ReferenceField
               source="account_id"

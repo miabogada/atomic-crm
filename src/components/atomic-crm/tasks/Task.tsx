@@ -122,8 +122,11 @@ export const Task = ({
               )}
             </div>
             <div className="text-sm text-muted-foreground">
-              due&nbsp;
-              <DateField source="due_date" record={task} />
+              {task.done_date ? "done" : "due"}&nbsp;
+              <DateField
+                source={task.done_date ? "done_date" : "due_date"}
+                record={task}
+              />
               {showContact && task.contact_id && (
                 <ReferenceField<TData, Contact>
                   source="contact_id"
