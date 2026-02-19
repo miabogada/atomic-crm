@@ -1,5 +1,5 @@
 import { endOfYesterday, startOfMonth, startOfWeek, subMonths } from "date-fns";
-import { CheckSquare, Clock, Contact, Tag, Users } from "lucide-react";
+import { CheckSquare, Clock, Tag, Users } from "lucide-react";
 import { useGetIdentity, useGetList, useListContext } from "ra-core";
 import { ToggleFilterButton } from "@/components/admin/toggle-filter-button";
 import { Badge } from "@/components/ui/badge";
@@ -16,11 +16,6 @@ export const ContactListFilter = () => {
     pagination: { page: 1, perPage: 10 },
     sort: { field: "name", order: "ASC" },
   });
-  const { data: contactTypes } = useGetList("contact_types", {
-    pagination: { page: 1, perPage: 50 },
-    sort: { field: "name", order: "ASC" },
-  });
-
   return (
     <ResponsiveFilters searchInput={{ placeholder: "Search name, company..." }}>
       <FilterCategory label="Last activity" icon={<Clock />}>
@@ -74,19 +69,6 @@ export const ContactListFilter = () => {
         />
       </FilterCategory>
 
-      <FilterCategory label="Contact Type" icon={<Contact />}>
-        {contactTypes &&
-          contactTypes.map((contactType) => (
-            <ToggleFilterButton
-              key={contactType.id}
-              className="w-auto md:w-full justify-between h-10 md:h-8"
-              label={contactType.name}
-              value={{ contact_type_id: contactType.id }}
-              size={isMobile ? "lg" : undefined}
-            />
-          ))}
-      </FilterCategory>
-
       <FilterCategory label="Tags" icon={<Tag />}>
         {data &&
           data.map((record) => (
@@ -135,10 +117,6 @@ export const ContactListFilterSummary = () => {
   const { identity } = useGetIdentity();
   const { data } = useGetList("tags", {
     pagination: { page: 1, perPage: 10 },
-    sort: { field: "name", order: "ASC" },
-  });
-  const { data: contactTypes } = useGetList("contact_types", {
-    pagination: { page: 1, perPage: 50 },
     sort: { field: "name", order: "ASC" },
   });
   const { filterValues } = useListContext();
@@ -192,16 +170,6 @@ export const ContactListFilterSummary = () => {
           "last_seen@lte": subMonths(startOfMonth(new Date()), 1).toISOString(),
         }}
       />
-
-      {contactTypes &&
-        contactTypes.map((contactType) => (
-          <ActiveFilterButton
-            key={contactType.id}
-            className="w-auto justify-between h-8"
-            label={contactType.name}
-            value={{ contact_type_id: contactType.id }}
-          />
-        ))}
 
       {data &&
         data.map((record) => (
