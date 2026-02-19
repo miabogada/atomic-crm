@@ -44,7 +44,7 @@ export const AccountEdit = () => {
           billingDataRef.current = {};
           const existingContact = billingContactRef.current;
 
-          if (billingData.billing_full_name) {
+          if (billingData.billing_first_name) {
             try {
               const { data: contactType } = await supabase
                 .from("contact_types")
@@ -56,7 +56,8 @@ export const AccountEdit = () => {
                 account_id: data.id,
                 contact_type_id: contactType?.id ?? null,
                 is_billing_contact: true,
-                full_name: billingData.billing_full_name,
+                first_name: billingData.billing_first_name,
+                last_name: billingData.billing_last_name || "",
                 email: billingData.billing_email || null,
                 phone: billingData.billing_phone || null,
                 address_street: billingData.billing_address_street || null,
@@ -130,7 +131,8 @@ const AccountEditContent = ({
 
   const billingDefaults = billingContact
     ? {
-        billing_full_name: billingContact.full_name || "",
+        billing_first_name: billingContact.first_name || "",
+        billing_last_name: billingContact.last_name || "",
         billing_email: billingContact.email || "",
         billing_phone: billingContact.phone || "",
         billing_address_street: billingContact.address_street || "",

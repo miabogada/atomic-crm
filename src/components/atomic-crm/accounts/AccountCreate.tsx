@@ -55,7 +55,7 @@ export const AccountCreate = () => {
           const billingData = billingDataRef.current;
           billingDataRef.current = {};
 
-          if (billingData.billing_full_name) {
+          if (billingData.billing_first_name) {
             try {
               const { data: contactType } = await supabase
                 .from("contact_types")
@@ -70,7 +70,8 @@ export const AccountCreate = () => {
                     account_id: data.id,
                     contact_type_id: contactType?.id ?? null,
                     is_billing_contact: true,
-                    full_name: billingData.billing_full_name,
+                    first_name: billingData.billing_first_name,
+                    last_name: billingData.billing_last_name || "",
                     email: billingData.billing_email || null,
                     phone: billingData.billing_phone || null,
                     address_street:

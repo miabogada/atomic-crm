@@ -22,8 +22,8 @@ const Header = () => {
     currentPath = "/account_contracts";
   } else if (matchPath("/tasks/*", location.pathname)) {
     currentPath = "/tasks";
-  } else if (matchPath("/contacts/*", location.pathname)) {
-    currentPath = "/contacts";
+  } else if (matchPath("/account_contacts/*", location.pathname)) {
+    currentPath = "/account_contacts";
   } else {
     currentPath = false;
   }
@@ -74,8 +74,8 @@ const Header = () => {
                   />
                   <NavigationTab
                     label="Contacts"
-                    to="/contacts"
-                    isActive={currentPath === "/contacts"}
+                    to="/account_contacts"
+                    isActive={currentPath === "/account_contacts"}
                   />
                 </nav>
               </div>

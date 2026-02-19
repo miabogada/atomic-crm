@@ -1,5 +1,5 @@
-import { DeleteButton, ReferenceField } from "@/components/admin";
-import { type Identifier, RecordRepresentation } from "ra-core";
+import { DeleteButton } from "@/components/admin";
+import { type Identifier } from "ra-core";
 import { EditSheet } from "../misc/EditSheet";
 import { TaskFormContent } from "./TaskFormContent";
 
@@ -18,26 +18,7 @@ export const TaskEditSheet = ({
     <EditSheet
       resource="tasks"
       id={taskId}
-      title={
-        <ReferenceField
-          source="contact_id"
-          reference="contacts"
-          render={({ referenceRecord }) => (
-            <h1 className="text-xl font-semibold">
-              Edit Task
-              {referenceRecord ? (
-                <>
-                  {" for "}
-                  <RecordRepresentation
-                    record={referenceRecord}
-                    resource="contacts"
-                  />
-                </>
-              ) : null}
-            </h1>
-          )}
-        />
-      }
+      title={<h1 className="text-xl font-semibold">Edit Task</h1>}
       redirect={false}
       open={open}
       onOpenChange={onOpenChange}

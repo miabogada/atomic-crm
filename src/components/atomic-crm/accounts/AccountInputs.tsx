@@ -16,7 +16,8 @@ import {
 
 export const BILLING_FIELDS = [
   "_billing_contact_lookup",
-  "billing_full_name",
+  "billing_first_name",
+  "billing_last_name",
   "billing_email",
   "billing_phone",
   "billing_address_street",
@@ -37,8 +38,8 @@ export const stripBillingFields = (data: Record<string, any>) => {
     }
   }
   // Derive account name/phone/email from billing contact
-  if (billingData.billing_full_name) {
-    accountData.name = billingData.billing_full_name;
+  if (billingData.billing_first_name) {
+    accountData.name = `${billingData.billing_first_name} ${billingData.billing_last_name || ""}`.trim();
   }
   if (billingData.billing_phone) {
     accountData.phone = billingData.billing_phone;
@@ -183,7 +184,8 @@ const BillingContactInputs = () => {
       .getOne<AccountContact>("account_contacts", { id })
       .then(({ data }) => {
         if (!data) return;
-        setValue("billing_full_name", data.full_name || "");
+        setValue("billing_first_name", data.first_name || "");
+        setValue("billing_last_name", data.last_name || "");
         setValue("billing_email", data.email || "");
         setValue("billing_phone", data.phone || "");
         setValue("billing_address_street", data.address_street || "");
@@ -200,19 +202,22 @@ const BillingContactInputs = () => {
       <ReferenceInput
         reference="account_contacts"
         source="_billing_contact_lookup"
-        sort={{ field: "full_name", order: "ASC" }}
+        sort={{ field: "first_name", order: "ASC" }}
       >
         <AutocompleteInput
           label="Copy from existing contact"
-          optionText="full_name"
+          optionText={(r: any) => `${r.first_name} ${r.last_name}`.trim()}
           helperText="Select to auto-fill fields below"
           filterToQuery={(text: string) => ({
-            "full_name@ilike": `%${text}%`,
+            "first_name@ilike": `%${text}%`,
           })}
           onChange={handleLookupChange}
         />
       </ReferenceInput>
-      <TextInput source="billing_full_name" label="Full Name" validate={required()} helperText={false} />
+      <div className="flex gap-2">
+        <TextInput source="billing_first_name" label="First Name" validate={required()} helperText={false} className="flex-1" />
+        <TextInput source="billing_last_name" label="Last Name" helperText={false} className="flex-1" />
+      </div>
       <TextInput source="billing_email" label="Email" helperText={false} />
       <TextInput source="billing_phone" label="Phone" helperText={false} />
       <TextInput source="billing_address_street" label="Street" helperText={false} />

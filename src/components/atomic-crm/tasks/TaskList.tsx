@@ -32,7 +32,7 @@ const TaskListLayout = () => {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
         <p className="text-muted-foreground mb-4">No tasks yet</p>
-        <AddTask selectContact selectAccount display="chip" />
+        <AddTask selectAccount display="chip" />
       </div>
     );
 
@@ -51,6 +51,6 @@ const TaskListLayout = () => {
 const TaskListActions = () => (
   <TopToolbar>
     <SortButton fields={["due_date", "status", "type", "text"]} />
-    <AddTask selectContact selectAccount display="chip" />
+    <AddTask selectAccount display="chip" />
   </TopToolbar>
 );

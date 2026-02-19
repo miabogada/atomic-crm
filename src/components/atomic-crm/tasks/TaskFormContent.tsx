@@ -5,15 +5,12 @@ import { SelectInput } from "@/components/admin/select-input";
 import { TextInput } from "@/components/admin/text-input";
 import { required } from "ra-core";
 
-import { contactOptionText } from "../misc/ContactOption";
 import { useConfigurationContext } from "../root/ConfigurationContext";
 import type { Sale } from "../types";
 
 export const TaskFormContent = ({
-  selectContact,
   selectAccount,
 }: {
-  selectContact?: boolean;
   selectAccount?: boolean;
 }) => {
   const { taskTypes, taskStatuses } = useConfigurationContext();
@@ -28,16 +25,6 @@ export const TaskFormContent = ({
         className="m-0"
         helperText={false}
       />
-      {selectContact && (
-        <ReferenceInput source="contact_id" reference="contacts_summary">
-          <AutocompleteInput
-            label="Contact"
-            optionText={contactOptionText}
-            helperText={false}
-            validate={required()}
-          />
-        </ReferenceInput>
-      )}
       {selectAccount && (
         <ReferenceInput source="account_id" reference="accounts">
           <AutocompleteInput

@@ -2,14 +2,10 @@ import { Plus } from "lucide-react";
 import {
   CreateBase,
   Form,
-  RecordRepresentation,
-  useDataProvider,
   useGetIdentity,
   useGetOne,
   useNotify,
-  useRecordContext,
   useRefresh,
-  useUpdate,
   type Identifier,
 } from "ra-core";
 import { useState } from "react";
@@ -33,14 +29,12 @@ import { TaskFormContent } from "./TaskFormContent";
 import type { Account } from "../types";
 
 export const AddTask = ({
-  selectContact,
   selectAccount,
   display = "chip",
   account_id,
   parent_type,
   parent_id,
 }: {
-  selectContact?: boolean;
   selectAccount?: boolean;
   display?: "chip" | "icon";
   account_id?: Identifier;
@@ -48,11 +42,8 @@ export const AddTask = ({
   parent_id?: Identifier;
 }) => {
   const { identity } = useGetIdentity();
-  const dataProvider = useDataProvider();
-  const [update] = useUpdate();
   const notify = useNotify();
   const refresh = useRefresh();
-  const contact = useRecordContext();
   const [open, setOpen] = useState(false);
 
   const { data: account } = useGetOne<Account>(
@@ -67,18 +58,6 @@ export const AddTask = ({
 
   const handleSuccess = async (data: any) => {
     setOpen(false);
-    if (data.contact_id) {
-      const contact = await dataProvider.getOne("contacts", {
-        id: data.contact_id,
-      });
-      if (contact.data) {
-        await update("contacts", {
-          id: contact.data.id,
-          data: { last_seen: new Date().toISOString() },
-          previousData: contact.data,
-        });
-      }
-    }
     if (data.account_id) {
       refresh();
     }
@@ -90,9 +69,7 @@ export const AddTask = ({
   const isAccountTask = account_id != null;
   const title = isAccountTask
     ? `Create a new task for ${account?.name ?? "account"}`
-    : selectContact || selectAccount
-      ? "Create a new task"
-      : "Create a new task for ";
+    : "Create a new task";
 
   return (
     <>
@@ -131,7 +108,7 @@ export const AddTask = ({
         record={{
           type: "None",
           status: "To do",
-          contact_id: isAccountTask ? null : contact?.id,
+          contact_id: null,
           account_id: account_id ?? null,
           parent_type: parent_type ?? null,
           parent_id: parent_id ?? null,
@@ -152,17 +129,9 @@ export const AddTask = ({
           <DialogContent className="lg:max-w-xl overflow-y-auto max-h-9/10 top-1/20 translate-y-0">
             <Form className="flex flex-col gap-4">
               <DialogHeader>
-                <DialogTitle>
-                  {title}
-                  {!isAccountTask && !selectContact && !selectAccount && (
-                    <RecordRepresentation
-                      record={contact}
-                      resource="contacts"
-                    />
-                  )}
-                </DialogTitle>
+                <DialogTitle>{title}</DialogTitle>
               </DialogHeader>
-              <TaskFormContent selectContact={selectContact} selectAccount={selectAccount} />
+              <TaskFormContent selectAccount={selectAccount} />
               <DialogFooter className="w-full justify-end">
                 <SaveButton />
               </DialogFooter>

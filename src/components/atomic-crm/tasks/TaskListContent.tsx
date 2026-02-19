@@ -5,6 +5,7 @@ import { ReferenceField } from "@/components/admin/reference-field";
 import { TextField } from "@/components/admin/text-field";
 import { DateField } from "@/components/admin/date-field";
 
+
 import type { Task as TaskType, Sale } from "../types";
 
 import { taskStatusColors } from "./taskStatusColors";
@@ -70,19 +71,6 @@ const TaskItemContent = ({ task }: { task: TaskType }) => {
             >
               <span> · </span>
               <TextField source="name" />
-            </ReferenceField>
-          )}
-          {task.contact_id && (
-            <ReferenceField
-              source="contact_id"
-              reference="contacts"
-              record={task}
-              link={false}
-              className="inline text-sm text-muted-foreground"
-            >
-              <span> · </span>
-              <TextField source="first_name" />{" "}
-              <TextField source="last_name" />
             </ReferenceField>
           )}
           {task.user_id && (

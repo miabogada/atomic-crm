@@ -272,7 +272,8 @@ export type AccountContact = {
   account_id: Identifier;
   contact_type_id?: Identifier | null;
   is_billing_contact: boolean;
-  full_name: string;
+  first_name: string;
+  last_name: string;
   email?: string;
   phone?: string;
   address_street?: string;

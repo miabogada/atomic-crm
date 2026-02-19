@@ -22,8 +22,7 @@ import {
   Users,
 } from "lucide-react";
 import { Translate, useAuthProvider, useGetIdentity, useLogout } from "ra-core";
-import { Link, matchPath, useLocation, useMatch } from "react-router";
-import { ContactCreateSheet } from "../contacts/ContactCreateSheet";
+import { Link, matchPath, useLocation, useNavigate } from "react-router";
 import { useState } from "react";
 import { NoteCreateSheet } from "../notes/NoteCreateSheet";
 import { TaskCreateSheet } from "../tasks/TaskCreateSheet";
@@ -34,8 +33,8 @@ export const MobileNavigation = () => {
   let currentPath: string | boolean = "/";
   if (matchPath("/", location.pathname)) {
     currentPath = "/";
-  } else if (matchPath("/contacts/*", location.pathname)) {
-    currentPath = "/contacts";
+  } else if (matchPath("/account_contacts/*", location.pathname)) {
+    currentPath = "/account_contacts";
   } else if (matchPath("/companies/*", location.pathname)) {
     currentPath = "/companies";
   } else if (matchPath("/tasks/*", location.pathname)) {
@@ -74,10 +73,10 @@ export const MobileNavigation = () => {
             isActive={currentPath === "/"}
           />
           <NavigationButton
-            href="/contacts"
+            href="/account_contacts"
             Icon={Users}
             label="Contacts"
-            isActive={currentPath === "/contacts"}
+            isActive={currentPath === "/account_contacts"}
           />
           <CreateButton />
           <NavigationButton
@@ -120,26 +119,19 @@ const NavigationButton = ({
 );
 
 const CreateButton = () => {
-  const contact_id = useMatch("/contacts/:id/*")?.params.id;
-  const [contactCreateOpen, setContactCreateOpen] = useState(false);
+  const navigate = useNavigate();
   const [noteCreateOpen, setNoteCreateOpen] = useState(false);
   const [taskCreateOpen, setTaskCreateOpen] = useState(false);
 
   return (
     <>
-      <ContactCreateSheet
-        open={contactCreateOpen}
-        onOpenChange={setContactCreateOpen}
-      />
       <NoteCreateSheet
         open={noteCreateOpen}
         onOpenChange={setNoteCreateOpen}
-        contact_id={contact_id}
       />
       <TaskCreateSheet
         open={taskCreateOpen}
         onOpenChange={setTaskCreateOpen}
-        contact_id={contact_id}
       />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -156,7 +148,7 @@ const CreateButton = () => {
           <DropdownMenuItem
             className="h-12 px-4 text-base"
             onSelect={() => {
-              setContactCreateOpen(true);
+              navigate("/account_contacts/create");
             }}
           >
             Contact

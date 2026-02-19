@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import type { Account, Contact, Sale, Task as TData } from "../types";
+import type { Account, Sale, Task as TData } from "../types";
 
 import { taskStatusColors } from "./taskStatusColors";
 import { TaskEdit } from "./TaskEdit";
@@ -23,10 +23,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 export const Task = ({
   task,
-  showContact,
 }: {
   task: TData;
-  showContact?: boolean;
 }) => {
   const isMobile = useIsMobile();
   const notify = useNotify();
@@ -121,27 +119,7 @@ export const Task = ({
                 source={task.done_date ? "done_date" : "due_date"}
                 record={task}
               />
-              {showContact && task.contact_id && (
-                <ReferenceField<TData, Contact>
-                  source="contact_id"
-                  reference="contacts"
-                  record={task}
-                  link="show"
-                  className="inline text-sm text-muted-foreground"
-                  render={({ referenceRecord }) => {
-                    if (!referenceRecord) return null;
-                    return (
-                      <>
-                        {" "}
-                        (Re:&nbsp;
-                        {referenceRecord?.first_name}{" "}
-                        {referenceRecord?.last_name})
-                      </>
-                    );
-                  }}
-                />
-              )}
-              {showContact && task.account_id && !task.contact_id && (
+              {task.account_id && (
                 <ReferenceField<TData, Account>
                   source="account_id"
                   reference="accounts"

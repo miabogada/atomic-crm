@@ -73,7 +73,7 @@ export const TasksListFilter = ({
       </p>
       <ResourceContextProvider value="tasks">
         <ListContextProvider value={listContext}>
-          <TasksIterator showContact={filterByContact == null} showCompleted={showCompleted} />
+          <TasksIterator showCompleted={showCompleted} />
         </ListContextProvider>
       </ResourceContextProvider>
       {total > listContext.perPage && (

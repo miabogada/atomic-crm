@@ -1,5 +1,50 @@
 # Changelog
 
+## 2026-02-19 — Replace contacts with account_contacts in CRM UI
+
+Replaced the upstream generic `contacts` resource with `account_contacts` throughout the UI. The old `contacts` table stays in the DB but is hidden from navigation. Also split `account_contacts.full_name` into `first_name` + `last_name` and removed `contact_id` references from tasks.
+
+### DB migration: split full_name (`20260219000004_split_account_contact_name.sql`)
+- Added `first_name` and `last_name` columns to `account_contacts`
+- Migrated data from `full_name` using `split_part`
+- Dropped `full_name` column
+- Recreated `accounts_summary` view with `first_name || ' ' || last_name`
+
+### New account_contacts views
+- **`ContactList.tsx`** — List page with name (linked), email/phone, account reference, contact type badge, billing badge
+- **`ContactShow.tsx`** — Detail page with all fields, aside with account link, edit/delete buttons
+- **`ContactEdit.tsx`** — Edit page reusing `ContactInputs`
+
+### Navigation: route to account_contacts, hide old contacts
+- `CRM.tsx` — `<Resource name="contacts" />` registered without views (backward compat only); `account_contacts` gets full CRUD
+- `Header.tsx` — Contacts tab points to `/account_contacts`
+- `MobileNavigation.tsx` — Contacts button navigates to `/account_contacts`; Create > Contact navigates to `/account_contacts/create` instead of old `ContactCreateSheet`
+
+### Dashboard: remove HotContacts
+- Removed `HotContacts` widget and `DashboardStepper` (which depended on old contacts existing)
+- Removed `contacts` and `contact_notes` count queries
+
+### Tasks: remove contact_id references
+- `TaskFormContent` — Removed `selectContact` prop and contact `ReferenceInput`
+- `Task.tsx` — Removed `showContact` prop and contact `ReferenceField`; always shows account reference
+- `TaskListContent.tsx` — Removed contact_id `ReferenceField`
+- `TaskEditSheet.tsx` — Plain "Edit Task" title (was showing contact name)
+- `AddTask.tsx` — Removed `selectContact` prop and contact `last_seen` update logic
+- `TaskCreateSheet.tsx` — Removed `contact_id` prop and related fetch/display/update logic
+- `TaskList.tsx` — Removed `selectContact` from `AddTask` calls
+- `TasksIterator.tsx` — Removed `showContact` prop
+- `TasksListFilter.tsx` — Removed `showContact` from `TasksIterator` call
+
+### Account contacts: clickable from account show
+- `AccountContactsList.tsx` — Contact names wrapped in `<Link to="/account_contacts/${id}/show">`
+
+### Name split propagation
+- `types.ts` — `AccountContact` type: `full_name` → `first_name` + `last_name`
+- `ContactInputs.tsx` — Two side-by-side name inputs
+- `account-contacts/index.ts` — `recordRepresentation` uses `first_name + last_name`
+- `AccountInputs.tsx` — Billing fields use `billing_first_name`/`billing_last_name`; autocomplete uses function for `optionText`
+- `AccountCreate.tsx` / `AccountEdit.tsx` — Contact creation/update uses `first_name`/`last_name`
+
 ## 2026-02-19 — Filter panels for Accounts, Contracts, Tasks; Contract status
 
 ### Filter panels for list pages
