@@ -93,6 +93,16 @@ export const defaultActivityTypes = [
   "payment",
 ];
 
+export const defaultContractStatuses = [
+  "To do",
+  "In process",
+  "In process - Past due",
+  "Stopped - Past due",
+  "In process - Paid",
+  "Done - Paid",
+  "Canceled",
+];
+
 export const defaultAccountCategories = [
   "In Process",
   "Closed",

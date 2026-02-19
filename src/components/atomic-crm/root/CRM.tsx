@@ -42,6 +42,7 @@ import {
   defaultCaseTypes,
   defaultCompanySectors,
   defaultContactGender,
+  defaultContractStatuses,
   defaultDarkModeLogo,
   defaultDealCategories,
   defaultDealPipelineStatuses,
@@ -112,6 +113,7 @@ export const CRM = ({
   caseTypes = defaultCaseTypes,
   contactGender = defaultContactGender,
   companySectors = defaultCompanySectors,
+  contractStatuses = defaultContractStatuses,
   dealCategories = defaultDealCategories,
   dealPipelineStatuses = defaultDealPipelineStatuses,
   dealStages = defaultDealStages,
@@ -153,6 +155,7 @@ export const CRM = ({
       caseTypes={caseTypes}
       contactGender={contactGender}
       companySectors={companySectors}
+      contractStatuses={contractStatuses}
       dealCategories={dealCategories}
       dealPipelineStatuses={dealPipelineStatuses}
       dealStages={dealStages}

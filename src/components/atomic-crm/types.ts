@@ -288,6 +288,7 @@ export type AccountContract = {
   account_id: Identifier;
   contract_number?: string;
   case_type?: string;
+  status?: string;
   fee?: number;
   retainer?: number;
   monthly_payment?: number;

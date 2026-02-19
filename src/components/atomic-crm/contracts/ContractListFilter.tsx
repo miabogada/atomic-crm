@@ -1,5 +1,5 @@
 import { startOfMonth, startOfYear, subMonths } from "date-fns";
-import { Briefcase, Clock, DollarSign } from "lucide-react";
+import { CircleDot, Clock, DollarSign } from "lucide-react";
 import { ToggleFilterButton } from "@/components/admin/toggle-filter-button";
 
 import { FilterCategory } from "../filters/FilterCategory";
@@ -8,20 +8,20 @@ import { ResponsiveFilters } from "../misc/ResponsiveFilters";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 export const ContractListFilter = () => {
-  const { caseTypes } = useConfigurationContext();
+  const { contractStatuses } = useConfigurationContext();
   const isMobile = useIsMobile();
 
   return (
     <ResponsiveFilters
       searchInput={{ placeholder: "Search contract, account..." }}
     >
-      <FilterCategory label="Case Type" icon={<Briefcase />}>
-        {caseTypes.map((caseType) => (
+      <FilterCategory label="Status" icon={<CircleDot />}>
+        {contractStatuses.map((status) => (
           <ToggleFilterButton
-            key={caseType}
+            key={status}
             className="w-auto md:w-full justify-between h-10 md:h-8"
-            label={caseType}
-            value={{ case_type: caseType }}
+            label={status}
+            value={{ status }}
             size={isMobile ? "lg" : undefined}
           />
         ))}

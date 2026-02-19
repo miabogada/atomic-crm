@@ -76,6 +76,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/tasks/TaskListFilter.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/tasks/TaskListContent.tsx",
           "type": "registry:component"
         },
@@ -644,6 +648,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/contracts/ContractListFilter.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/contracts/ContractListContent.tsx",
           "type": "registry:component"
         },
@@ -857,6 +865,10 @@
         },
         {
           "path": "src/components/atomic-crm/accounts/AccountShow.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/accounts/AccountListFilter.tsx",
           "type": "registry:component"
         },
         {

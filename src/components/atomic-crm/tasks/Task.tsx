@@ -16,13 +16,7 @@ import {
 
 import type { Account, Contact, Sale, Task as TData } from "../types";
 
-const statusColors: Record<string, string> = {
-  "To do": "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-  "In Process":
-    "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
-  Blocked: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
-  Done: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-};
+import { taskStatusColors } from "./taskStatusColors";
 import { TaskEdit } from "./TaskEdit";
 import { TaskEditSheet } from "./TaskEditSheet";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -115,7 +109,7 @@ export const Task = ({
               {task.status && task.status !== "Done" && (
                 <Badge
                   variant="outline"
-                  className={`text-xs py-0 px-1.5 ${statusColors[task.status] ?? ""}`}
+                  className={`text-xs py-0 px-1.5 ${taskStatusColors[task.status] ?? ""}`}
                 >
                   {task.status}
                 </Badge>

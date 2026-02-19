@@ -1,5 +1,52 @@
 # Changelog
 
+## 2026-02-19 — Filter panels for Accounts, Contracts, Tasks; Contract status
+
+### Filter panels for list pages
+Added filter sidebars (search + toggle filters) to the Accounts, Contracts, and Tasks list pages, matching the existing Contacts pattern.
+
+- **Accounts** — Category, Activity (updated today/this week/etc.), Open tasks, Team (attorney/clerk/assistant)
+- **Contracts** — Status, Date Opened, Fee Range
+- **Tasks** — Due Date (Overdue/Today/Tomorrow/This week/Later), Status, Type, Assigned to
+- **Contacts** — Replaced the Status filter (Cold/Warm/Hot/In Contract) with a Contact Type filter fetched from the `contact_types` resource
+
+All pages now show the filter sidebar alongside the list, with a `hasFilters` guard so the empty state still renders when filters produce no results. Mobile uses the existing `ResponsiveFilters` sheet.
+
+### Contract status
+Added a `status` field to contracts with 7 statuses: To do, In process, In process - Past due, Stopped - Past due, In process - Paid, Done - Paid, Canceled.
+
+- Color-coded status badges on the contract list and show pages
+- Instant status change via a `<Select>` dropdown in the show page aside
+- Status `<SelectInput>` in the contract edit form
+
+### Status badge color consistency
+Standardized "To do" as yellow (attention) and "In process" / "In process - Paid" as blue (neutral) across both contract and task status badges. Extracted duplicated task status color map into shared `tasks/taskStatusColors.ts`.
+
+### Bug fix: Task Due Date filters
+Fixed an issue where clicking multiple Due Date filters on the Tasks page caused filters to silently accumulate and conflict (eventually showing zero results with no visual indication). Each filter now declares all due-date keys explicitly so switching between them clears stale values.
+
+### New files
+- `supabase/migrations/20260219000003_contract_status.sql` — Adds `status text not null default 'To do'` to `account_contracts`
+- `accounts/AccountListFilter.tsx` — Filter sidebar for accounts list
+- `contracts/ContractListFilter.tsx` — Filter sidebar for contracts list
+- `tasks/TaskListFilter.tsx` — Filter sidebar for tasks list
+- `tasks/taskStatusColors.ts` — Shared task status → color class map
+
+### Modified files
+- `root/defaultConfiguration.ts` — Added `defaultContractStatuses`, `defaultAccountCategories` (already existed but unused)
+- `root/ConfigurationContext.tsx` — Added `accountCategories`, `caseTypes`, `contractStatuses` to context
+- `root/CRM.tsx` — Wired new config props through to provider
+- `accounts/AccountList.tsx` — Added filter sidebar layout
+- `contracts/ContractList.tsx` — Added filter sidebar layout
+- `contracts/ContractListContent.tsx` — Added contract status badge with color map
+- `contracts/ContractShow.tsx` — Added status badge in header, status change dropdown in aside
+- `contracts/ContractInputs.tsx` — Added status `SelectInput`
+- `tasks/TaskList.tsx` — Added filter sidebar layout
+- `tasks/Task.tsx` — Uses shared `taskStatusColors`
+- `tasks/TaskListContent.tsx` — Uses shared `taskStatusColors`
+- `contacts/ContactListFilter.tsx` — Replaced Status with Contact Type filter
+- `types.ts` — Added `status` to `AccountContract` type
+
 ## 2026-02-18 — Dashboard: Completed Tasks section
 
 Added a "Completed Tasks" section on the Dashboard, displayed underneath the existing Upcoming Tasks list in the right column. Shows tasks completed in the last 30 days, sorted by done date (newest first). Respects the same role-based filtering (admins see all, regular users see only their own) and has the same "Load more" pagination.

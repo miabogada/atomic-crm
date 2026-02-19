@@ -7,6 +7,22 @@ import { TextField } from "@/components/admin/text-field";
 
 import type { AccountContract } from "../types";
 
+const contractStatusColors: Record<string, string> = {
+  "To do": "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
+  "In process":
+    "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+  "In process - Past due":
+    "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
+  "Stopped - Past due":
+    "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+  "In process - Paid":
+    "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+  "Done - Paid":
+    "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+  Canceled:
+    "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300",
+};
+
 export const ContractListContent = () => {
   const {
     data: contracts,
@@ -63,6 +79,14 @@ const ContractItemContent = ({ contract }: { contract: AccountContract }) => {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {contract.status && (
+            <Badge
+              variant="outline"
+              className={`text-xs py-0 px-1.5 ${contractStatusColors[contract.status] ?? ""}`}
+            >
+              {contract.status}
+            </Badge>
+          )}
           {contract.fee != null && (
             <Badge variant="outline">
               ${Number(contract.fee).toLocaleString()}

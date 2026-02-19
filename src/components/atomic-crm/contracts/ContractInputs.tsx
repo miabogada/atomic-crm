@@ -10,6 +10,7 @@ import { NumberInput } from "@/components/admin/number-input";
 import { DateInput } from "@/components/admin/date-input";
 
 import type { Account } from "../types";
+import { useConfigurationContext } from "../root/ConfigurationContext";
 
 const accountOptionText = (record: Account) =>
   record?.name
@@ -47,6 +48,9 @@ export const defaultCaseTypes = [
 const caseTypeChoices = defaultCaseTypes.map((c) => ({ id: c, name: c }));
 
 export const ContractInputs = () => {
+  const { contractStatuses } = useConfigurationContext();
+  const statusChoices = contractStatuses.map((s) => ({ id: s, name: s }));
+
   return (
     <div className="flex flex-col gap-2 p-1">
       <div className="flex gap-4 flex-col md:flex-row">
@@ -58,6 +62,14 @@ export const ContractInputs = () => {
             source="case_type"
             label="Case Type"
             choices={caseTypeChoices}
+            helperText={false}
+          />
+        </div>
+        <div className="flex-1">
+          <SelectInput
+            source="status"
+            label="Status"
+            choices={statusChoices}
             helperText={false}
           />
         </div>

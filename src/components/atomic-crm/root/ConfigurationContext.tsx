@@ -6,6 +6,7 @@ import {
   defaultCaseTypes,
   defaultCompanySectors,
   defaultContactGender,
+  defaultContractStatuses,
   defaultDarkModeLogo,
   defaultDealCategories,
   defaultDealPipelineStatuses,
@@ -22,6 +23,7 @@ export interface ConfigurationContextValue {
   accountCategories: string[];
   caseTypes: string[];
   companySectors: string[];
+  contractStatuses: string[];
   dealCategories: string[];
   dealPipelineStatuses: string[];
   dealStages: DealStage[];
@@ -46,6 +48,7 @@ export const ConfigurationContext = createContext<ConfigurationContextValue>({
   accountCategories: defaultAccountCategories,
   caseTypes: defaultCaseTypes,
   companySectors: defaultCompanySectors,
+  contractStatuses: defaultContractStatuses,
   dealCategories: defaultDealCategories,
   dealPipelineStatuses: defaultDealPipelineStatuses,
   dealStages: defaultDealStages,
@@ -64,6 +67,7 @@ export const ConfigurationProvider = ({
   accountCategories,
   caseTypes,
   companySectors,
+  contractStatuses,
   dealCategories,
   dealPipelineStatuses,
   dealStages,
@@ -82,6 +86,7 @@ export const ConfigurationProvider = ({
       accountCategories,
       caseTypes,
       companySectors,
+      contractStatuses,
       dealCategories,
       dealPipelineStatuses,
       dealStages,

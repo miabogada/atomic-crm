@@ -5,14 +5,23 @@ import {
   useRecordContext,
   useGetOne,
   useGetList,
+  useUpdate,
 } from "ra-core";
 import { Link } from "react-router";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { EditButton } from "@/components/admin/edit-button";
 import { DeleteButton } from "@/components/admin";
 
 import { AsideSection } from "../misc/AsideSection";
+import { useConfigurationContext } from "../root/ConfigurationContext";
 import { AddTask } from "../tasks/AddTask";
 import { Task } from "../tasks/Task";
 import { AddActivity } from "../accounts/AddActivity";
@@ -22,6 +31,22 @@ import type {
   AccountContract,
   Task as TaskType,
 } from "../types";
+
+const contractStatusColors: Record<string, string> = {
+  "To do": "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
+  "In process":
+    "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+  "In process - Past due":
+    "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
+  "Stopped - Past due":
+    "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+  "In process - Paid":
+    "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+  "Done - Paid":
+    "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+  Canceled:
+    "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300",
+};
 
 export const ContractShow = () => {
   return (
@@ -56,6 +81,14 @@ const ContractShowContent = () => {
                   )}
                 </div>
               </div>
+              {record.status && (
+                <Badge
+                  variant="outline"
+                  className={`text-sm ${contractStatusColors[record.status] ?? ""}`}
+                >
+                  {record.status}
+                </Badge>
+              )}
               {record.fee != null && (
                 <Badge variant="outline" className="text-base">
                   Fee: ${Number(record.fee).toLocaleString()}
@@ -176,6 +209,44 @@ const Field = ({ label, value }: { label: string; value?: string }) => (
   </div>
 );
 
+const ContractStatusSelect = () => {
+  const record = useRecordContext<AccountContract>();
+  const { contractStatuses } = useConfigurationContext();
+  const [update] = useUpdate();
+
+  if (!record) return null;
+
+  const handleChange = (value: string) => {
+    update("account_contracts", {
+      id: record.id,
+      data: { status: value },
+      previousData: record,
+    });
+  };
+
+  return (
+    <AsideSection title="Status">
+      <Select value={record.status || "To do"} onValueChange={handleChange}>
+        <SelectTrigger className="w-full h-8 text-xs">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {contractStatuses.map((status) => (
+            <SelectItem key={status} value={status}>
+              <span className="flex items-center gap-2">
+                <span
+                  className={`inline-block w-2 h-2 rounded-full ${(contractStatusColors[status] ?? "").split(" ")[0]}`}
+                />
+                {status}
+              </span>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </AsideSection>
+  );
+};
+
 export const ContractAside = () => {
   const record = useRecordContext<AccountContract>();
 
@@ -186,6 +257,8 @@ export const ContractAside = () => {
       <div className="mb-4 -ml-1">
         <EditButton label="Edit Contract" />
       </div>
+
+      <ContractStatusSelect />
 
       <AccountInfo accountId={record.account_id} />
 
