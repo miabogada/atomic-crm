@@ -34,12 +34,14 @@ import type { Account } from "../types";
 
 export const AddTask = ({
   selectContact,
+  selectAccount,
   display = "chip",
   account_id,
   parent_type,
   parent_id,
 }: {
   selectContact?: boolean;
+  selectAccount?: boolean;
   display?: "chip" | "icon";
   account_id?: Identifier;
   parent_type?: string;
@@ -88,9 +90,9 @@ export const AddTask = ({
   const isAccountTask = account_id != null;
   const title = isAccountTask
     ? `Create a new task for ${account?.name ?? "account"}`
-    : !selectContact
-      ? "Create a new task for "
-      : "Create a new task";
+    : selectContact || selectAccount
+      ? "Create a new task"
+      : "Create a new task for ";
 
   return (
     <>
@@ -152,7 +154,7 @@ export const AddTask = ({
               <DialogHeader>
                 <DialogTitle>
                   {title}
-                  {!isAccountTask && !selectContact && (
+                  {!isAccountTask && !selectContact && !selectAccount && (
                     <RecordRepresentation
                       record={contact}
                       resource="contacts"
@@ -160,7 +162,7 @@ export const AddTask = ({
                   )}
                 </DialogTitle>
               </DialogHeader>
-              <TaskFormContent selectContact={selectContact} />
+              <TaskFormContent selectContact={selectContact} selectAccount={selectAccount} />
               <DialogFooter className="w-full justify-end">
                 <SaveButton />
               </DialogFooter>

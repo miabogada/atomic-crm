@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-02-18 — Dashboard task creation: Account selector instead of Contact
+
+Dashboard > Upcoming Tasks > "Create a new task" dialog now shows an **Account** selector instead of a Contact selector, matching the law office workflow where tasks are normally related to accounts.
+
+### Changed
+- `dashboard/TasksList.tsx` — passes `selectAccount` instead of `selectContact` to `AddTask`
+- `tasks/AddTask.tsx` — added `selectAccount` prop, wired through to `TaskFormContent`, fixed dialog title and record representation logic
+
 ## 2026-02-19 — Rename `sales_id` column to `user_id` everywhere
 
 Completes the `sales` → `users` rename. The table was renamed earlier but FK columns stayed as `sales_id`, which was confusing — `sales_id` on a task actually means "assigned user."

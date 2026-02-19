@@ -14,7 +14,7 @@ export const TasksList = () => {
         <h2 className="text-xl font-semibold text-muted-foreground flex-1">
           Upcoming Tasks
         </h2>
-        <AddTask display="icon" selectContact />
+        <AddTask display="icon" selectAccount />
       </div>
       <Card className="p-4 mb-2">
         <TasksListContent />
