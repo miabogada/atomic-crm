@@ -83,6 +83,27 @@ Atomic CRM components are published as a Shadcn Registry file:
 > [!WARNING]  
 > If the `registry.json` misses some changes you made, you MUST update the `scripts/generate-registry.mjs` to include those changes.
 
+## Clark Law Customizations
+
+This fork is customized for a law firm practice management workflow. Key differences from upstream:
+
+### Data Model
+
+**Accounts** represent families or individuals who have already agreed to contract the firm for work. This is not a prospecting flow — an account exists only once a client relationship is established.
+
+**Companies** (upstream concept) remain in the database but are hidden in the UI. They may be surfaced in the future for H-1B and other corporate-sponsored immigration matters, where a corporate sponsor is a meaningful entity. For now, the account model covers the firm's current caseload.
+
+**Account Contacts** are the individuals associated with an account (e.g. family members, petitioners). They replace the upstream `contacts` resource in the UI.
+
+**Account Contracts** represent individual legal matters or engagements under an account, replacing the upstream `deals`/pipeline concept.
+
+### Hidden Upstream Resources
+
+The following upstream resources remain in the database but are not exposed in the UI:
+- `companies` — hidden pending potential H-1B corporate sponsor use case
+- `contacts` — replaced by `account_contacts`
+- `deals` — replaced by `account_contracts`
+
 ## License
 
 This project is licensed under the MIT License, courtesy of [Marmelab](https://marmelab.com). See the [LICENSE.md](./LICENSE.md) file for details.
