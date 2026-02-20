@@ -1,5 +1,36 @@
 # Changelog
 
+## 2026-02-20 — FakeRest demo data for Clark Law schema
+
+Added data generators so that `make start-demo` works against the dev branch UI instead of failing with account_contacts errors. This enables runtime testing of upstream cherry-picks without touching the real Supabase database.
+
+### New generator files
+- `dataGenerator/contact_types.ts` — Static list of immigration-relevant contact types (Petitioner, Beneficiary, Spouse, Child, Parent, Emergency Contact)
+- `dataGenerator/accounts.ts` — 20 fake law firm client accounts with account numbers, categories, attorney assignments
+- `dataGenerator/account_contacts.ts` — 1–4 contacts per account, first contact marked as billing
+- `dataGenerator/account_contracts.ts` — 1–2 contracts per account using real case types and contract statuses
+- `dataGenerator/account_activities.ts` — 2–4 activities per account, some linked to contracts via `parent_type`/`parent_id`
+
+### Modified generator files
+- `dataGenerator/types.ts` — Extended `Db` interface with the 5 new resources
+- `dataGenerator/index.ts` — Wired up new generators in dependency order
+- `dataGenerator/tasks.ts` — Updated to link tasks to accounts/contracts instead of contacts; reduced count to 60
+- `dataGenerator/companies.ts` — Fixed `db.sales` → `db.users` bug (latent since sales→users rename)
+
+## 2026-02-20 — Upstream cherry-pick: improve attachment previews (f6fed7a)
+
+Merged upstream commit `f6fed7a` ("Improve attachments previews") from marmelab/atomic-crm.
+
+- Extracted `isImageMimeType()` helper into `notes/isImageMimeType.ts` (shared between input and display)
+- Added `notes/AttachmentField.tsx` — renders image attachments as `<img>` tags instead of plain file links
+- `NoteInputs.tsx` — replaced `FileField` with `AttachmentField` in the file upload section
+- `NoteAttachments.tsx` — removed now-redundant inline `isImageMimeType` function
+- `fakerest/dataProvider.ts` — added `beforeSave` lifecycle for `contact_notes` to convert attachments to base64; fixed TypeScript return type on `convertFileToBase64`
+
+## 2026-02-20 — Document Clark Law data model in README
+
+Added a "Clark Law Customizations" section to `README.md` explaining the accounts vs. companies distinction, the rationale for keeping companies in the DB but hidden, and which upstream resources are replaced or hidden in the dev branch UI.
+
 ## 2026-02-19 — Replace contacts with account_contacts in CRM UI
 
 Replaced the upstream generic `contacts` resource with `account_contacts` throughout the UI. The old `contacts` table stays in the DB but is hidden from navigation. Also split `account_contacts.full_name` into `first_name` + `last_name` and removed `contact_id` references from tasks.
