@@ -5,8 +5,8 @@ date: 2026-02-18T01:06:00
 
 All views
 - [x] make a reusable filter panel based on the one in /contacts, apply it to /accounts, /contracts, /tasks 
-	- [ ] bug: /x/contacts?filter Contact Type filters error: "column contact_summary.contact_type_id does not exist"
-- [ ] badge colors: To do (yellow), In process (blue)
+	- [x] bug: /x/contacts?filter Contact Type filters error: "column contact_summary.contact_type_id does not exist"
+- [x] badge colors: To do (yellow), In process (blue)
 
 Dashboard
 - [x] Task items should display Assignee
@@ -14,6 +14,7 @@ Dashboard
 - [x] Add Completed Tasks
 - [ ] Contracts count, bookings, fees collected / mo graph or table
 	- [ ] A way to set monthly sales goal
+- [x] bug: Latest Activities not displaying any
 
 Tasks
 - [x] add a /tasks page with top menu item
@@ -24,6 +25,8 @@ Tasks
 - [ ] Task Status changes should be logged with a Date Status Change field.
 - [x] Tasks with status Done should show date of completion
 - [ ] kanban view
+- [x] entire task item should be clickable, same for account_contacts
+- [x] editing task to Done status does not update the dashboard, maybe there's a separate task complete binary field
 
 account_contracts?create
 - [ ] contract number should be based on account number appended with uppercase alpha starting with A, which is the same scheme used in outlook script
@@ -38,22 +41,38 @@ account_contracts/1/show
 - [x] filter view by Contract Status = To do / In process / In progress - Past due / Stopped - Past due / In process - Paid / Done - Paid / Canceled
 	- [x] add status badge to contract items
 	- [x] add method to change contract status
-- [ ] click on a contract item should open it in /x/account_contracts/x/show
-- [ ] click on a contact item should open it in /x/account_contacts/x/show
+
 
 Add Task dialog in any view
 - [x] needs an Assignee field
-- [ ] needs a Type = Document Request
+- [x] needs a Type = Document Request
+
+/accounts/create
+- [ ] form fields:
+	- [x] Full Name vs. First, Last separately
+	- account name show as Last, First number
+	- Country should be dropdown w/ US pre selected
+	- does phone -> home?
+	- phone types should be home / cell / work / other (for all contacts context)
+	- address: integrate w/ google places to autofill
+- [ ] account status = New is needed, should apply before the first contract is created, should be yellow like To do is
 
 /accounts/x/show
 - [x] Task items should display Assignee
+- [x] need a way to add more contacts to an account
+- [ ] show tags as badges on account contact
+- [ ] click on a contract item should open it in /x/account_contracts/x/show
+- [x] click on a contact item should open it in /x/account_contacts/x/show
+	- [ ] expand clickable area of account_contact beyond description text
 
 Every item type
-- needs a Created by (user) and a Date Created, which could be different from the Date Opened field. This is for system logging and access records.
+- [ ] needs a Created by (user) and a Date Created (which could be different from Date Opened for example). This is for system logging and access records. Likely exists in db but needs to be displayed.
 
 Activities
 - [ ] if type = document, then should have a pointer to the file
+	- [ ] google drive integration
 - [ ] if type = payment, then should have a pointer to the payment item (maybe reference stripe somehow)
+	- [ ] stripe integration
 - [ ] if type = payment, then should have fields similar to outlook payment form (amount, type, check number). maybe the payments are already a schedule created with contract and then the activity type=payment will link to the next payment item in the schedule
 
 Users
@@ -61,11 +80,18 @@ Users
 - accounts.sales_id/attorney_id/law_clerk_id/legal_assistant_id should be types of Users, not separate fields
 
 /contacts/create
-- don't require Position: Title, Company fields
-- don't require Linkedin field
+- [x] deprecate contacts type in favor of account_contacts type
+	- [x] don't require Position: Title, Company fields
+	- [x] don't require Linkedin field
 - could use Relation: Petitioner, Beneficiary, ? (ask Linnette)
 - Email should default to Home
 - Phone should default to Mobile
+
+## Settings page (admin UI for CRM configuration)
+- [ ] Adapt upstream 4b9c52a "Add Settings page" for Clark Law schema. Don't cherry-pick directly — too many conflicts in ConfigurationContext.tsx and CRM.tsx. Instead:
+  - Cherry-pick the `app_configuration` DB migration and `storedConfiguration.ts` / ConfigurationContext runtime-loading infrastructure
+  - Build a Clark Law-specific Settings page exposing: Case Types, Contract Statuses, Account Categories, Activity Types, Task Types, Note Statuses
+  - Goal: attorney admin can update config lists without a code deployment
 
 ## regression after Sales -> Users rename
 - [x] /accounts/create in Billing Contact heading, Copy from existing contact selector does not contain the newly created first contact as an option. (as-designed, log out / in to get onboarding)
