@@ -5,51 +5,34 @@ import type { Task } from "../../../types";
 import type { Db } from "./types";
 import { randomDate } from "./utils";
 
-type TaskType = (typeof defaultTaskTypes)[number];
-
-export const type: TaskType[] = [
-  "Email",
-  "Email",
-  "Email",
-  "Email",
-  "Email",
-  "Email",
-  "Call",
-  "Call",
-  "Call",
-  "Call",
-  "Call",
-  "Call",
-  "Call",
-  "Call",
-  "Call",
-  "Call",
-  "Call",
-  "Demo",
-  "Lunch",
-  "Meeting",
-  "Follow-up",
-  "Follow-up",
-  "Thank you",
-  "Ship",
-  "None",
-];
-
 export const generateTasks = (db: Db) => {
-  return Array.from(Array(400).keys()).map<Task>((id) => {
-    const contact = random.arrayElement(db.contacts);
-    contact.nb_tasks++;
+  return Array.from(Array(60).keys()).map<Task>((id) => {
+    const account = random.arrayElement(db.accounts);
+    const accountContracts = db.account_contracts.filter(
+      (c) => c.account_id === account.id,
+    );
+    const contract =
+      accountContracts.length > 0
+        ? random.arrayElement(accountContracts)
+        : null;
+
+    account.nb_open_tasks = (account.nb_open_tasks ?? 0) + 1;
+
     return {
       id,
-      contact_id: contact.id,
+      account_id: account.id,
+      parent_type: contract ? "account_contract" : null,
+      parent_id: contract ? contract.id : null,
+      contact_id: null,
       type: random.arrayElement(defaultTaskTypes),
       text: lorem.sentence(),
       due_date: randomDate(
-        datatype.boolean() ? new Date() : new Date(contact.first_seen),
+        new Date(),
         new Date(Date.now() + 100 * 24 * 60 * 60 * 1000),
       ).toISOString(),
       done_date: undefined,
-      user_id: 0,
+      status: "To do",
+      user_id: account.user_id as number,
     };
   });
 };

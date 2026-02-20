@@ -1,7 +1,12 @@
 import type {
+  Account,
+  AccountActivity,
+  AccountContact,
+  AccountContract,
   Company,
   Contact,
   ContactNote,
+  ContactType,
   Deal,
   DealNote,
   Sale,
@@ -18,4 +23,9 @@ export interface Db {
   users: Sale[];
   tags: Tag[];
   tasks: Task[];
+  contact_types: ContactType[];
+  accounts: Account[];
+  account_contacts: AccountContact[];
+  account_contracts: AccountContract[];
+  account_activities: AccountActivity[];
 }

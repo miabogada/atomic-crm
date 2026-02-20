@@ -1,5 +1,10 @@
+import { generateAccountActivities } from "./account_activities";
+import { generateAccountContacts } from "./account_contacts";
+import { generateAccountContracts } from "./account_contracts";
+import { generateAccounts } from "./accounts";
 import { generateCompanies } from "./companies";
 import { generateContactNotes } from "./contactNotes";
+import { generateContactTypes } from "./contact_types";
 import { generateContacts } from "./contacts";
 import { generateDealNotes } from "./dealNotes";
 import { generateDeals } from "./deals";
@@ -18,6 +23,12 @@ export default (): Db => {
   db.contact_notes = generateContactNotes(db);
   db.deals = generateDeals(db);
   db.deal_notes = generateDealNotes(db);
+  // Clark Law resources (depend on db.users)
+  db.contact_types = generateContactTypes(db);
+  db.accounts = generateAccounts(db);
+  db.account_contacts = generateAccountContacts(db);
+  db.account_contracts = generateAccountContracts(db);
+  db.account_activities = generateAccountActivities(db);
   db.tasks = generateTasks(db);
   finalize(db);
 
