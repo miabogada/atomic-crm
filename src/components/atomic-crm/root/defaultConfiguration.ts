@@ -104,6 +104,14 @@ export const defaultContractStatuses = [
   "Canceled",
 ];
 
+export const defaultPaymentMethods = [
+  "CHECK",
+  "MONEY ORDER",
+  "CASH",
+  "CREDIT CARD",
+  "WIRE TRANSFER",
+];
+
 export const defaultAccountCategories = [
   "In Process",
   "Closed",

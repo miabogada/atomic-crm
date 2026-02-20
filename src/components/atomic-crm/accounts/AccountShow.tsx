@@ -9,6 +9,7 @@ import { AccountAside } from "./AccountAside";
 import { AccountContactsList } from "./AccountContactsList";
 import { AccountContractsList } from "./AccountContractsList";
 import { AccountActivitiesList } from "./AccountActivitiesList";
+import { AccountPaymentList } from "../payments/AccountPaymentList";
 import { Task } from "../tasks/Task";
 import { AddTask } from "../tasks/AddTask";
 import type { Account, Task as TaskType } from "../types";
@@ -73,8 +74,31 @@ const AccountShowContent = () => {
               )}
             </div>
 
+            {(record.total_contracted != null || record.total_received != null) && (
+              <div className="flex gap-6 mb-4 text-sm">
+                <div>
+                  <span className="text-muted-foreground">Contracted: </span>
+                  <span className="font-medium">
+                    ${Number(record.total_contracted ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Received: </span>
+                  <span className="font-medium">
+                    ${Number(record.total_received ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Balance: </span>
+                  <span className={`font-medium ${Number(record.balance_due ?? 0) > 0 ? "text-destructive" : "text-green-600"}`}>
+                    ${Number(record.balance_due ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
+                </div>
+              </div>
+            )}
+
             <Tabs defaultValue="contacts" className="w-full">
-              <TabsList className="grid w-full grid-cols-4 h-10">
+              <TabsList className="grid w-full grid-cols-5 h-10">
                 <TabsTrigger value="contacts">
                   <ReferenceManyCount
                     target="account_id"
@@ -103,6 +127,13 @@ const AccountShowContent = () => {
                     reference="account_activities"
                   />{" "}
                   Activities
+                </TabsTrigger>
+                <TabsTrigger value="payments">
+                  <ReferenceManyCount
+                    target="account_id"
+                    reference="account_payments"
+                  />{" "}
+                  Payments
                 </TabsTrigger>
               </TabsList>
 
@@ -147,6 +178,17 @@ const AccountShowContent = () => {
                   empty={false}
                 >
                   <AccountActivitiesList />
+                </ReferenceManyField>
+              </TabsContent>
+
+              <TabsContent value="payments" className="mt-4">
+                <ReferenceManyField
+                  target="account_id"
+                  reference="account_payments"
+                  sort={{ field: "date_received", order: "DESC" }}
+                  empty={false}
+                >
+                  <AccountPaymentList />
                 </ReferenceManyField>
               </TabsContent>
             </Tabs>

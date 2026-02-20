@@ -1,5 +1,53 @@
 # Changelog
 
+## 2026-02-20 — Payment UI polish and contract financial summaries
+
+### Add payment dialog (replaces full-page sheet)
+- Extracted `AddPayment` component using the `CreateBase + Dialog` pattern, matching `AddTask` / `AddActivity` style. Deleted `AccountPaymentCreateSheet`.
+- Used in both `ContractShow` aside and `AccountPaymentList` tab.
+- Renamed all "Record Payment" labels to "Add payment".
+
+### Contract financial summary (Contracted / Received / Balance / Payments)
+Displayed consistently across three surfaces, always sourced from live `account_payments` data:
+- **`AccountContractsList`** (`/accounts/:id/show` → Contracts tab): single `useGetList` for all account payments; per-contract totals computed client-side. `Payments: x of n` uses `num_payments` when set.
+- **`ContractListContent`** (`/account_contracts`): `ContractPaymentSummary` child component per row; each fires its own `useGetList` filtered by `contract_id` (react-query caches/deduplicates).
+- **`ContractShow`** (`/account_contracts/:id/show`): single `useGetList` filtered by `contract_id`; summary bar rendered between the header and Terms / Dates grid. Balance shown in red when > 0, green otherwise.
+
+### AccountPaymentList improvements
+- Each payment row now shows the associated contract number (e.g. `Contract 26021901`) when `contract_id` is set; fetched via a single `useGetList` for the account's contracts.
+- Removed the redundant "Contract:" label prefix — the word "Contract" is part of the contract number itself.
+- Removed the "Total received" footer (redundant with the Balance figure in the account-level summary bar above the tabs).
+
+### Removed redundant display elements
+- `ContractShow` header: removed the "Fee: $X" badge (fee is already shown in the Terms section and in the financial summary bar).
+- `ContractListContent` rows: removed the `$X/mo × N` monthly payment detail from the right column (fee detail is now in the financial summary row); status badge remains.
+
+## 2026-02-20 — Account Payment recording
+
+Replaces the legacy Outlook `IPM.Post.Account payment` form and Access `tblPaymentsReceived` table with a native CRM feature.
+
+**Database (`20260220000000_account_payments.sql`)**
+- New `account_payments` table: `account_id`, `contract_id` (nullable), `date_received`, `amount` (> 0 check), `payment_method`, `reference_number`, `notes`, `user_id`, `created_at`, `updated_at`. Permissive RLS matching project convention; admin enforcement is frontend-only.
+- `accounts_summary` view updated with correlated-subquery aggregates: `total_received`, `total_contracted`, `balance_due`.
+
+**Configuration**
+- New `paymentMethods` prop on `<CRM>` (default: CHECK, MONEY ORDER, CASH, CREDIT CARD, WIRE TRANSFER). Threaded through `ConfigurationContext`.
+
+**Components (`src/components/atomic-crm/payments/`)**
+- `AccountPaymentInputs` — shared form fields; `reference_number` label adapts to selected payment method (Check Number, Money Order Number, Cash Receipt Number, etc.).
+- `AccountPaymentCreateSheet` — any authenticated user can record a payment against an account.
+- `AccountPaymentEditSheet` — admin-only edit/delete sheet using pessimistic mutation mode.
+- `AccountPaymentList` — displays payments sorted by date descending with a running total; pencil edit button visible only to admins (`isAdmin = !!currentUser?.administrator`).
+
+**Account Show page**
+- Financial summary bar (Contracted / Received / Balance) above the tab strip; balance renders red when > 0.
+- New **Payments** tab with count badge using `ReferenceManyField` → `AccountPaymentList`.
+- `account_payments` registered as a `<Resource>` in `CRM.tsx`.
+
+**FakeRest demo**
+- `account_payments` data generator: 0–4 payments per contract with realistic reference numbers per method.
+- Computes `total_contracted`, `total_received`, `balance_due` on account objects so the financial summary works in demo mode.
+
 ## 2026-02-20 — FakeRest demo data for Clark Law schema
 
 Added data generators so that `make start-demo` works against the dev branch UI instead of failing with account_contacts errors. This enables runtime testing of upstream cherry-picks without touching the real Supabase database.

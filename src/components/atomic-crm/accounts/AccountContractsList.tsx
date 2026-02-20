@@ -1,14 +1,27 @@
-import { useListContext, useRecordContext } from "ra-core";
+import { useGetList, useListContext, useRecordContext } from "ra-core";
 import { Link } from "react-router";
 import { Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-import type { Account, AccountContract } from "../types";
+import type { Account, AccountContract, AccountPayment } from "../types";
+
+const fmt = (n: number) =>
+  n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export const AccountContractsList = () => {
   const { data, isPending } = useListContext<AccountContract>();
   const account = useRecordContext<Account>();
+
+  const { data: payments } = useGetList<AccountPayment>(
+    "account_payments",
+    {
+      filter: { account_id: account?.id },
+      pagination: { page: 1, perPage: 1000 },
+      sort: { field: "id", order: "ASC" },
+    },
+    { enabled: !!account?.id },
+  );
 
   if (isPending) return null;
 
@@ -31,46 +44,83 @@ export const AccountContractsList = () => {
         </div>
       ) : (
         <div className="divide-y">
-          {data.map((contract) => (
-            <div
-              key={contract.id}
-              className="flex items-center gap-4 py-3 px-2"
-            >
-              <div className="flex-1">
-                <div className="font-medium">
-                  {contract.contract_number || `Contract #${contract.id}`}
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  {contract.case_type && <span>{contract.case_type}</span>}
-                  {contract.date_opened && (
-                    <span>
-                      {contract.case_type && " \u00b7 "}
-                      Opened {contract.date_opened}
-                    </span>
-                  )}
-                </div>
-                {contract.work_description && (
-                  <div className="text-sm text-muted-foreground mt-1">
-                    {contract.work_description}
+          {data.map((contract) => {
+            const contractPayments =
+              payments?.filter((p) => p.contract_id === contract.id) ?? [];
+            const totalReceived = contractPayments.reduce(
+              (sum, p) => sum + Number(p.amount),
+              0,
+            );
+            const fee = Number(contract.fee ?? 0);
+            const balance = fee - totalReceived;
+            const paymentCount = contractPayments.length;
+            const numPayments = contract.num_payments;
+
+            return (
+              <div
+                key={contract.id}
+                className="flex items-start gap-4 py-3 px-2"
+              >
+                <div className="flex-1">
+                  <div className="font-medium">
+                    {contract.contract_number || `Contract #${contract.id}`}
                   </div>
-                )}
-              </div>
-              <div className="flex flex-col items-end gap-1">
-                {contract.fee != null && (
-                  <Badge variant="outline">
-                    Fee: ${Number(contract.fee).toLocaleString()}
-                  </Badge>
-                )}
-                {contract.monthly_payment != null &&
-                  contract.monthly_payment > 0 && (
-                    <span className="text-xs text-muted-foreground">
-                      ${Number(contract.monthly_payment).toLocaleString()}/mo
-                      {contract.num_payments && ` \u00d7 ${contract.num_payments}`}
-                    </span>
+                  <div className="text-sm text-muted-foreground">
+                    {contract.case_type && <span>{contract.case_type}</span>}
+                    {contract.date_opened && (
+                      <span>
+                        {contract.case_type && " \u00b7 "}
+                        Opened {contract.date_opened}
+                      </span>
+                    )}
+                  </div>
+                  {contract.work_description && (
+                    <div className="text-sm text-muted-foreground mt-1">
+                      {contract.work_description}
+                    </div>
                   )}
+                  {fee > 0 && (
+                    <div className="flex flex-wrap gap-x-4 mt-2 text-xs">
+                      <span>
+                        <span className="text-muted-foreground">Contracted: </span>
+                        <span className="font-medium">${fmt(fee)}</span>
+                      </span>
+                      <span>
+                        <span className="text-muted-foreground">Received: </span>
+                        <span className="font-medium">${fmt(totalReceived)}</span>
+                      </span>
+                      <span>
+                        <span className="text-muted-foreground">Balance: </span>
+                        <span className={`font-medium ${balance > 0 ? "text-destructive" : "text-green-600"}`}>
+                          ${fmt(balance)}
+                        </span>
+                      </span>
+                      <span>
+                        <span className="text-muted-foreground">Payments: </span>
+                        <span className="font-medium">
+                          {numPayments ? `${paymentCount} of ${numPayments}` : paymentCount}
+                        </span>
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-col items-end gap-1">
+                  {contract.status && (
+                    <Badge variant="outline" className="text-xs">
+                      {contract.status}
+                    </Badge>
+                  )}
+                  {contract.monthly_payment != null &&
+                    contract.monthly_payment > 0 && (
+                      <span className="text-xs text-muted-foreground">
+                        ${Number(contract.monthly_payment).toLocaleString()}/mo
+                        {contract.num_payments && ` \u00d7 ${contract.num_payments}`}
+                      </span>
+                    )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

@@ -1,11 +1,12 @@
-import { RecordContextProvider, useListContext } from "ra-core";
+import { useGetList, useListContext, type Identifier } from "ra-core";
+import { RecordContextProvider } from "ra-core";
 import { Link } from "react-router";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { ReferenceField } from "@/components/admin/reference-field";
 import { TextField } from "@/components/admin/text-field";
 
-import type { AccountContract } from "../types";
+import type { AccountContract, AccountPayment } from "../types";
 
 const contractStatusColors: Record<string, string> = {
   "To do": "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
@@ -22,6 +23,9 @@ const contractStatusColors: Record<string, string> = {
   Canceled:
     "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300",
 };
+
+const fmt = (n: number) =>
+  n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export const ContractListContent = () => {
   const {
@@ -55,12 +59,62 @@ export const ContractListContent = () => {
   );
 };
 
+const ContractPaymentSummary = ({
+  contract_id,
+  fee,
+  num_payments,
+}: {
+  contract_id: Identifier;
+  fee: number;
+  num_payments?: number | null;
+}) => {
+  const { data: payments } = useGetList<AccountPayment>(
+    "account_payments",
+    {
+      filter: { contract_id },
+      pagination: { page: 1, perPage: 1000 },
+      sort: { field: "id", order: "ASC" },
+    },
+  );
+
+  if (!payments) return null;
+
+  const totalReceived = payments.reduce((sum, p) => sum + Number(p.amount), 0);
+  const balance = fee - totalReceived;
+  const paymentCount = payments.length;
+
+  return (
+    <div className="flex flex-wrap gap-x-4 mt-1 text-xs">
+      <span>
+        <span className="text-muted-foreground">Contracted: </span>
+        <span className="font-medium">${fmt(fee)}</span>
+      </span>
+      <span>
+        <span className="text-muted-foreground">Received: </span>
+        <span className="font-medium">${fmt(totalReceived)}</span>
+      </span>
+      <span>
+        <span className="text-muted-foreground">Balance: </span>
+        <span className={`font-medium ${balance > 0 ? "text-destructive" : "text-green-600"}`}>
+          ${fmt(balance)}
+        </span>
+      </span>
+      <span>
+        <span className="text-muted-foreground">Payments: </span>
+        <span className="font-medium">
+          {num_payments ? `${paymentCount} of ${num_payments}` : paymentCount}
+        </span>
+      </span>
+    </div>
+  );
+};
+
 const ContractItemContent = ({ contract }: { contract: AccountContract }) => {
   return (
     <div className="flex flex-row items-center px-4 py-3 hover:bg-muted transition-colors first:rounded-t-xl last:rounded-b-xl">
       <Link
         to={`/account_contracts/${contract.id}/show`}
-        className="flex-1 flex flex-row gap-4 items-center"
+        className="flex-1 flex flex-row gap-4 items-start"
       >
         <div className="flex-1 min-w-0">
           <div className="font-medium">
@@ -77,8 +131,15 @@ const ContractItemContent = ({ contract }: { contract: AccountContract }) => {
             {contract.case_type && ` \u00b7 ${contract.case_type}`}
             {contract.date_opened && ` \u00b7 Opened ${contract.date_opened}`}
           </div>
+          {contract.fee != null && (
+            <ContractPaymentSummary
+              contract_id={contract.id}
+              fee={Number(contract.fee)}
+              num_payments={contract.num_payments}
+            />
+          )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 mt-0.5">
           {contract.status && (
             <Badge
               variant="outline"
@@ -87,18 +148,6 @@ const ContractItemContent = ({ contract }: { contract: AccountContract }) => {
               {contract.status}
             </Badge>
           )}
-          {contract.fee != null && (
-            <Badge variant="outline">
-              ${Number(contract.fee).toLocaleString()}
-            </Badge>
-          )}
-          {contract.monthly_payment != null &&
-            contract.monthly_payment > 0 && (
-              <span className="text-sm text-muted-foreground">
-                ${Number(contract.monthly_payment).toLocaleString()}/mo
-                {contract.num_payments && ` \u00d7 ${contract.num_payments}`}
-              </span>
-            )}
         </div>
       </Link>
     </div>

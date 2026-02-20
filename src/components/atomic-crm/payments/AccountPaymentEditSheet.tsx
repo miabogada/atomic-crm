@@ -1,0 +1,58 @@
+import { type Identifier, useNotify } from "ra-core";
+import { DeleteButton } from "@/components/admin";
+import { WithRecord } from "ra-core";
+import { EditSheet } from "../misc/EditSheet";
+import { AccountPaymentInputs } from "./AccountPaymentInputs";
+
+export interface AccountPaymentEditSheetProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  paymentId: Identifier;
+}
+
+/**
+ * Admin-only edit sheet for account payments.
+ * Caller is responsible for checking isAdmin before rendering this component.
+ */
+export const AccountPaymentEditSheet = ({
+  open,
+  onOpenChange,
+  paymentId,
+}: AccountPaymentEditSheetProps) => {
+  const notify = useNotify();
+
+  return (
+    <EditSheet
+      resource="account_payments"
+      id={paymentId}
+      title="Edit Payment"
+      redirect={false}
+      mutationMode="pessimistic"
+      mutationOptions={{
+        onSuccess: () => {
+          notify("Payment updated");
+          onOpenChange(false);
+        },
+      }}
+      deleteButton={
+        <WithRecord
+          render={() => (
+            <DeleteButton
+              variant="destructive"
+              className="flex-1"
+              redirect={false}
+              onClick={() => {
+                notify("Payment deleted");
+                onOpenChange(false);
+              }}
+            />
+          )}
+        />
+      }
+      open={open}
+      onOpenChange={onOpenChange}
+    >
+      <AccountPaymentInputs />
+    </EditSheet>
+  );
+};

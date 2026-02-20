@@ -22,6 +22,7 @@ import { DeleteButton } from "@/components/admin";
 
 import { AsideSection } from "../misc/AsideSection";
 import { useConfigurationContext } from "../root/ConfigurationContext";
+import { AddPayment } from "../payments/AddPayment";
 import { AddTask } from "../tasks/AddTask";
 import { Task } from "../tasks/Task";
 import { AddActivity } from "../accounts/AddActivity";
@@ -29,8 +30,12 @@ import type {
   Account,
   AccountActivity,
   AccountContract,
+  AccountPayment,
   Task as TaskType,
 } from "../types";
+
+const fmt = (n: number) =>
+  n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const contractStatusColors: Record<string, string> = {
   "To do": "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
@@ -59,14 +64,29 @@ export const ContractShow = () => {
 const ContractShowContent = () => {
   const { record, isPending } = useShowContext<AccountContract>();
 
+  const { data: payments } = useGetList<AccountPayment>(
+    "account_payments",
+    {
+      filter: { contract_id: record?.id },
+      pagination: { page: 1, perPage: 1000 },
+      sort: { field: "id", order: "ASC" },
+    },
+    { enabled: !!record?.id },
+  );
+
   if (isPending || !record) return null;
+
+  const fee = Number(record.fee ?? 0);
+  const totalReceived = payments?.reduce((sum, p) => sum + Number(p.amount), 0) ?? 0;
+  const balance = fee - totalReceived;
+  const paymentCount = payments?.length ?? 0;
 
   return (
     <div className="mt-2 mb-2 flex gap-8">
       <div className="flex-1">
         <Card>
           <CardContent>
-            <div className="flex items-center gap-4 mb-6">
+            <div className="flex items-center gap-4 mb-4">
               <div className="flex-1">
                 <h5 className="text-xl font-semibold">
                   {record.contract_number || `Contract #${record.id}`}
@@ -89,12 +109,34 @@ const ContractShowContent = () => {
                   {record.status}
                 </Badge>
               )}
-              {record.fee != null && (
-                <Badge variant="outline" className="text-base">
-                  Fee: ${Number(record.fee).toLocaleString()}
-                </Badge>
-              )}
             </div>
+
+            {fee > 0 && (
+              <div className="flex flex-wrap gap-x-6 mb-6 text-sm border-t border-b py-3">
+                <div>
+                  <span className="text-muted-foreground">Contracted: </span>
+                  <span className="font-medium">${fmt(fee)}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Received: </span>
+                  <span className="font-medium">${fmt(totalReceived)}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Balance: </span>
+                  <span className={`font-medium ${balance > 0 ? "text-destructive" : "text-green-600"}`}>
+                    ${fmt(balance)}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Payments: </span>
+                  <span className="font-medium">
+                    {record.num_payments
+                      ? `${paymentCount} of ${record.num_payments}`
+                      : paymentCount}
+                  </span>
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="flex flex-col gap-3">
@@ -272,6 +314,10 @@ export const ContractAside = () => {
           account_id={record.account_id}
           parent_type="account_contract"
           parent_id={record.id}
+        />
+        <AddPayment
+          account_id={record.account_id}
+          contract_id={record.id}
         />
       </div>
 

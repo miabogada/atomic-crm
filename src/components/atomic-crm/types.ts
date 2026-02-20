@@ -272,6 +272,10 @@ export type Account = {
   nb_contacts?: number;
   nb_contracts?: number;
   nb_open_tasks?: number;
+  // From accounts_summary payment aggregates
+  total_received?: number;
+  total_contracted?: number;
+  balance_due?: number;
 } & Pick<RaRecord, "id">;
 
 export type ContactType = {
@@ -312,6 +316,19 @@ export type AccountContract = {
   user_id?: Identifier | null;
 } & Pick<RaRecord, "id">;
 
+
+export type AccountPayment = {
+  account_id: Identifier;
+  contract_id?: Identifier | null;
+  date_received: string;
+  amount: number;
+  payment_method: string;
+  reference_number?: string;
+  notes?: string;
+  user_id?: Identifier | null;
+  created_at: string;
+  updated_at: string;
+} & Pick<RaRecord, "id">;
 
 export type AccountActivity = {
   account_id: Identifier;

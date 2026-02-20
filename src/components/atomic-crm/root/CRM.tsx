@@ -50,6 +50,7 @@ import {
   defaultDealStages,
   defaultLightModeLogo,
   defaultNoteStatuses,
+  defaultPaymentMethods,
   defaultTaskStatuses,
   defaultTaskTypes,
   defaultTitle,
@@ -121,6 +122,7 @@ export const CRM = ({
   darkModeLogo = defaultDarkModeLogo,
   lightModeLogo = defaultLightModeLogo,
   noteStatuses = defaultNoteStatuses,
+  paymentMethods = defaultPaymentMethods,
   taskStatuses = defaultTaskStatuses,
   taskTypes = defaultTaskTypes,
   title = defaultTitle,
@@ -163,6 +165,7 @@ export const CRM = ({
       darkModeLogo={darkModeLogo}
       lightModeLogo={lightModeLogo}
       noteStatuses={noteStatuses}
+      paymentMethods={paymentMethods}
       taskStatuses={taskStatuses}
       taskTypes={taskTypes}
       title={title}
@@ -207,6 +210,7 @@ const DesktopAdmin = (props: CoreAdminProps) => {
       <Resource name="accounts" {...accounts} />
       <Resource name="account_contacts" {...accountContactViews} />
       <Resource name="account_contracts" {...contractViews} />
+      <Resource name="account_payments" />
       <Resource name="account_activities" />
       <Resource name="contact_types" />
       <Resource name="deals" {...deals} />
