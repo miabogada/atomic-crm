@@ -856,6 +856,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/activity/ActivityLogAccountActivityCreated.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/activity/ActivityLog.tsx",
           "type": "registry:component"
         },

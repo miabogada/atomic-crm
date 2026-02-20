@@ -1,14 +1,17 @@
 import { RecordContextProvider, useListContext } from "ra-core";
+import { useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { ReferenceField } from "@/components/admin/reference-field";
 import { TextField } from "@/components/admin/text-field";
 import { DateField } from "@/components/admin/date-field";
-
+import { useIsMobile } from "@/hooks/use-mobile";
 
 import type { Task as TaskType, Sale } from "../types";
 
 import { taskStatusColors } from "./taskStatusColors";
+import { TaskEdit } from "./TaskEdit";
+import { TaskEditSheet } from "./TaskEditSheet";
 
 export const TaskListContent = () => {
   const { data: tasks, error, isPending } = useListContext<TaskType>();
@@ -39,12 +42,16 @@ export const TaskListContent = () => {
 };
 
 const TaskItemContent = ({ task }: { task: TaskType }) => {
+  const isMobile = useIsMobile();
+  const [openEdit, setOpenEdit] = useState(false);
   const colorClass =
     taskStatusColors[task.status ?? "To do"] ?? taskStatusColors["To do"];
 
   return (
+    <>
     <div
-      className={`flex flex-row items-center px-4 py-3 hover:bg-muted transition-colors first:rounded-t-xl last:rounded-b-xl ${task.done_date ? "opacity-60" : ""}`}
+      className={`flex flex-row items-center px-4 py-3 hover:bg-muted transition-colors first:rounded-t-xl last:rounded-b-xl cursor-pointer ${task.done_date ? "opacity-60" : ""}`}
+      onClick={() => setOpenEdit(true)}
     >
       <div className="flex-1 min-w-0">
         <div className={`font-medium ${task.done_date ? "line-through" : ""}`}>
@@ -99,5 +106,11 @@ const TaskItemContent = ({ task }: { task: TaskType }) => {
         </Badge>
       </div>
     </div>
+    {isMobile ? (
+      <TaskEditSheet taskId={task.id} open={openEdit} onOpenChange={setOpenEdit} />
+    ) : (
+      <TaskEdit taskId={task.id} open={openEdit} close={() => setOpenEdit(false)} />
+    )}
+    </>
   );
 };

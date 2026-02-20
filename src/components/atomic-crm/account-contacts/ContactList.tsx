@@ -57,14 +57,14 @@ const ContactListLayout = () => {
 
 const ContactListItem = ({ contact }: { contact: AccountContact }) => {
   return (
-    <div className="flex flex-row items-center px-4 py-3 hover:bg-muted transition-colors first:rounded-t-xl last:rounded-b-xl">
+    <Link
+      to={`/account_contacts/${contact.id}/show`}
+      className="flex flex-row items-center px-4 py-3 hover:bg-muted transition-colors first:rounded-t-xl last:rounded-b-xl"
+    >
       <div className="flex-1 min-w-0">
-        <Link
-          to={`/account_contacts/${contact.id}/show`}
-          className="font-medium text-primary hover:underline"
-        >
+        <div className="font-medium">
           {contact.first_name} {contact.last_name}
-        </Link>
+        </div>
         <div className="text-sm text-muted-foreground">
           {[contact.email, contact.phone].filter(Boolean).join(" \u00b7 ")}
         </div>
@@ -74,7 +74,7 @@ const ContactListItem = ({ contact }: { contact: AccountContact }) => {
           <ReferenceField
             source="account_id"
             reference="accounts"
-            link="show"
+            link={false}
             className="text-sm"
           >
             <TextField source="name" />
@@ -95,7 +95,7 @@ const ContactListItem = ({ contact }: { contact: AccountContact }) => {
           <Badge variant="default">Billing</Badge>
         )}
       </div>
-    </div>
+    </Link>
   );
 };
 
