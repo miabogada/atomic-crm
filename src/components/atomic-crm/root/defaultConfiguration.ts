@@ -55,6 +55,7 @@ export const defaultTaskTypes = [
   "Filing",
   "Court Date",
   "Client Request",
+  "Document Request",
 ];
 
 export const defaultCaseTypes = [
