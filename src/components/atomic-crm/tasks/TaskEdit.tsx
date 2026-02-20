@@ -9,7 +9,18 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+import type { Task } from "../types";
 import { TaskFormContent } from "./TaskFormContent";
+
+const transformTask = (data: Task): Task => {
+  if (data.status === "Done" && !data.done_date) {
+    return { ...data, done_date: new Date().toISOString() };
+  }
+  if (data.status !== "Done" && data.done_date) {
+    return { ...data, done_date: null };
+  }
+  return data;
+};
 
 export const TaskEdit = ({
   open,
@@ -28,6 +39,7 @@ export const TaskEdit = ({
           id={taskId}
           resource="tasks"
           className="mt-0"
+          transform={transformTask}
           mutationOptions={{
             onSuccess: () => {
               close();

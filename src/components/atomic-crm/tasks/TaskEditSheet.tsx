@@ -2,6 +2,17 @@ import { DeleteButton } from "@/components/admin";
 import { type Identifier } from "ra-core";
 import { EditSheet } from "../misc/EditSheet";
 import { TaskFormContent } from "./TaskFormContent";
+import type { Task } from "../types";
+
+const transformTask = (data: Task): Task => {
+  if (data.status === "Done" && !data.done_date) {
+    return { ...data, done_date: new Date().toISOString() };
+  }
+  if (data.status !== "Done" && data.done_date) {
+    return { ...data, done_date: null };
+  }
+  return data;
+};
 
 export interface TaskEditSheetProps {
   open: boolean;
@@ -18,6 +29,7 @@ export const TaskEditSheet = ({
     <EditSheet
       resource="tasks"
       id={taskId}
+      transform={transformTask}
       title={<h1 className="text-xl font-semibold">Edit Task</h1>}
       redirect={false}
       open={open}
