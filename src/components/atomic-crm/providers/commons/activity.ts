@@ -1,6 +1,7 @@
 import type { DataProvider, Identifier } from "ra-core";
 
 import {
+  ACCOUNT_ACTIVITY_CREATED,
   COMPANY_CREATED,
   CONTACT_CREATED,
   CONTACT_NOTE_CREATED,
@@ -8,6 +9,7 @@ import {
   DEAL_NOTE_CREATED,
 } from "../../consts";
 import type {
+  AccountActivity,
   Activity,
   Company,
   Contact,
@@ -37,14 +39,16 @@ export async function getActivityLog(
     filter["user_id@in"] = `(${salesId})`;
   }
 
-  const [newCompanies, newContactsAndNotes, newDealsAndNotes] =
+  const [newCompanies, newContactsAndNotes, newDealsAndNotes, newAccountActivities] =
     await Promise.all([
       getNewCompanies(dataProvider, companyFilter),
       getNewContactsAndNotes(dataProvider, filter),
       getNewDealsAndNotes(dataProvider, filter),
+      // Only include account activities in the global dashboard view (not company-scoped views)
+      !companyId && !salesId ? getNewAccountActivities(dataProvider) : Promise.resolve([]),
     ]);
   return (
-    [...newCompanies, ...newContactsAndNotes, ...newDealsAndNotes]
+    [...newCompanies, ...newContactsAndNotes, ...newDealsAndNotes, ...newAccountActivities]
       // sort by date desc
       .sort(
         (a, b) =>
@@ -174,4 +178,29 @@ async function getNewDealsAndNotes(
   }));
 
   return [...newDeals, ...newDealNotes];
+}
+
+async function getNewAccountActivities(
+  dataProvider: DataProvider,
+): Promise<Activity[]> {
+  try {
+    const { data: accountActivities } = await dataProvider.getList<AccountActivity>(
+      "account_activities",
+      {
+        filter: {},
+        pagination: { page: 1, perPage: 250 },
+        sort: { field: "date", order: "DESC" },
+      },
+    );
+    return accountActivities.map((accountActivity) => ({
+      id: `accountActivity.${accountActivity.id}.created`,
+      type: ACCOUNT_ACTIVITY_CREATED,
+      account_id: accountActivity.account_id,
+      user_id: accountActivity.user_id,
+      accountActivity,
+      date: accountActivity.date || accountActivity.created_at,
+    }));
+  } catch {
+    return [];
+  }
 }

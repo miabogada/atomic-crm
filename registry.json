@@ -60,6 +60,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/tasks/taskStatusColors.ts",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/tasks/taskFilters.ts",
           "type": "registry:component"
         },
@@ -905,6 +909,30 @@
         },
         {
           "path": "src/components/atomic-crm/accounts/AccountActivitiesList.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/account-contacts/index.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/account-contacts/ContactShow.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/account-contacts/ContactList.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/account-contacts/ContactInputs.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/account-contacts/ContactEdit.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/account-contacts/ContactCreate.tsx",
           "type": "registry:component"
         },
         {

@@ -98,6 +98,10 @@ const AccountShowContent = () => {
                   Tasks
                 </TabsTrigger>
                 <TabsTrigger value="activities">
+                  <ReferenceManyCount
+                    target="account_id"
+                    reference="account_activities"
+                  />{" "}
                   Activities
                 </TabsTrigger>
               </TabsList>

@@ -2,6 +2,7 @@ import { Fragment, useState } from "react";
 
 import { Separator } from "@/components/ui/separator";
 import {
+  ACCOUNT_ACTIVITY_CREATED,
   COMPANY_CREATED,
   CONTACT_CREATED,
   CONTACT_NOTE_CREATED,
@@ -9,6 +10,7 @@ import {
   DEAL_NOTE_CREATED,
 } from "../consts";
 import type { Activity } from "../types";
+import { ActivityLogAccountActivityCreated } from "./ActivityLogAccountActivityCreated";
 import { ActivityLogCompanyCreated } from "./ActivityLogCompanyCreated";
 import { ActivityLogContactCreated } from "./ActivityLogContactCreated";
 import { ActivityLogContactNoteCreated } from "./ActivityLogContactNoteCreated";
@@ -74,6 +76,10 @@ function ActivityItem({ activity }: { activity: Activity }) {
 
   if (activity.type === DEAL_NOTE_CREATED) {
     return <ActivityLogDealNoteCreated activity={activity} />;
+  }
+
+  if (activity.type === ACCOUNT_ACTIVITY_CREATED) {
+    return <ActivityLogAccountActivityCreated activity={activity} />;
   }
 
   return null;

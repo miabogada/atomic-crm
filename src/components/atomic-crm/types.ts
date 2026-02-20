@@ -2,6 +2,7 @@ import type { Identifier, RaRecord } from "ra-core";
 import type { ComponentType } from "react";
 
 import type {
+  ACCOUNT_ACTIVITY_CREATED,
   COMPANY_CREATED,
   CONTACT_CREATED,
   CONTACT_NOTE_CREATED,
@@ -195,6 +196,14 @@ export type ActivityDealNoteCreated = {
   date: string;
 };
 
+export type ActivityAccountActivityCreated = {
+  type: typeof ACCOUNT_ACTIVITY_CREATED;
+  account_id: Identifier;
+  user_id?: Identifier;
+  accountActivity: AccountActivity;
+  date: string;
+} & Pick<RaRecord, "id">;
+
 export type Activity = RaRecord &
   (
     | ActivityCompanyCreated
@@ -202,6 +211,7 @@ export type Activity = RaRecord &
     | ActivityContactNoteCreated
     | ActivityDealCreated
     | ActivityDealNoteCreated
+    | ActivityAccountActivityCreated
   );
 
 export interface RAFile {
