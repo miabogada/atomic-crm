@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-02-20 — Contract number alpha suffix generation
+
+Implements the legacy Outlook VBScript contract numbering scheme: `{account_number}{A|B|C...}` where the alpha suffix increments for each additional contract on the same account (e.g. `26022001A`, `26022001B`).
+
+**Database**
+- `20260220000001_contract_number_generation.sql` — `generate_contract_number(account_id)` function counts existing contracts for the account and appends `chr(65 + count)`; `set_contract_number()` trigger fires `BEFORE INSERT` on `account_contracts` when `contract_number` is null/empty.
+- `20260220000002_backfill_contract_numbers.sql` — One-time `UPDATE` using `row_number() OVER (PARTITION BY account_id ORDER BY created_at, id)` to reformat all existing records to the new scheme.
+
+**Frontend**
+- `ContractCreate.tsx` — Removed the account fetch and `Contract ${account_number}` pre-fill; the DB trigger handles numbering server-side.
+- `ContractInputs.tsx` — `contract_number` field is now disabled with helper text "Auto-generated on save"; removed `handleAccountChange` auto-fill logic and unused imports.
+- `account_contracts.ts` (FakeRest) — Demo contracts now generated as `${account.account_number}${A|B}` matching the real format.
+
 ## 2026-02-20 — Payment UI polish and contract financial summaries
 
 ### Add payment dialog (replaces full-page sheet)
