@@ -6,6 +6,7 @@ import { EditButton } from "@/components/admin/edit-button";
 import { DeleteButton } from "@/components/admin";
 
 import { AsideSection } from "../misc/AsideSection";
+import { accountCategoryColors } from "../misc/statusColors";
 import type { Account, AccountContact, ContactType } from "../types";
 
 export const ContactShow = () => {
@@ -18,6 +19,11 @@ export const ContactShow = () => {
 
 const ContactShowContent = () => {
   const { record, isPending } = useShowContext<AccountContact>();
+  const { data: contactType } = useGetOne<ContactType>(
+    "contact_types",
+    { id: record?.contact_type_id! },
+    { enabled: !!record?.contact_type_id },
+  );
 
   if (isPending || !record) return null;
 
@@ -26,18 +32,25 @@ const ContactShowContent = () => {
       <div className="flex-1">
         <Card>
           <CardContent>
-            <div className="flex items-center gap-4 mb-6">
-              <div className="flex-1">
+            <div className="mb-6">
+              <div className="flex items-center gap-1.5 flex-wrap">
                 <h5 className="text-xl font-semibold">
                   {record.first_name} {record.last_name}
                 </h5>
-                <div className="text-sm text-muted-foreground">
-                  {[record.email, record.phone].filter(Boolean).join(" \u00b7 ")}
-                </div>
+                {contactType && (
+                  <Badge variant="outline" className="text-xs py-0 px-1.5">
+                    {contactType.name}
+                  </Badge>
+                )}
+                {record.is_billing_contact && (
+                  <Badge variant="outline" className="text-xs py-0 px-1.5 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                    Billing
+                  </Badge>
+                )}
               </div>
-              {record.is_billing_contact && (
-                <Badge variant="default">Billing</Badge>
-              )}
+              <div className="text-sm text-muted-foreground">
+                {[record.email, record.phone].filter(Boolean).join(" \u00b7 ")}
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -83,7 +96,6 @@ const ContactAside = () => {
         <EditButton label="Edit Contact" />
       </div>
 
-      <ContactTypeInfo contactTypeId={record.contact_type_id} />
       <AccountInfo accountId={record.account_id} />
 
       <div className="mt-6 pt-6 border-t hidden sm:flex flex-col gap-2 items-start">
@@ -93,22 +105,6 @@ const ContactAside = () => {
         />
       </div>
     </div>
-  );
-};
-
-const ContactTypeInfo = ({ contactTypeId }: { contactTypeId?: any }) => {
-  const { data: contactType } = useGetOne<ContactType>(
-    "contact_types",
-    { id: contactTypeId! },
-    { enabled: !!contactTypeId },
-  );
-
-  if (!contactType) return null;
-
-  return (
-    <AsideSection title="Contact Type">
-      <Badge variant="outline">{contactType.name}</Badge>
-    </AsideSection>
   );
 };
 
@@ -130,7 +126,17 @@ const AccountInfo = ({ accountId }: { accountId: any }) => {
         >
           {account.name}
         </Link>
-        <div className="text-muted-foreground">#{account.account_number}</div>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-muted-foreground">{account.account_number}</span>
+          {account.categories && (
+            <Badge
+              variant="outline"
+              className={`text-xs py-0 px-1.5 ${accountCategoryColors[account.categories] ?? ""}`}
+            >
+              {account.categories}
+            </Badge>
+          )}
+        </div>
       </div>
     </AsideSection>
   );

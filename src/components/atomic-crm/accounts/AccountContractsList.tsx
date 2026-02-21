@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 import type { Account, AccountContract, AccountPayment } from "../types";
+import { contractStatusColors } from "../misc/statusColors";
 
 const fmt = (n: number) =>
   n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -62,8 +63,21 @@ export const AccountContractsList = () => {
                 className="flex items-start gap-4 py-3 px-2"
               >
                 <div className="flex-1">
-                  <div className="font-medium">
-                    {contract.contract_number || `Contract #${contract.id}`}
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <Link
+                      to={`/account_contracts/${contract.id}/show`}
+                      className="font-medium text-primary hover:underline"
+                    >
+                      {contract.contract_number || `Contract #${contract.id}`}
+                    </Link>
+                    {contract.status && (
+                      <Badge
+                        variant="outline"
+                        className={`text-xs py-0 px-1.5 ${contractStatusColors[contract.status] ?? ""}`}
+                      >
+                        {contract.status}
+                      </Badge>
+                    )}
                   </div>
                   <div className="text-sm text-muted-foreground">
                     {contract.case_type && <span>{contract.case_type}</span>}
@@ -103,20 +117,6 @@ export const AccountContractsList = () => {
                       </span>
                     </div>
                   )}
-                </div>
-                <div className="flex flex-col items-end gap-1">
-                  {contract.status && (
-                    <Badge variant="outline" className="text-xs">
-                      {contract.status}
-                    </Badge>
-                  )}
-                  {contract.monthly_payment != null &&
-                    contract.monthly_payment > 0 && (
-                      <span className="text-xs text-muted-foreground">
-                        ${Number(contract.monthly_payment).toLocaleString()}/mo
-                        {contract.num_payments && ` \u00d7 ${contract.num_payments}`}
-                      </span>
-                    )}
                 </div>
               </div>
             );

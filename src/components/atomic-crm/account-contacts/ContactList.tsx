@@ -62,38 +62,40 @@ const ContactListItem = ({ contact }: { contact: AccountContact }) => {
       className="flex flex-row items-center px-4 py-3 hover:bg-muted transition-colors first:rounded-t-xl last:rounded-b-xl"
     >
       <div className="flex-1 min-w-0">
-        <div className="font-medium">
-          {contact.first_name} {contact.last_name}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="font-medium">
+            {contact.first_name} {contact.last_name}
+          </span>
+          {contact.contact_type_id && (
+            <ReferenceField
+              source="contact_type_id"
+              reference="contact_types"
+              link={false}
+            >
+              <Badge variant="outline" className="text-xs py-0 px-1.5">
+                <TextField source="name" />
+              </Badge>
+            </ReferenceField>
+          )}
+          {contact.is_billing_contact && (
+            <Badge variant="outline" className="text-xs py-0 px-1.5 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+              Billing
+            </Badge>
+          )}
         </div>
         <div className="text-sm text-muted-foreground">
           {[contact.email, contact.phone].filter(Boolean).join(" \u00b7 ")}
+          {contact.account_id && (
+            <ReferenceField
+              source="account_id"
+              reference="accounts"
+              link={false}
+              className="inline"
+            >
+              <span> &middot; <TextField source="name" className="inline" /></span>
+            </ReferenceField>
+          )}
         </div>
-      </div>
-      <div className="flex items-center gap-2">
-        {contact.account_id && (
-          <ReferenceField
-            source="account_id"
-            reference="accounts"
-            link={false}
-            className="text-sm"
-          >
-            <TextField source="name" />
-          </ReferenceField>
-        )}
-        {contact.contact_type_id && (
-          <ReferenceField
-            source="contact_type_id"
-            reference="contact_types"
-            link={false}
-          >
-            <Badge variant="outline">
-              <TextField source="name" />
-            </Badge>
-          </ReferenceField>
-        )}
-        {contact.is_billing_contact && (
-          <Badge variant="default">Billing</Badge>
-        )}
       </div>
     </Link>
   );

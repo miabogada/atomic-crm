@@ -50,12 +50,30 @@ export const AccountContactsList = () => {
               className="flex items-center gap-4 py-3 px-2"
             >
               <div className="flex-1">
-                <Link
-                  to={`/account_contacts/${contact.id}/show`}
-                  className="font-medium text-primary hover:underline"
-                >
-                  {contact.first_name} {contact.last_name}
-                </Link>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <Link
+                    to={`/account_contacts/${contact.id}/show`}
+                    className="font-medium text-primary hover:underline"
+                  >
+                    {contact.first_name} {contact.last_name}
+                  </Link>
+                  {contact.contact_type_id && (
+                    <ReferenceField
+                      source="contact_type_id"
+                      reference="contact_types"
+                      link={false}
+                    >
+                      <Badge variant="outline" className="text-xs py-0 px-1.5">
+                        <TextField source="name" />
+                      </Badge>
+                    </ReferenceField>
+                  )}
+                  {contact.is_billing_contact && (
+                    <Badge variant="outline" className="text-xs py-0 px-1.5 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                      Billing
+                    </Badge>
+                  )}
+                </div>
                 <div className="text-sm text-muted-foreground">
                   {[contact.email, contact.phone].filter(Boolean).join(" \u00b7 ")}
                 </div>
@@ -72,33 +90,17 @@ export const AccountContactsList = () => {
                   </div>
                 )}
               </div>
-              <div className="flex items-center gap-2">
-                {account && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    title="Add task for this contact"
-                    onClick={() => handleAddTask(contact.id)}
-                  >
-                    <ClipboardPlus className="w-4 h-4" />
-                  </Button>
-                )}
-                {contact.contact_type_id && (
-                  <ReferenceField
-                    source="contact_type_id"
-                    reference="contact_types"
-                    link={false}
-                  >
-                    <Badge variant="outline">
-                      <TextField source="name" />
-                    </Badge>
-                  </ReferenceField>
-                )}
-                {contact.is_billing_contact && (
-                  <Badge variant="default">Billing</Badge>
-                )}
-              </div>
+              {account && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  title="Add task for this contact"
+                  onClick={() => handleAddTask(contact.id)}
+                >
+                  <ClipboardPlus className="w-4 h-4" />
+                </Button>
+              )}
             </div>
           ))}
         </div>

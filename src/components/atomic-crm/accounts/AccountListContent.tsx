@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 
 import type { Account } from "../types";
+import { accountCategoryColors } from "../misc/statusColors";
 
 export const AccountListContent = () => {
   const {
@@ -56,11 +57,21 @@ const AccountItemContent = ({ account }: { account: Account }) => {
             .toUpperCase()}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="font-medium">{account.name}</div>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="font-medium">{account.name}</span>
+            <span className="font-medium">{account.account_number}</span>
+            {account.categories && (
+              <Badge
+                variant="outline"
+                className={`text-xs py-0 px-1.5 ${accountCategoryColors[account.categories] ?? ""}`}
+              >
+                {account.categories}
+              </Badge>
+            )}
+          </div>
           <div className="text-sm text-muted-foreground">
-            #{account.account_number}
             {account.nb_contacts != null &&
-              ` \u00b7 ${account.nb_contacts} contact${account.nb_contacts !== 1 ? "s" : ""}`}
+              `${account.nb_contacts} contact${account.nb_contacts !== 1 ? "s" : ""}`}
             {account.nb_contracts != null &&
               account.nb_contracts > 0 &&
               ` \u00b7 ${account.nb_contracts} contract${account.nb_contracts !== 1 ? "s" : ""}`}
@@ -68,24 +79,6 @@ const AccountItemContent = ({ account }: { account: Account }) => {
               account.nb_open_tasks > 0 &&
               ` \u00b7 ${account.nb_open_tasks} open task${account.nb_open_tasks !== 1 ? "s" : ""}`}
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {account.billing_city && (
-            <span className="text-sm text-muted-foreground">
-              {[account.billing_city, account.billing_state]
-                .filter(Boolean)
-                .join(", ")}
-            </span>
-          )}
-          {account.categories && (
-            <Badge
-              variant={
-                account.categories === "In Process" ? "default" : "secondary"
-              }
-            >
-              {account.categories}
-            </Badge>
-          )}
         </div>
       </Link>
     </div>

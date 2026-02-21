@@ -22,6 +22,7 @@ import { DeleteButton } from "@/components/admin";
 
 import { AsideSection } from "../misc/AsideSection";
 import { useConfigurationContext } from "../root/ConfigurationContext";
+import { activityTypeColors, accountCategoryColors, contractStatusColors } from "../misc/statusColors";
 import { AddPayment } from "../payments/AddPayment";
 import { AddTask } from "../tasks/AddTask";
 import { Task } from "../tasks/Task";
@@ -37,21 +38,6 @@ import type {
 const fmt = (n: number) =>
   n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-const contractStatusColors: Record<string, string> = {
-  "To do": "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
-  "In process":
-    "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-  "In process - Past due":
-    "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
-  "Stopped - Past due":
-    "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
-  "In process - Paid":
-    "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-  "Done - Paid":
-    "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-  Canceled:
-    "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300",
-};
 
 export const ContractShow = () => {
   return (
@@ -86,29 +72,29 @@ const ContractShowContent = () => {
       <div className="flex-1">
         <Card>
           <CardContent>
-            <div className="flex items-center gap-4 mb-4">
-              <div className="flex-1">
+            <div className="mb-4">
+              <div className="flex items-center gap-1.5 flex-wrap">
                 <h5 className="text-xl font-semibold">
                   {record.contract_number || `Contract #${record.id}`}
                 </h5>
-                <div className="text-sm text-muted-foreground">
-                  {record.case_type && <span>{record.case_type}</span>}
-                  {record.date_opened && (
-                    <span>
-                      {record.case_type && " \u00b7 "}
-                      Opened {record.date_opened}
-                    </span>
-                  )}
-                </div>
+                {record.status && (
+                  <Badge
+                    variant="outline"
+                    className={`text-xs py-0 px-1.5 ${contractStatusColors[record.status] ?? ""}`}
+                  >
+                    {record.status}
+                  </Badge>
+                )}
               </div>
-              {record.status && (
-                <Badge
-                  variant="outline"
-                  className={`text-sm ${contractStatusColors[record.status] ?? ""}`}
-                >
-                  {record.status}
-                </Badge>
-              )}
+              <div className="text-sm text-muted-foreground">
+                {record.case_type && <span>{record.case_type}</span>}
+                {record.date_opened && (
+                  <span>
+                    {record.case_type && " \u00b7 "}
+                    Opened {record.date_opened}
+                  </span>
+                )}
+              </div>
             </div>
 
             {fee > 0 && (
@@ -217,22 +203,21 @@ const ContractLinkedItems = ({ record }: { record: AccountContract }) => {
                   className="flex items-center gap-4 py-2"
                 >
                   <div className="flex-1">
-                    <div className="font-medium">{activity.subject}</div>
-                    {activity.body && (
-                      <div className="text-sm text-muted-foreground mt-0.5 line-clamp-2">
-                        {activity.body}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex flex-col items-end gap-1">
-                    {activity.type && (
-                      <Badge variant="outline">{activity.type}</Badge>
-                    )}
-                    {activity.date && (
-                      <span className="text-xs text-muted-foreground">
-                        {formatRelative(activity.date, now)}
-                      </span>
-                    )}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="font-medium">{activity.subject}</span>
+                      {activity.type && (
+                        <Badge
+                          variant="outline"
+                          className={`text-xs py-0 px-1.5 ${activityTypeColors[activity.type] ?? ""}`}
+                        >
+                          {activity.type}
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="text-sm text-muted-foreground mt-0.5 truncate">
+                      {activity.date && formatRelative(activity.date, now)}
+                      {activity.body && <span> &middot; {activity.body}</span>}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -347,13 +332,17 @@ const AccountInfo = ({ accountId }: { accountId: any }) => {
         >
           {account.name}
         </Link>
-        <div className="text-muted-foreground">#{account.account_number}</div>
-        {account.categories && (
-          <div>
-            <span className="text-muted-foreground">Status:</span>{" "}
-            {account.categories}
-          </div>
-        )}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-muted-foreground">{account.account_number}</span>
+          {account.categories && (
+            <Badge
+              variant="outline"
+              className={`text-xs py-0 px-1.5 ${accountCategoryColors[account.categories] ?? ""}`}
+            >
+              {account.categories}
+            </Badge>
+          )}
+        </div>
       </div>
     </AsideSection>
   );

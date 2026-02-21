@@ -1,4 +1,4 @@
-import { RecordRepresentation, ShowBase, useListContext, useRecordContext, useShowContext } from "ra-core";
+import { ShowBase, useListContext, useRecordContext, useShowContext } from "ra-core";
 import { ReferenceManyField } from "@/components/admin/reference-many-field";
 import { ReferenceManyCount } from "@/components/admin/reference-many-count";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,6 +13,7 @@ import { AccountPaymentList } from "../payments/AccountPaymentList";
 import { Task } from "../tasks/Task";
 import { AddTask } from "../tasks/AddTask";
 import type { Account, Task as TaskType } from "../types";
+import { accountCategoryColors } from "../misc/statusColors";
 
 export const AccountShow = () => {
   return (
@@ -41,37 +42,19 @@ const AccountShowContent = () => {
                   .toUpperCase()}
               </div>
               <div className="flex-1">
-                <h5 className="text-xl font-semibold">
-                  <RecordRepresentation />
-                </h5>
-                <div className="text-sm text-muted-foreground">
-                  #{record.account_number}
-                  {record.billing_city && (
-                    <>
-                      {" \u00b7 "}
-                      {[
-                        record.billing_street,
-                        record.billing_city,
-                        record.billing_state,
-                        record.billing_postal_code,
-                      ]
-                        .filter(Boolean)
-                        .join(", ")}
-                    </>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <h5 className="text-xl font-semibold">{record.name}</h5>
+                  <span className="text-xl font-semibold">{record.account_number}</span>
+                  {record.categories && (
+                    <Badge
+                      variant="outline"
+                      className={`text-xs py-0 px-1.5 ${accountCategoryColors[record.categories] ?? ""}`}
+                    >
+                      {record.categories}
+                    </Badge>
                   )}
                 </div>
               </div>
-              {record.categories && (
-                <Badge
-                  variant={
-                    record.categories === "In Process"
-                      ? "default"
-                      : "secondary"
-                  }
-                >
-                  {record.categories}
-                </Badge>
-              )}
             </div>
 
             {(record.total_contracted != null || record.total_received != null) && (
