@@ -21,7 +21,7 @@ export const generateAccountContracts = (db: Db): AccountContract[] => {
       contracts.push({
         id: id++,
         account_id: account.id,
-        contract_number: `C-${String(id).padStart(3, "0")}`,
+        contract_number: `${account.account_number}${String.fromCharCode(65 + i)}`,
         case_type: random.arrayElement(defaultCaseTypes),
         status: random.arrayElement(defaultContractStatuses),
         fee: randomFloat(1500, 8000),

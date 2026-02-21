@@ -1,8 +1,7 @@
-import { CreateBase, Form, useGetIdentity, useGetOne } from "ra-core";
+import { CreateBase, Form, useGetIdentity } from "ra-core";
 import { Card, CardContent } from "@/components/ui/card";
 import { useSearchParams } from "react-router";
 
-import type { Account } from "../types";
 import { ContractInputs } from "./ContractInputs";
 import { FormToolbar } from "../layout/FormToolbar";
 
@@ -13,16 +12,7 @@ export const ContractCreate = () => {
   const [searchParams] = useSearchParams();
   const accountId = searchParams.get("account_id");
 
-  // If we have an account_id from URL, fetch the account to pre-fill contract_number
-  const { data: account, isPending: accountPending } = useGetOne<Account>(
-    "accounts",
-    { id: accountId! },
-    { enabled: !!accountId },
-  );
-
   if (!identity) return null;
-  // Wait for account data if we have an account_id param
-  if (accountId && accountPending) return null;
 
   const defaultValues: Record<string, any> = {
     user_id: identity.id,
@@ -32,9 +22,6 @@ export const ContractCreate = () => {
 
   if (accountId) {
     defaultValues.account_id = Number(accountId);
-    if (account?.account_number) {
-      defaultValues.contract_number = `Contract ${account.account_number}`;
-    }
   }
 
   return (

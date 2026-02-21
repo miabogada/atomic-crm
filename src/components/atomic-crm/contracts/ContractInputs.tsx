@@ -1,4 +1,4 @@
-import { required, useDataProvider } from "ra-core";
+import { required } from "ra-core";
 import { useFormContext, useWatch } from "react-hook-form";
 import { useEffect, useRef } from "react";
 import { Separator } from "@/components/ui/separator";
@@ -78,7 +78,7 @@ export const ContractInputs = () => {
       <div className="flex gap-6 flex-col md:flex-row mt-4">
         <div className="flex flex-col gap-4 flex-1">
           <h6 className="text-lg font-semibold">Terms</h6>
-          <TextInput source="contract_number" label="Contract Number" helperText="Auto-generated from account" />
+          <TextInput source="contract_number" label="Contract Number" disabled helperText="Auto-generated on save" />
           <NumberInput source="fee" label="Fee" helperText={false} />
           <NumberInput source="retainer" label="Retainer" helperText={false} />
           <NumberInput source="monthly_payment" label="Monthly Payment" helperText={false} />
@@ -98,23 +98,11 @@ export const ContractInputs = () => {
 };
 
 const AccountSelector = () => {
-  const { setValue, getValues } = useFormContext();
-  const dataProvider = useDataProvider();
   const lastAccountId = useRef<string | null>(null);
 
   const handleAccountChange = (id: any) => {
     if (!id || id === lastAccountId.current) return;
     lastAccountId.current = id;
-    dataProvider
-      .getOne<Account>("accounts", { id })
-      .then(({ data }) => {
-        if (!data?.account_number) return;
-        // Only auto-fill contract_number if it's currently empty
-        const current = getValues("contract_number");
-        if (!current) {
-          setValue("contract_number", `Contract ${data.account_number}`);
-        }
-      });
   };
 
   return (

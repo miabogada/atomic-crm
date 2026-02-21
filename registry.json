@@ -316,6 +316,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/providers/fakerest/dataGenerator/account_payments.ts",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/providers/fakerest/dataGenerator/account_contracts.ts",
           "type": "registry:component"
         },
@@ -353,6 +357,26 @@
         },
         {
           "path": "src/components/atomic-crm/providers/commons/activity.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/payments/index.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/payments/AddPayment.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/payments/AccountPaymentList.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/payments/AccountPaymentInputs.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/payments/AccountPaymentEditSheet.tsx",
           "type": "registry:component"
         },
         {
