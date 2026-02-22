@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { formatRelative } from "date-fns";
 import {
   ShowBase,
@@ -5,6 +6,7 @@ import {
   useRecordContext,
   useGetOne,
   useGetList,
+  useGetIdentity,
   useUpdate,
 } from "ra-core";
 import { Link } from "react-router";
@@ -27,11 +29,14 @@ import { AddPayment } from "../payments/AddPayment";
 import { AddTask } from "../tasks/AddTask";
 import { Task } from "../tasks/Task";
 import { AddActivity } from "../accounts/AddActivity";
+import { AccountPaymentEditSheet } from "../payments/AccountPaymentEditSheet";
+import { PaymentRow } from "../payments/PaymentRow";
 import type {
   Account,
   AccountActivity,
   AccountContract,
   AccountPayment,
+  Sale,
   Task as TaskType,
 } from "../types";
 
@@ -68,7 +73,7 @@ const ContractShowContent = () => {
   const paymentCount = payments?.length ?? 0;
 
   return (
-    <div className="mt-2 mb-2 flex gap-8">
+    <div className="mt-2 mb-2 flex gap-8 pb-20 md:pb-0">
       <div className="flex-1">
         <Card>
           <CardContent>
@@ -142,14 +147,30 @@ const ContractShowContent = () => {
             </div>
           </CardContent>
         </Card>
-        <ContractLinkedItems record={record} />
+        <ContractLinkedItems record={record} payments={payments} />
       </div>
       <ContractAside />
     </div>
   );
 };
 
-const ContractLinkedItems = ({ record }: { record: AccountContract }) => {
+const ContractLinkedItems = ({
+  record,
+  payments,
+}: {
+  record: AccountContract;
+  payments?: AccountPayment[];
+}) => {
+  const [editingPaymentId, setEditingPaymentId] = useState<number | null>(null);
+
+  const { identity } = useGetIdentity();
+  const { data: currentUser } = useGetOne<Sale>(
+    "users",
+    { id: identity?.id! },
+    { enabled: !!identity },
+  );
+  const isAdmin = !!currentUser?.administrator;
+
   const { data: tasks } = useGetList<TaskType>("tasks", {
     filter: {
       parent_type: "account_contract",
@@ -173,10 +194,28 @@ const ContractLinkedItems = ({ record }: { record: AccountContract }) => {
 
   const now = Date.now();
 
-  if (!tasks?.length && !activities?.length) return null;
+  if (!tasks?.length && !activities?.length && !payments?.length) return null;
 
   return (
     <div className="mt-4 flex flex-col gap-4">
+      {payments && payments.length > 0 && (
+        <Card>
+          <CardContent>
+            <h6 className="text-lg font-semibold mb-2">Payments</h6>
+            <div className="divide-y">
+              {payments.map((payment) => (
+                <PaymentRow
+                  key={payment.id}
+                  payment={payment}
+                  isAdmin={isAdmin}
+                  onEdit={setEditingPaymentId}
+                />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {tasks && tasks.length > 0 && (
         <Card>
           <CardContent>
@@ -224,6 +263,14 @@ const ContractLinkedItems = ({ record }: { record: AccountContract }) => {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {editingPaymentId != null && (
+        <AccountPaymentEditSheet
+          open={editingPaymentId != null}
+          onOpenChange={(open) => { if (!open) setEditingPaymentId(null); }}
+          paymentId={editingPaymentId}
+        />
       )}
     </div>
   );

@@ -1,11 +1,10 @@
 import { useState } from "react";
 import { useGetIdentity, useGetList, useGetOne, useListContext, useRecordContext } from "ra-core";
-import { Pencil } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 import type { Account, AccountContract, AccountPayment, Sale } from "../types";
 import { AddPayment } from "./AddPayment";
 import { AccountPaymentEditSheet } from "./AccountPaymentEditSheet";
+import { PaymentRow } from "./PaymentRow";
 
 export const AccountPaymentList = () => {
   const { data, isPending } = useListContext<AccountPayment>();
@@ -43,58 +42,23 @@ export const AccountPaymentList = () => {
           No payments recorded
         </div>
       ) : (
-        <>
-          <div className="divide-y">
-            {data.map((payment) => {
-              const contract = contracts?.find((c) => c.id === payment.contract_id);
-              return (
-              <div
+        <div className="divide-y">
+          {data.map((payment) => {
+            const contract = contracts?.find((c) => c.id === payment.contract_id);
+            const contractLabel = contract
+              ? (contract.contract_number || `Contract #${contract.id}`)
+              : undefined;
+            return (
+              <PaymentRow
                 key={payment.id}
-                className="flex items-center gap-4 py-3 px-2"
-              >
-                <div className="flex-1">
-                  <div className="font-medium">
-                    ${Number(payment.amount).toLocaleString("en-US", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    {payment.date_received}
-                    {payment.payment_method && (
-                      <span> &middot; {payment.payment_method}</span>
-                    )}
-                    {payment.reference_number && (
-                      <span> &middot; #{payment.reference_number}</span>
-                    )}
-                  </div>
-                  {contract && (
-                    <div className="text-sm text-muted-foreground mt-0.5">
-                      {contract.contract_number || `Contract #${contract.id}`}
-                    </div>
-                  )}
-                  {payment.notes && (
-                    <div className="text-sm text-muted-foreground mt-1">
-                      {payment.notes}
-                    </div>
-                  )}
-                </div>
-                {isAdmin && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="p-1 h-auto"
-                    onClick={() => setEditingId(payment.id as number)}
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </Button>
-                )}
-              </div>
-              );
-            })}
-          </div>
-
-        </>
+                payment={payment}
+                isAdmin={isAdmin}
+                onEdit={setEditingId}
+                contractLabel={contractLabel}
+              />
+            );
+          })}
+        </div>
       )}
 
       {editingId != null && (
