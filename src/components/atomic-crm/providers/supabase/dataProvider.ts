@@ -208,6 +208,9 @@ const dataProviderWithCustomMethods = {
   async getActivityLog(companyId?: Identifier) {
     return getActivityLog(baseDataProvider, companyId);
   },
+  async getAccountActivityLog(accountId: Identifier) {
+    return getActivityLog(baseDataProvider, undefined, undefined, accountId);
+  },
   async isInitialized() {
     return getIsInitialized();
   },

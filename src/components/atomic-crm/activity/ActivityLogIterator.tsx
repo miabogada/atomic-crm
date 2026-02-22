@@ -4,6 +4,7 @@ import { Separator } from "@/components/ui/separator";
 import {
   ACCOUNT_ACTIVITY_CREATED,
   COMPANY_CREATED,
+  CONTRACT_CREATED,
   CONTACT_CREATED,
   CONTACT_NOTE_CREATED,
   DEAL_CREATED,
@@ -14,6 +15,7 @@ import {
 import type { Activity } from "../types";
 import { ActivityLogAccountActivityCreated } from "./ActivityLogAccountActivityCreated";
 import { ActivityLogCompanyCreated } from "./ActivityLogCompanyCreated";
+import { ActivityLogContractCreated } from "./ActivityLogContractCreated";
 import { ActivityLogContactCreated } from "./ActivityLogContactCreated";
 import { ActivityLogContactNoteCreated } from "./ActivityLogContactNoteCreated";
 import { ActivityLogDealCreated } from "./ActivityLogDealCreated";
@@ -61,7 +63,7 @@ export function ActivityLogIterator({
   );
 }
 
-function ActivityItem({ activity }: { activity: Activity }) {
+export function ActivityItem({ activity }: { activity: Activity }) {
   if (activity.type === COMPANY_CREATED) {
     return <ActivityLogCompanyCreated activity={activity} />;
   }
@@ -92,6 +94,10 @@ function ActivityItem({ activity }: { activity: Activity }) {
 
   if (activity.type === PAYMENT_RECEIVED) {
     return <ActivityLogPaymentReceived activity={activity} />;
+  }
+
+  if (activity.type === CONTRACT_CREATED) {
+    return <ActivityLogContractCreated activity={activity} />;
   }
 
   return null;

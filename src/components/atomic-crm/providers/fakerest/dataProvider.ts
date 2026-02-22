@@ -140,6 +140,9 @@ const dataProviderWithCustomMethod: CrmDataProvider = {
   getActivityLog: async (companyId?: Identifier) => {
     return getActivityLog(dataProvider, companyId);
   },
+  getAccountActivityLog: async (accountId: Identifier) => {
+    return getActivityLog(dataProvider, undefined, undefined, accountId);
+  },
   signUp: async ({
     email,
     password,

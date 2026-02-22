@@ -10,6 +10,7 @@ import { AccountContactsList } from "./AccountContactsList";
 import { AccountContractsList } from "./AccountContractsList";
 import { AccountActivitiesList } from "./AccountActivitiesList";
 import { AccountPaymentList } from "../payments/AccountPaymentList";
+import { AccountActivityLogWidget } from "../activity/AccountActivityLog";
 import { Task } from "../tasks/Task";
 import { AddTask } from "../tasks/AddTask";
 import type { Account, Task as TaskType } from "../types";
@@ -179,6 +180,7 @@ const AccountShowContent = () => {
             </Tabs>
           </CardContent>
         </Card>
+        <AccountActivityLogWidget accountId={record.id} />
       </div>
       <AccountAside />
     </div>

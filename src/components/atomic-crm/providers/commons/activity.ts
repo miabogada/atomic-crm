@@ -3,6 +3,7 @@ import type { DataProvider, Identifier } from "ra-core";
 import {
   ACCOUNT_ACTIVITY_CREATED,
   COMPANY_CREATED,
+  CONTRACT_CREATED,
   CONTACT_CREATED,
   CONTACT_NOTE_CREATED,
   DEAL_CREATED,
@@ -12,6 +13,7 @@ import {
 } from "../../consts";
 import type {
   AccountActivity,
+  AccountContract,
   AccountPayment,
   Activity,
   Company,
@@ -28,7 +30,29 @@ export async function getActivityLog(
   dataProvider: DataProvider,
   companyId?: Identifier,
   salesId?: Identifier,
+  accountId?: Identifier,
 ) {
+  // Account-scoped view: only fetch account activities, tasks, payments, and contracts for the account
+  if (accountId) {
+    const [newAccountActivities, completedTasks, paymentsReceived, newContracts] =
+      await Promise.all([
+        getNewAccountActivities(dataProvider, accountId),
+        getCompletedTasks(dataProvider, accountId),
+        getPaymentsReceived(dataProvider, accountId),
+        getNewContracts(dataProvider, accountId),
+      ]);
+    return (
+      [...newAccountActivities, ...completedTasks, ...paymentsReceived, ...newContracts]
+        .sort(
+          (a, b) =>
+            (a.date || new Date(0).toISOString()).localeCompare(
+              b.date || new Date(0).toISOString(),
+            ) * -1,
+        )
+        .slice(0, 250)
+    );
+  }
+
   const companyFilter = {} as any;
   if (companyId) {
     companyFilter.id = companyId;
@@ -43,7 +67,7 @@ export async function getActivityLog(
     filter["user_id@in"] = `(${salesId})`;
   }
 
-  const [newCompanies, newContactsAndNotes, newDealsAndNotes, newAccountActivities, completedTasks, paymentsReceived] =
+  const [newCompanies, newContactsAndNotes, newDealsAndNotes, newAccountActivities, completedTasks, paymentsReceived, newContracts] =
     await Promise.all([
       getNewCompanies(dataProvider, companyFilter),
       getNewContactsAndNotes(dataProvider, filter),
@@ -52,9 +76,10 @@ export async function getActivityLog(
       !companyId && !salesId ? getNewAccountActivities(dataProvider) : Promise.resolve([]),
       !companyId && !salesId ? getCompletedTasks(dataProvider) : Promise.resolve([]),
       !companyId && !salesId ? getPaymentsReceived(dataProvider) : Promise.resolve([]),
+      !companyId && !salesId ? getNewContracts(dataProvider) : Promise.resolve([]),
     ]);
   return (
-    [...newCompanies, ...newContactsAndNotes, ...newDealsAndNotes, ...newAccountActivities, ...completedTasks, ...paymentsReceived]
+    [...newCompanies, ...newContactsAndNotes, ...newDealsAndNotes, ...newAccountActivities, ...completedTasks, ...paymentsReceived, ...newContracts]
       // sort by date desc
       .sort(
         (a, b) =>
@@ -188,12 +213,14 @@ async function getNewDealsAndNotes(
 
 async function getNewAccountActivities(
   dataProvider: DataProvider,
+  accountId?: Identifier,
 ): Promise<Activity[]> {
   try {
+    const filter = accountId ? { account_id: accountId } : {};
     const { data: accountActivities } = await dataProvider.getList<AccountActivity>(
       "account_activities",
       {
-        filter: {},
+        filter,
         pagination: { page: 1, perPage: 250 },
         sort: { field: "date", order: "DESC" },
       },
@@ -213,10 +240,13 @@ async function getNewAccountActivities(
 
 async function getCompletedTasks(
   dataProvider: DataProvider,
+  accountId?: Identifier,
 ): Promise<Activity[]> {
   try {
+    const filter: any = { "done_date@not.is": null };
+    if (accountId) filter.account_id = accountId;
     const { data: tasks } = await dataProvider.getList<Task>("tasks", {
-      filter: { "done_date@not.is": null },
+      filter,
       pagination: { page: 1, perPage: 250 },
       sort: { field: "done_date", order: "DESC" },
     });
@@ -237,12 +267,14 @@ async function getCompletedTasks(
 
 async function getPaymentsReceived(
   dataProvider: DataProvider,
+  accountId?: Identifier,
 ): Promise<Activity[]> {
   try {
+    const filter = accountId ? { account_id: accountId } : {};
     const { data: payments } = await dataProvider.getList<AccountPayment>(
       "account_payments",
       {
-        filter: {},
+        filter,
         pagination: { page: 1, perPage: 250 },
         sort: { field: "date_received", order: "DESC" },
       },
@@ -254,6 +286,33 @@ async function getPaymentsReceived(
       user_id: payment.user_id,
       payment,
       date: payment.date_received || payment.created_at,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+async function getNewContracts(
+  dataProvider: DataProvider,
+  accountId?: Identifier,
+): Promise<Activity[]> {
+  try {
+    const filter = accountId ? { account_id: accountId } : {};
+    const { data: contracts } = await dataProvider.getList<AccountContract>(
+      "account_contracts",
+      {
+        filter,
+        pagination: { page: 1, perPage: 250 },
+        sort: { field: "created_at", order: "DESC" },
+      },
+    );
+    return contracts.map((contract) => ({
+      id: `contract.${contract.id}.created`,
+      type: CONTRACT_CREATED,
+      account_id: contract.account_id,
+      user_id: contract.user_id,
+      contract,
+      date: contract.date_opened || contract.created_at,
     }));
   } catch {
     return [];
