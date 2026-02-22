@@ -10,7 +10,7 @@ import type { AccountContract, AccountPayment } from "../types";
 import { contractStatusColors } from "../misc/statusColors";
 
 const fmt = (n: number) =>
-  n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  n.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
 export const ContractListContent = () => {
   const {

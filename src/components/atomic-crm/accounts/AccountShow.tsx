@@ -62,19 +62,19 @@ const AccountShowContent = () => {
                 <div>
                   <span className="text-muted-foreground">Contracted: </span>
                   <span className="font-medium">
-                    ${Number(record.total_contracted ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    ${Number(record.total_contracted ?? 0).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                   </span>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Received: </span>
                   <span className="font-medium">
-                    ${Number(record.total_received ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    ${Number(record.total_received ?? 0).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                   </span>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Balance: </span>
                   <span className={`font-medium ${Number(record.balance_due ?? 0) > 0 ? "text-destructive" : "text-green-600"}`}>
-                    ${Number(record.balance_due ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    ${Number(record.balance_due ?? 0).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                   </span>
                 </div>
               </div>
