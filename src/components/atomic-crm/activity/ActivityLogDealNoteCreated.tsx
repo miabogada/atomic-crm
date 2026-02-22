@@ -1,7 +1,7 @@
+import { FileText } from "lucide-react";
 import type { RaRecord } from "ra-core";
 
 import { ReferenceField } from "@/components/admin/reference-field";
-import { CompanyAvatar } from "../companies/CompanyAvatar";
 import { RelativeDate } from "../misc/RelativeDate";
 import { UserName } from "../users/UserName";
 import type { ActivityDealNoteCreated } from "../types";
@@ -23,20 +23,7 @@ export function ActivityLogDealNoteCreated({
     <ActivityLogNote
       header={
         <div className="flex flex-row items-start gap-2 flex-grow">
-          <ReferenceField
-            source="deal_id"
-            reference="deals"
-            record={dealNote}
-            link={false}
-          >
-            <ReferenceField
-              source="company_id"
-              reference="companies"
-              link={false}
-            >
-              <CompanyAvatar width={20} height={20} />
-            </ReferenceField>
-          </ReferenceField>
+          <FileText className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
 
           <span className="text-muted-foreground text-sm flex-grow">
             <ReferenceField

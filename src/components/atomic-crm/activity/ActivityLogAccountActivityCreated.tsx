@@ -1,3 +1,5 @@
+import { Banknote, FileText, Mail, Paperclip, Phone, Users } from "lucide-react";
+import type { ElementType } from "react";
 import { Link } from "react-router";
 
 import { ReferenceField } from "@/components/admin/reference-field";
@@ -6,6 +8,15 @@ import { RelativeDate } from "../misc/RelativeDate";
 import { UserName } from "../users/UserName";
 import type { ActivityAccountActivityCreated } from "../types";
 
+const activityTypeIcon: Record<string, ElementType> = {
+  call: Phone,
+  email: Mail,
+  meeting: Users,
+  document: Paperclip,
+  note: FileText,
+  payment: Banknote,
+};
+
 type Props = {
   activity: ActivityAccountActivityCreated;
 };
@@ -13,11 +24,13 @@ type Props = {
 export function ActivityLogAccountActivityCreated({ activity }: Props) {
   const { accountActivity } = activity;
   const link = `/accounts/${accountActivity.account_id}/show`;
+  const Icon = activityTypeIcon[accountActivity.type] ?? FileText;
   return (
     <div className="p-0">
       <div className="flex flex-col space-y-2 w-full">
         <div className="flex flex-row space-x-1 items-center w-full">
           <div className="flex items-start gap-2 w-full">
+            <Icon className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
             <span className="text-muted-foreground text-sm flex-grow">
               <ReferenceField
                 source="user_id"

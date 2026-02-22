@@ -1,23 +1,17 @@
-import { useRecordContext } from "ra-core";
+import { FileText } from "lucide-react";
 
 import { ReferenceField } from "@/components/admin/reference-field";
 import { TextField } from "@/components/admin/text-field";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Avatar } from "../contacts/Avatar";
 import { RelativeDate } from "../misc/RelativeDate";
 import { UserName } from "../users/UserName";
-import type { ActivityContactNoteCreated, Contact } from "../types";
+import type { ActivityContactNoteCreated } from "../types";
 import { useActivityLogContext } from "./ActivityLogContext";
 import { ActivityLogNote } from "./ActivityLogNote";
 
 type ActivityLogContactNoteCreatedProps = {
   activity: ActivityContactNoteCreated;
 };
-
-function ContactAvatar() {
-  const record = useRecordContext<Contact>();
-  return <Avatar width={20} height={20} record={record} />;
-}
 
 export function ActivityLogContactNoteCreated({
   activity,
@@ -32,13 +26,7 @@ export function ActivityLogContactNoteCreated({
     <ActivityLogNote
       header={
         <div className="flex items-start gap-2 w-full">
-          <ReferenceField
-            source="contact_id"
-            reference="contacts"
-            record={activity.contactNote}
-          >
-            <ContactAvatar />
-          </ReferenceField>
+          <FileText className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
 
           <span className="text-muted-foreground text-sm flex-grow">
             <ReferenceField

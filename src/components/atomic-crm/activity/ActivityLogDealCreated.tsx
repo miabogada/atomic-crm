@@ -1,3 +1,4 @@
+import { DollarSign } from "lucide-react";
 import type { RaRecord } from "ra-core";
 import { Link } from "react-router";
 
@@ -21,7 +22,7 @@ export function ActivityLogDealCreated({
   return (
     <div className="p-0">
       <div className="flex flex-row gap-2 items-start w-full">
-        <div className="w-[20px] h-[20px] bg-gray-300 rounded-full shrink-0" />
+        <DollarSign className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
         <span className="text-muted-foreground text-sm flex-grow">
           <ReferenceField source="user_id" reference="users" record={activity}>
             <UserName />
