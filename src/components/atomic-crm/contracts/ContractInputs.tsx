@@ -83,6 +83,7 @@ export const ContractInputs = () => {
           <NumberInput source="retainer" label="Retainer" helperText={false} />
           <NumberInput source="monthly_payment" label="Monthly Payment" helperText={false} />
           <CalculatedPayments />
+          <FinalPayment />
         </div>
         <Separator orientation="vertical" className="flex-shrink-0 hidden md:block" />
         <div className="flex flex-col gap-4 flex-1">
@@ -148,6 +149,35 @@ const CalculatedPayments = () => {
       source="num_payments"
       label="# Payments"
       helperText="Auto-calculated from fee, retainer, and monthly payment"
+    />
+  );
+};
+
+const FinalPayment = () => {
+  const { setValue } = useFormContext();
+  const fee = useWatch({ name: "fee" });
+  const retainer = useWatch({ name: "retainer" });
+  const monthlyPayment = useWatch({ name: "monthly_payment" });
+  const numPayments = useWatch({ name: "num_payments" });
+
+  useEffect(() => {
+    const feeNum = Number(fee) || 0;
+    const retainerNum = Number(retainer) || 0;
+    const monthlyNum = Number(monthlyPayment) || 0;
+    const numPay = Number(numPayments) || 0;
+
+    if (numPay > 0 && monthlyNum > 0) {
+      const remaining = feeNum - retainerNum;
+      const finalPay = remaining - monthlyNum * (numPay - 1);
+      setValue("final_payment", Math.round(finalPay * 100) / 100);
+    }
+  }, [fee, retainer, monthlyPayment, numPayments, setValue]);
+
+  return (
+    <NumberInput
+      source="final_payment"
+      label="Final Payment"
+      helperText="Auto-calculated — last payment may differ from monthly"
     />
   );
 };

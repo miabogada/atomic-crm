@@ -136,6 +136,7 @@ const ContractShowContent = () => {
                 <Field label="Retainer" value={record.retainer != null ? `$${Number(record.retainer).toLocaleString()}` : undefined} />
                 <Field label="Monthly Payment" value={record.monthly_payment != null ? `$${Number(record.monthly_payment).toLocaleString()}` : undefined} />
                 <Field label="# Payments" value={record.num_payments?.toString()} />
+                <Field label="Final Payment" value={record.final_payment != null ? `$${Number(record.final_payment).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : undefined} />
               </div>
               <div className="flex flex-col gap-3">
                 <h6 className="text-lg font-semibold">Dates & Details</h6>

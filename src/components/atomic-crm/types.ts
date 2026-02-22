@@ -308,6 +308,7 @@ export type AccountContract = {
   retainer?: number;
   monthly_payment?: number;
   num_payments?: number;
+  final_payment?: number;
   date_opened?: string;
   date_retainer?: string;
   date_first_payment?: string;
