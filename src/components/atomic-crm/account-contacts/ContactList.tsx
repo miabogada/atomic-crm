@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "react-router";
 
 import { TopToolbar } from "../layout/TopToolbar";
+import { AccountContactListFilter } from "./AccountContactListFilter";
 import type { AccountContact } from "../types";
 
 export const ContactList = () => {
@@ -28,6 +29,7 @@ export const ContactList = () => {
 
 const ContactListLayout = () => {
   const { data, isPending, filterValues } = useListContext<AccountContact>();
+  const isMobile = useIsMobile();
 
   const hasFilters = filterValues && Object.keys(filterValues).length > 0;
 
@@ -41,7 +43,7 @@ const ContactListLayout = () => {
       </div>
     );
 
-  return (
+  const content = (
     <div className="w-full flex flex-col gap-4">
       <Card className="py-0">
         <div className="md:divide-y">
@@ -52,6 +54,17 @@ const ContactListLayout = () => {
           ))}
         </div>
       </Card>
+    </div>
+  );
+
+  if (isMobile) {
+    return content;
+  }
+
+  return (
+    <div className="flex flex-row gap-8">
+      <AccountContactListFilter />
+      {content}
     </div>
   );
 };
@@ -104,10 +117,18 @@ const ContactListItem = ({ contact }: { contact: AccountContact }) => {
 
 const ContactListActions = () => {
   const isMobile = useIsMobile();
+  if (isMobile) {
+    return (
+      <TopToolbar className="w-full">
+        <AccountContactListFilter />
+        <SortButton fields={["first_name", "last_name", "created_at"]} />
+      </TopToolbar>
+    );
+  }
   return (
     <TopToolbar>
       <SortButton fields={["first_name", "last_name", "created_at"]} />
-      {!isMobile && <CreateButton />}
+      <CreateButton />
     </TopToolbar>
   );
 };

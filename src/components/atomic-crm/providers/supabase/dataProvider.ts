@@ -307,6 +307,30 @@ const lifeCycleCallbacks: ResourceCallbacks[] = [
       return applyFullTextSearch(["name", "category", "description"])(params);
     },
   },
+  {
+    resource: "accounts",
+    beforeGetList: async (params) => {
+      return applyFullTextSearch(["name", "account_number"])(params);
+    },
+  },
+  {
+    resource: "account_contacts",
+    beforeGetList: async (params) => {
+      return applyFullTextSearch(["first_name", "last_name"])(params);
+    },
+  },
+  {
+    resource: "account_contracts",
+    beforeGetList: async (params) => {
+      return applyFullTextSearch(["contract_number", "case_type"])(params);
+    },
+  },
+  {
+    resource: "tasks",
+    beforeGetList: async (params) => {
+      return applyFullTextSearch(["text", "type"])(params);
+    },
+  },
 ];
 
 export const dataProvider = withLifecycleCallbacks(

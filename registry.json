@@ -364,6 +364,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/payments/PaymentCreateSheet.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/payments/AddPayment.tsx",
           "type": "registry:component"
         },
@@ -704,6 +708,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/contracts/MobileContractsList.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/contracts/ContractShow.tsx",
           "type": "registry:component"
         },
@@ -725,6 +733,10 @@
         },
         {
           "path": "src/components/atomic-crm/contracts/ContractEdit.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/contracts/ContractCreateSheet.tsx",
           "type": "registry:component"
         },
         {
@@ -924,7 +936,15 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/accounts/MobileAccountsList.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/accounts/AddActivity.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/accounts/ActivityCreateSheet.tsx",
           "type": "registry:component"
         },
         {
@@ -949,6 +969,10 @@
         },
         {
           "path": "src/components/atomic-crm/accounts/AccountEdit.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/accounts/AccountCreateSheet.tsx",
           "type": "registry:component"
         },
         {
@@ -992,7 +1016,15 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/account-contacts/ContactEditSheet.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/account-contacts/ContactEdit.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/account-contacts/ContactCreateSheet.tsx",
           "type": "registry:component"
         },
         {

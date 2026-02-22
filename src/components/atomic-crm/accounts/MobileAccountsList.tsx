@@ -1,9 +1,11 @@
 import { InfiniteListBase } from "ra-core";
 import { Card } from "@/components/ui/card";
+import { SortButton } from "@/components/admin/sort-button";
 
 import MobileHeader from "../layout/MobileHeader";
 import { MobileContent } from "../layout/MobileContent";
 import { AccountListContent } from "./AccountListContent";
+import { AccountListFilter } from "./AccountListFilter";
 
 export const MobileAccountsList = () => (
   <InfiniteListBase
@@ -11,7 +13,8 @@ export const MobileAccountsList = () => (
     filter={{ "archived@neq": true }}
   >
     <MobileHeader>
-      <h1 className="text-xl font-semibold">Accounts</h1>
+      <AccountListFilter />
+      <SortButton fields={["name", "account_number", "updated_at", "date_opened"]} />
     </MobileHeader>
     <MobileContent>
       <Card className="py-0">
