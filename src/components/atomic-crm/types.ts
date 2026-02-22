@@ -8,6 +8,8 @@ import type {
   CONTACT_NOTE_CREATED,
   DEAL_CREATED,
   DEAL_NOTE_CREATED,
+  PAYMENT_RECEIVED,
+  TASK_COMPLETED,
 } from "./consts";
 
 export type SignUpData = {
@@ -204,6 +206,22 @@ export type ActivityAccountActivityCreated = {
   date: string;
 } & Pick<RaRecord, "id">;
 
+export type ActivityTaskCompleted = {
+  type: typeof TASK_COMPLETED;
+  account_id?: Identifier | null;
+  user_id?: Identifier;
+  task: Task;
+  date: string;
+} & Pick<RaRecord, "id">;
+
+export type ActivityPaymentReceived = {
+  type: typeof PAYMENT_RECEIVED;
+  account_id: Identifier;
+  user_id?: Identifier | null;
+  payment: AccountPayment;
+  date: string;
+} & Pick<RaRecord, "id">;
+
 export type Activity = RaRecord &
   (
     | ActivityCompanyCreated
@@ -212,6 +230,8 @@ export type Activity = RaRecord &
     | ActivityDealCreated
     | ActivityDealNoteCreated
     | ActivityAccountActivityCreated
+    | ActivityTaskCompleted
+    | ActivityPaymentReceived
   );
 
 export interface RAFile {

@@ -7,15 +7,19 @@ import {
   CONTACT_NOTE_CREATED,
   DEAL_CREATED,
   DEAL_NOTE_CREATED,
+  PAYMENT_RECEIVED,
+  TASK_COMPLETED,
 } from "../../consts";
 import type {
   AccountActivity,
+  AccountPayment,
   Activity,
   Company,
   Contact,
   ContactNote,
   Deal,
   DealNote,
+  Task,
 } from "../../types";
 
 // FIXME: Requires 5 large queries to get the latest activities.
@@ -39,16 +43,18 @@ export async function getActivityLog(
     filter["user_id@in"] = `(${salesId})`;
   }
 
-  const [newCompanies, newContactsAndNotes, newDealsAndNotes, newAccountActivities] =
+  const [newCompanies, newContactsAndNotes, newDealsAndNotes, newAccountActivities, completedTasks, paymentsReceived] =
     await Promise.all([
       getNewCompanies(dataProvider, companyFilter),
       getNewContactsAndNotes(dataProvider, filter),
       getNewDealsAndNotes(dataProvider, filter),
       // Only include account activities in the global dashboard view (not company-scoped views)
       !companyId && !salesId ? getNewAccountActivities(dataProvider) : Promise.resolve([]),
+      !companyId && !salesId ? getCompletedTasks(dataProvider) : Promise.resolve([]),
+      !companyId && !salesId ? getPaymentsReceived(dataProvider) : Promise.resolve([]),
     ]);
   return (
-    [...newCompanies, ...newContactsAndNotes, ...newDealsAndNotes, ...newAccountActivities]
+    [...newCompanies, ...newContactsAndNotes, ...newDealsAndNotes, ...newAccountActivities, ...completedTasks, ...paymentsReceived]
       // sort by date desc
       .sort(
         (a, b) =>
@@ -199,6 +205,55 @@ async function getNewAccountActivities(
       user_id: accountActivity.user_id,
       accountActivity,
       date: accountActivity.date || accountActivity.created_at,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+async function getCompletedTasks(
+  dataProvider: DataProvider,
+): Promise<Activity[]> {
+  try {
+    const { data: tasks } = await dataProvider.getList<Task>("tasks", {
+      filter: { "done_date@not.is": null },
+      pagination: { page: 1, perPage: 250 },
+      sort: { field: "done_date", order: "DESC" },
+    });
+    return tasks
+      .filter((task) => task.done_date)
+      .map((task) => ({
+        id: `task.${task.id}.completed`,
+        type: TASK_COMPLETED,
+        account_id: task.account_id,
+        user_id: task.user_id,
+        task,
+        date: task.done_date as string,
+      }));
+  } catch {
+    return [];
+  }
+}
+
+async function getPaymentsReceived(
+  dataProvider: DataProvider,
+): Promise<Activity[]> {
+  try {
+    const { data: payments } = await dataProvider.getList<AccountPayment>(
+      "account_payments",
+      {
+        filter: {},
+        pagination: { page: 1, perPage: 250 },
+        sort: { field: "date_received", order: "DESC" },
+      },
+    );
+    return payments.map((payment) => ({
+      id: `payment.${payment.id}.received`,
+      type: PAYMENT_RECEIVED,
+      account_id: payment.account_id,
+      user_id: payment.user_id,
+      payment,
+      date: payment.date_received || payment.created_at,
     }));
   } catch {
     return [];

@@ -4,3 +4,5 @@ export const CONTACT_NOTE_CREATED = "contactNote.created" as const;
 export const DEAL_CREATED = "deal.created" as const;
 export const DEAL_NOTE_CREATED = "dealNote.created" as const;
 export const ACCOUNT_ACTIVITY_CREATED = "accountActivity.created" as const;
+export const TASK_COMPLETED = "task.completed" as const;
+export const PAYMENT_RECEIVED = "payment.received" as const;

@@ -8,6 +8,8 @@ import {
   CONTACT_NOTE_CREATED,
   DEAL_CREATED,
   DEAL_NOTE_CREATED,
+  PAYMENT_RECEIVED,
+  TASK_COMPLETED,
 } from "../consts";
 import type { Activity } from "../types";
 import { ActivityLogAccountActivityCreated } from "./ActivityLogAccountActivityCreated";
@@ -16,6 +18,8 @@ import { ActivityLogContactCreated } from "./ActivityLogContactCreated";
 import { ActivityLogContactNoteCreated } from "./ActivityLogContactNoteCreated";
 import { ActivityLogDealCreated } from "./ActivityLogDealCreated";
 import { ActivityLogDealNoteCreated } from "./ActivityLogDealNoteCreated";
+import { ActivityLogPaymentReceived } from "./ActivityLogPaymentReceived";
+import { ActivityLogTaskCompleted } from "./ActivityLogTaskCompleted";
 
 type ActivityLogIteratorProps = {
   activities: Activity[];
@@ -80,6 +84,14 @@ function ActivityItem({ activity }: { activity: Activity }) {
 
   if (activity.type === ACCOUNT_ACTIVITY_CREATED) {
     return <ActivityLogAccountActivityCreated activity={activity} />;
+  }
+
+  if (activity.type === TASK_COMPLETED) {
+    return <ActivityLogTaskCompleted activity={activity} />;
+  }
+
+  if (activity.type === PAYMENT_RECEIVED) {
+    return <ActivityLogPaymentReceived activity={activity} />;
   }
 
   return null;
