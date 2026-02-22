@@ -93,7 +93,7 @@ export const DealsChart = memo(() => {
           Upcoming Deal Revenue
         </h2>
       </div>
-      <div className="h-[400px]">
+      <div className="h-[220px] md:h-[400px]">
         <ResponsiveBar
           data={months}
           indexBy="date"

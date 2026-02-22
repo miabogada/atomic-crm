@@ -456,6 +456,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/misc/statusColors.ts",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/misc/isLinkedInUrl.ts",
           "type": "registry:component"
         },
@@ -961,6 +965,10 @@
         },
         {
           "path": "src/components/atomic-crm/accounts/AccountAside.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/accounts/AccountActivityEditSheet.tsx",
           "type": "registry:component"
         },
         {

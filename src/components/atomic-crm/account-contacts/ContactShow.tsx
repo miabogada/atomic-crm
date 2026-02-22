@@ -1,12 +1,17 @@
 import { ShowBase, useShowContext, useGetOne } from "ra-core";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { EditButton } from "@/components/admin/edit-button";
 import { DeleteButton } from "@/components/admin";
+import { ChevronLeft, Pencil } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 import { AsideSection } from "../misc/AsideSection";
 import { accountCategoryColors } from "../misc/statusColors";
+import { ContactEditSheet } from "./ContactEditSheet";
 import type { Account, AccountContact, ContactType } from "../types";
 
 export const ContactShow = () => {
@@ -24,11 +29,42 @@ const ContactShowContent = () => {
     { id: record?.contact_type_id! },
     { enabled: !!record?.contact_type_id },
   );
+  const isMobile = useIsMobile();
+  const navigate = useNavigate();
+  const [editOpen, setEditOpen] = useState(false);
 
   if (isPending || !record) return null;
 
   return (
-    <div className="mt-2 mb-2 flex gap-8">
+    <div className="mt-2 mb-2 flex flex-col gap-4 md:flex-row md:gap-8">
+      {isMobile && (
+        <>
+          <ContactEditSheet
+            open={editOpen}
+            onOpenChange={setEditOpen}
+            contactId={record.id}
+          />
+          <div className="flex items-center justify-between">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="-ml-2"
+              onClick={() => navigate("/account_contacts")}
+            >
+              <ChevronLeft className="size-4" />
+              Contacts
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setEditOpen(true)}
+            >
+              <Pencil className="size-3.5" />
+              Edit
+            </Button>
+          </div>
+        </>
+      )}
       <div className="flex-1">
         <Card>
           <CardContent>
@@ -91,14 +127,14 @@ const ContactAside = () => {
   if (!record) return null;
 
   return (
-    <div className="hidden sm:block w-64 min-w-64 text-sm">
+    <div className="hidden md:block w-64 min-w-64 text-sm">
       <div className="mb-4 -ml-1">
         <EditButton label="Edit Contact" />
       </div>
 
       <AccountInfo accountId={record.account_id} />
 
-      <div className="mt-6 pt-6 border-t hidden sm:flex flex-col gap-2 items-start">
+      <div className="mt-6 pt-6 border-t flex flex-col gap-2 items-start">
         <DeleteButton
           className="h-6 cursor-pointer hover:bg-destructive/10! text-destructive! border-destructive! focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40"
           size="sm"

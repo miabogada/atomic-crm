@@ -59,9 +59,16 @@ import { i18nProvider } from "./i18nProvider";
 import { StartPage } from "../login/StartPage.tsx";
 import { useIsMobile } from "@/hooks/use-mobile.ts";
 import { MobileTasksList } from "../tasks/MobileTasksList.tsx";
-import { ContactListMobile } from "../contacts/ContactList.tsx";
-import { ContactShow } from "../contacts/ContactShow.tsx";
-import { CompanyShow } from "../companies/CompanyShow.tsx";
+import { MobileAccountsList } from "../accounts/MobileAccountsList.tsx";
+import { AccountShow } from "../accounts/AccountShow.tsx";
+import { AccountCreate } from "../accounts/AccountCreate.tsx";
+import { ContactList as MobileContactsList } from "../account-contacts/ContactList.tsx";
+import { ContactShow as AccountContactShow } from "../account-contacts/ContactShow.tsx";
+import { ContactCreate as AccountContactCreate } from "../account-contacts/ContactCreate.tsx";
+import { ContactEdit as AccountContactEdit } from "../account-contacts/ContactEdit.tsx";
+import { MobileContractsList } from "../contracts/MobileContractsList.tsx";
+import { ContractShow } from "../contracts/ContractShow.tsx";
+import { ContractCreate } from "../contracts/ContractCreate.tsx";
 import { NoteShowPage } from "../notes/NoteShowPage.tsx";
 
 export type CRMProps = {
@@ -265,16 +272,24 @@ const MobileAdmin = (props: CoreAdminProps) => {
           />
           <Route path={OAuthConsentPage.path} element={<OAuthConsentPage />} />
         </CustomRoutes>
+        <Resource name="accounts" list={MobileAccountsList} show={AccountShow} create={AccountCreate} recordRepresentation={accounts.recordRepresentation} />
         <Resource
-          name="contacts"
-          list={ContactListMobile}
-          show={ContactShow}
-          recordRepresentation={contacts.recordRepresentation}
+          name="account_contacts"
+          list={MobileContactsList}
+          show={AccountContactShow}
+          create={AccountContactCreate}
+          edit={AccountContactEdit}
+          recordRepresentation={accountContactViews.recordRepresentation}
         >
           <Route path=":id/notes/:noteId" element={<NoteShowPage />} />
         </Resource>
-        <Resource name="companies" show={CompanyShow} />
+        <Resource name="account_contracts" list={MobileContractsList} show={ContractShow} create={ContractCreate} recordRepresentation={contractViews.recordRepresentation} />
+        <Resource name="account_payments" />
+        <Resource name="account_activities" />
+        <Resource name="contact_types" />
         <Resource name="tasks" list={MobileTasksList} />
+        <Resource name="users" />
+        <Resource name="tags" />
       </Admin>
     </PersistQueryClientProvider>
   );

@@ -18,13 +18,13 @@ export const NoteAttachments = ({ note }: { note: ContactNote | DealNote }) => {
   return (
     <div className="flex flex-col">
       {imageAttachments.length > 0 && (
-        <div className="grid grid-cols-4 gap-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 md:gap-4">
           {imageAttachments.map((attachment: AttachmentNote, index: number) => (
             <div key={index}>
               <img
                 src={attachment.src}
                 alt={attachment.title}
-                className="w-[200px] h-[100px] object-cover cursor-pointer object-left border border-border"
+                className="w-full h-[80px] md:h-[100px] object-cover cursor-pointer object-left border border-border rounded"
                 onClick={(e) => {
                   e.stopPropagation();
                   window.open(attachment.src, "_blank");

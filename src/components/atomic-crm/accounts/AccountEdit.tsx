@@ -144,7 +144,7 @@ const AccountEditContent = ({
     : {};
 
   return (
-    <div className="mt-2 flex gap-8">
+    <div className="mt-2 flex flex-col gap-4 md:flex-row md:gap-8">
       <Form
         className="flex flex-1 flex-col gap-4"
         defaultValues={billingDefaults}

@@ -28,7 +28,7 @@ const AccountShowContent = () => {
   if (isPending || !record) return null;
 
   return (
-    <div className="mt-2 mb-2 flex gap-8">
+    <div className="mt-2 mb-2 flex flex-col gap-4 md:flex-row md:gap-8">
       <div className="flex-1">
         <Card>
           <CardContent>
@@ -81,7 +81,8 @@ const AccountShowContent = () => {
             )}
 
             <Tabs defaultValue="contacts" className="w-full">
-              <TabsList className="grid w-full grid-cols-5 h-10">
+              <div className="w-full overflow-x-auto">
+              <TabsList className="flex h-10 w-max min-w-full">
                 <TabsTrigger value="contacts">
                   <ReferenceManyCount
                     target="account_id"
@@ -119,6 +120,7 @@ const AccountShowContent = () => {
                   Payments
                 </TabsTrigger>
               </TabsList>
+              </div>
 
               <TabsContent value="contacts" className="mt-4">
                 <ReferenceManyField

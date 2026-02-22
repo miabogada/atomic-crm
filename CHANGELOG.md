@@ -1,5 +1,44 @@
 # Changelog
 
+## 2026-02-21 — Mobile (phone viewport) support
+
+Comprehensive responsive design pass to make the app fully usable on phone viewports. The app now maintains two separate React component trees: `DesktopAdmin` (≥768px) and `MobileAdmin` (<768px), each with appropriate resource registrations and layouts.
+
+### Navigation & layout
+- **`MobileNavigation`** — Replaced generic "Contacts/Contracts" tabs with **Home | Accounts | [FAB] | Tasks | More** bottom nav. "More" dropdown contains Contacts, Contracts, theme toggle, and logout. FAB is context-sensitive: creates an Account on the accounts list, Contact on the contacts list, Contract on the contracts list, Task on the tasks list, and a picker (Task / Activity / Payment) on a contract detail page.
+- **`MobileNavigation`** — Nav bar hides entirely on edit and create form routes so `FormToolbar` has unobstructed access to the bottom of the screen.
+- **`Header`** — Desktop nav tab padding reduced (`px-3 lg:px-6`) to prevent overflow at the 768px breakpoint.
+- **`MobileLayout`** / **`MobileContent`** — No changes needed; existing `pt-18 pb-20` spacing was already correct.
+
+### New mobile list pages
+- **`MobileAccountsList`** — `InfiniteListBase` + `MobileHeader` + `AccountListContent`; replaces full desktop `AccountList` on mobile.
+- **`MobileContractsList`** — Same pattern for contracts.
+- **`ContactList`** — Shared between desktop and mobile; hides the `+Create` button on mobile (FAB handles creation).
+
+### Sheet-based create & edit forms (replaces full-page routes on mobile)
+All create and edit actions on mobile now use bottom-sheet modals matching the existing `TaskCreateSheet` / `TaskEditSheet` UX (title + X close, scrollable content, footer actions):
+- **`AccountCreateSheet`** — Handles async `generate_account_number` RPC and secondary billing-contact creation.
+- **`ContactCreateSheet`** / **`ContractCreateSheet`** — Thin wrappers around `CreateSheet`.
+- **`ContactEditSheet`** — Uses `EditSheet` with `ContactInputs`; Delete redirects to contact list.
+- **`ActivityCreateSheet`** — Inline form (subject, details, date, type) for creating contract activities.
+- **`PaymentCreateSheet`** — Uses `AccountPaymentInputs` for recording payments from a contract detail page.
+
+### Show page improvements
+- **`AccountShow`** / **`ContactShow`** / **`ContractShow`** — Outer wrapper changed from `flex gap-8` to `flex flex-col gap-4 md:flex-row md:gap-8` so content stacks vertically on mobile.
+- **`AccountAside`** / **`ContactAside`** — `hidden sm:block` → `hidden md:block` to align with the flex-row breakpoint.
+- **`AccountShow`** tabs — Wrapped in `overflow-x-auto` with `flex w-max min-w-full` so tabs scroll horizontally instead of wrapping.
+- **`ContactShow`** — Mobile-only action bar added: `← Contacts` back button, `Edit` button (opens `ContactEditSheet`). Desktop aside unchanged.
+
+### Dashboard
+- **`MobileDashboard`** — Removed onboarding stepper (was querying the unused `contacts` table, always showing zero). Now always renders the activity log dashboard.
+- **`DealsChart`** — Height capped at `h-[220px]` on mobile, `h-[400px]` on desktop.
+- **`DashboardStepper`** — Gap values reduced on mobile (`gap-6 md:gap-12`).
+
+### Other fixes
+- **`NoteAttachments`** — Attachment grid changed from fixed 4-column / `w-[200px]` to responsive `grid-cols-2 sm:grid-cols-3 md:grid-cols-4` with `w-full`.
+- **`FormToolbar`** — Restored to `sticky bottom-0`; the mobile nav hides itself on form routes so there is no overlap.
+- **`CRM.tsx` `MobileAdmin`** — Registered `AccountShow`, `AccountCreate`, `ContactShow`, `ContactCreate`, `ContactEdit`, `ContractShow`, `ContractCreate` with correct resource props and nested note routes.
+
 ## 2026-02-20 — Contract number alpha suffix generation
 
 Implements the legacy Outlook VBScript contract numbering scheme: `{account_number}{A|B|C...}` where the alpha suffix increments for each additional contract on the same account (e.g. `26022001A`, `26022001B`).

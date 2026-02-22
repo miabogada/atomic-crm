@@ -50,12 +50,12 @@ export const DashboardStepper = ({
                 <div className="text-right text-sm">{step}/3 done</div>
               </div>
             </div>
-            <div className="flex flex-col gap-12">
-              <div className="flex gap-8 items-center">
+            <div className="flex flex-col gap-6 md:gap-12">
+              <div className="flex gap-4 md:gap-8 items-center">
                 <CheckCircle className="text-green-600 w-5 h-5 shrink-0" />
                 <h4 className="font-bold">Install Atomic CRM</h4>
               </div>
-              <div className="flex gap-8 items-start">
+              <div className="flex gap-4 md:gap-8 items-start">
                 {step > 1 ? (
                   <CheckCircle className="text-green-600 w-5 h-5 mt-1 shrink-0" />
                 ) : (
@@ -65,7 +65,7 @@ export const DashboardStepper = ({
                 <div className="flex flex-col gap-4">
                   <h4 className="font-bold">Add your first contact</h4>
 
-                  <div className="flex gap-8">
+                  <div className="flex gap-4">
                     {isMobile ? (
                       <Button
                         onClick={() => setContactCreateOpen(true)}
@@ -84,7 +84,7 @@ export const DashboardStepper = ({
                   </div>
                 </div>
               </div>
-              <div className="flex gap-8 items-start">
+              <div className="flex gap-4 md:gap-8 items-start">
                 <Circle className="text-muted-foreground w-5 h-5 mt-1 shrink-0" />
                 <div className="flex flex-col gap-4">
                   <h4 className="font-bold">Add your first note</h4>

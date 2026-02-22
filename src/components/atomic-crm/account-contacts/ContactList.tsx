@@ -2,6 +2,7 @@ import { RecordContextProvider, useListContext } from "ra-core";
 import { CreateButton } from "@/components/admin/create-button";
 import { List } from "@/components/admin/list";
 import { SortButton } from "@/components/admin/sort-button";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { ReferenceField } from "@/components/admin/reference-field";
 import { TextField } from "@/components/admin/text-field";
 import { Card } from "@/components/ui/card";
@@ -101,9 +102,12 @@ const ContactListItem = ({ contact }: { contact: AccountContact }) => {
   );
 };
 
-const ContactListActions = () => (
-  <TopToolbar>
-    <SortButton fields={["first_name", "last_name", "created_at"]} />
-    <CreateButton />
-  </TopToolbar>
-);
+const ContactListActions = () => {
+  const isMobile = useIsMobile();
+  return (
+    <TopToolbar>
+      <SortButton fields={["first_name", "last_name", "created_at"]} />
+      {!isMobile && <CreateButton />}
+    </TopToolbar>
+  );
+};
