@@ -63,6 +63,9 @@ const dataProviderWithCustomMethods = {
     if (resource === "accounts") {
       return baseDataProvider.getList("accounts_summary", params);
     }
+    if (resource === "contract_payment_schedule") {
+      return baseDataProvider.getList("contract_payment_schedule_view", params);
+    }
 
     return baseDataProvider.getList(resource, params);
   },
@@ -75,6 +78,9 @@ const dataProviderWithCustomMethods = {
     }
     if (resource === "accounts") {
       return baseDataProvider.getOne("accounts_summary", params);
+    }
+    if (resource === "contract_payment_schedule") {
+      return baseDataProvider.getOne("contract_payment_schedule_view", params);
     }
 
     return baseDataProvider.getOne(resource, params);

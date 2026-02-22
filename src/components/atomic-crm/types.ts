@@ -318,6 +318,22 @@ export type AccountContract = {
 } & Pick<RaRecord, "id">;
 
 
+export type ContractPaymentSchedule = {
+  contract_id: Identifier;
+  account_id: Identifier;
+  payment_number: number;   // 0 = retainer, 1..N = installments
+  due_date: string;         // YYYY-MM-DD
+  amount: number;
+  payment_id?: Identifier | null;
+  created_at: string;
+  // Denormalized from view / FakeRest generator
+  contract_number?: string;
+  case_type?: string;
+  account_name?: string;
+  account_number?: string;
+  status?: 'upcoming' | 'due' | 'late' | 'paid';
+} & Pick<RaRecord, "id">;
+
 export type AccountPayment = {
   account_id: Identifier;
   contract_id?: Identifier | null;

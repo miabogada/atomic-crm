@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { formatRelative } from "date-fns";
 import {
+  CreateBase,
+  Form,
   ShowBase,
   useShowContext,
   useRecordContext,
@@ -8,10 +10,26 @@ import {
   useGetList,
   useGetIdentity,
   useUpdate,
+  useNotify,
+  useRefresh,
 } from "ra-core";
+import { supabase } from "../providers/supabase/supabase";
 import { Link } from "react-router";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import {
   Select,
   SelectContent,
@@ -21,11 +39,13 @@ import {
 } from "@/components/ui/select";
 import { EditButton } from "@/components/admin/edit-button";
 import { DeleteButton } from "@/components/admin";
+import { SaveButton } from "@/components/admin/form";
 
 import { AsideSection } from "../misc/AsideSection";
 import { useConfigurationContext } from "../root/ConfigurationContext";
 import { activityTypeColors, accountCategoryColors, contractStatusColors } from "../misc/statusColors";
 import { AddPayment } from "../payments/AddPayment";
+import { AccountPaymentInputs } from "../payments/AccountPaymentInputs";
 import { AddTask } from "../tasks/AddTask";
 import { Task } from "../tasks/Task";
 import { AddActivity } from "../accounts/AddActivity";
@@ -36,12 +56,28 @@ import type {
   AccountActivity,
   AccountContract,
   AccountPayment,
+  ContractPaymentSchedule,
   Sale,
   Task as TaskType,
 } from "../types";
 
 const fmt = (n: number) =>
-  n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  n.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
+const scheduleStatus = (row: ContractPaymentSchedule): 'paid' | 'late' | 'due' | 'upcoming' => {
+  if (row.payment_id != null) return 'paid';
+  const today = new Date().toISOString().split('T')[0];
+  if (row.due_date < today) return 'late';
+  if (row.due_date === today) return 'due';
+  return 'upcoming';
+};
+
+const scheduleStatusStyle: Record<string, string> = {
+  paid:     'text-green-700 bg-green-50 border-green-200',
+  late:     'text-red-700 bg-red-50 border-red-200',
+  due:      'text-amber-700 bg-amber-50 border-amber-200',
+  upcoming: 'text-muted-foreground bg-muted/40 border-border',
+};
 
 
 export const ContractShow = () => {
@@ -155,6 +191,225 @@ const ContractShowContent = () => {
   );
 };
 
+const ScheduleTable = ({
+  schedule,
+  payments,
+  accountId,
+  contractId,
+}: {
+  schedule: ContractPaymentSchedule[];
+  payments?: AccountPayment[];
+  accountId: any;
+  contractId: any;
+}) => {
+  const [update] = useUpdate();
+  const refresh = useRefresh();
+  const notify = useNotify();
+  const { identity } = useGetIdentity();
+  const [pendingLinkRow, setPendingLinkRow] = useState<ContractPaymentSchedule | null>(null);
+
+  const paymentById = new Map((payments ?? []).map((p) => [Number(p.id), p]));
+  const linkedPaymentIds = new Set(
+    schedule.filter((r) => r.payment_id != null).map((r) => Number(r.payment_id)),
+  );
+  const availablePayments = (payments ?? []).filter(
+    (p) => !linkedPaymentIds.has(Number(p.id)),
+  );
+  const hasPaid = schedule.some((r) => r.payment_id != null);
+
+  const handleLink = (scheduleRowId: number, paymentId: string) => {
+    const scheduleRow = schedule.find((r) => Number(r.id) === scheduleRowId)!;
+    update(
+      "contract_payment_schedule",
+      {
+        id: scheduleRowId,
+        data: { payment_id: Number(paymentId) },
+        previousData: scheduleRow,
+      },
+      {
+        onSuccess: () => { notify("Payment linked", { type: "success" }); refresh(); },
+        onError: () => notify("Failed to link payment", { type: "error" }),
+      },
+    );
+  };
+
+  const handleUnlink = (scheduleRow: ContractPaymentSchedule) => {
+    update(
+      "contract_payment_schedule",
+      {
+        id: Number(scheduleRow.id),
+        data: { payment_id: null },
+        previousData: scheduleRow,
+      },
+      {
+        onSuccess: () => { notify("Payment unlinked", { type: "success" }); refresh(); },
+        onError: () => notify("Failed to unlink payment", { type: "error" }),
+      },
+    );
+  };
+
+  const handleCreateSuccess = (newPayment: AccountPayment) => {
+    if (!pendingLinkRow) return;
+    const row = pendingLinkRow;
+    update(
+      "contract_payment_schedule",
+      {
+        id: Number(row.id),
+        data: { payment_id: Number(newPayment.id) },
+        previousData: row,
+      },
+      {
+        onSuccess: () => {
+          notify("Payment created and linked", { type: "success" });
+          setPendingLinkRow(null);
+          refresh();
+        },
+        onError: () => {
+          notify("Payment created but could not auto-link", { type: "warning" });
+          setPendingLinkRow(null);
+          refresh();
+        },
+      },
+    );
+  };
+
+  return (
+    <>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b text-muted-foreground text-xs">
+              <th className="text-left py-1 pr-3 font-medium">#</th>
+              <th className="text-left py-1 pr-3 font-medium">Due Date</th>
+              <th className="text-right py-1 pr-3 font-medium">Amount</th>
+              <th className="text-left py-1 pr-3 font-medium">Status</th>
+              {hasPaid && <th className="text-left py-1 pr-3 font-medium">Paid Date</th>}
+              {hasPaid && <th className="text-left py-1 pr-3 font-medium">Method</th>}
+              {hasPaid && <th className="text-left py-1 font-medium">Ref #</th>}
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            {schedule.map((row) => {
+              const st = scheduleStatus(row);
+              const pmt = row.payment_id != null
+                ? paymentById.get(Number(row.payment_id))
+                : undefined;
+              return (
+                <tr key={row.id} className="hover:bg-muted/30">
+                  <td className="py-1.5 pr-3 text-muted-foreground">
+                    {row.payment_number === 0 ? 'R' : row.payment_number}
+                  </td>
+                  <td className="py-1.5 pr-3">{row.due_date}</td>
+                  <td className="py-1.5 pr-3 text-right font-mono">
+                    ${fmt(Number(row.amount))}
+                  </td>
+                  <td className="py-1.5 pr-3">
+                    {row.payment_id == null ? (
+                      <Select onValueChange={(val) => {
+                        if (val === "__new__") {
+                          setPendingLinkRow(row);
+                        } else {
+                          handleLink(Number(row.id), val);
+                        }
+                      }}>
+                        <SelectTrigger className="h-6 text-xs w-36 border-dashed">
+                          <SelectValue placeholder="Link payment…" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availablePayments.map((p) => (
+                            <SelectItem key={p.id} value={String(p.id)}>
+                              {p.date_received} · ${fmt(Number(p.amount))} · {p.payment_method}
+                              {p.reference_number ? ` · #${p.reference_number}` : ''}
+                            </SelectItem>
+                          ))}
+                          <SelectItem value="__new__" className="text-primary font-medium">
+                            + Create new payment…
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5">
+                        <span className={`inline-block text-xs px-1.5 py-0.5 rounded border ${scheduleStatusStyle[st]}`}>
+                          Paid
+                        </span>
+                        <button
+                          onClick={() => handleUnlink(row)}
+                          className="text-xs text-muted-foreground hover:text-destructive"
+                          title="Unlink payment"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    )}
+                  </td>
+                  {hasPaid && (
+                    <td className="py-1.5 pr-3 text-muted-foreground">
+                      {pmt?.date_received ?? '—'}
+                    </td>
+                  )}
+                  {hasPaid && (
+                    <td className="py-1.5 pr-3 text-muted-foreground">
+                      {pmt?.payment_method ?? '—'}
+                    </td>
+                  )}
+                  {hasPaid && (
+                    <td className="py-1.5 text-muted-foreground">
+                      {pmt?.reference_number ?? '—'}
+                    </td>
+                  )}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {pendingLinkRow && identity && (
+        <CreateBase
+          resource="account_payments"
+          record={{
+            account_id: accountId,
+            contract_id: contractId ?? null,
+            user_id: identity.id,
+            amount: pendingLinkRow.amount,
+            date_received: pendingLinkRow.due_date,
+          }}
+          transform={(data: any) => ({
+            ...data,
+            account_id: accountId,
+            contract_id: data.contract_id || null,
+            user_id: identity.id,
+          })}
+          mutationOptions={{ onSuccess: handleCreateSuccess }}
+        >
+          <Dialog
+            open={!!pendingLinkRow}
+            onOpenChange={(open) => { if (!open) setPendingLinkRow(null); }}
+          >
+            <DialogContent className="lg:max-w-xl overflow-y-auto max-h-9/10 top-1/20 translate-y-0">
+              <Form className="flex flex-col gap-4">
+                <DialogHeader>
+                  <DialogTitle>
+                    Add payment ·{" "}
+                    {pendingLinkRow.payment_number === 0
+                      ? "Retainer"
+                      : `Payment ${pendingLinkRow.payment_number}`}
+                    {" "}(${fmt(Number(pendingLinkRow.amount))} due {pendingLinkRow.due_date})
+                  </DialogTitle>
+                </DialogHeader>
+                <AccountPaymentInputs />
+                <DialogFooter className="w-full justify-end">
+                  <SaveButton />
+                </DialogFooter>
+              </Form>
+            </DialogContent>
+          </Dialog>
+        </CreateBase>
+      )}
+    </>
+  );
+};
+
 const ContractLinkedItems = ({
   record,
   payments,
@@ -171,6 +426,16 @@ const ContractLinkedItems = ({
     { enabled: !!identity },
   );
   const isAdmin = !!currentUser?.administrator;
+
+  const { data: schedule } = useGetList<ContractPaymentSchedule>(
+    "contract_payment_schedule",
+    {
+      filter: { "contract_id@eq": record.id },
+      pagination: { page: 1, perPage: 100 },
+      sort: { field: "payment_number", order: "ASC" },
+    },
+    { enabled: !!record.id },
+  );
 
   const { data: tasks } = useGetList<TaskType>("tasks", {
     filter: {
@@ -195,24 +460,60 @@ const ContractLinkedItems = ({
 
   const now = Date.now();
 
-  if (!tasks?.length && !activities?.length && !payments?.length) return null;
+  if (!schedule?.length && !tasks?.length && !activities?.length && !payments?.length) return null;
 
   return (
     <div className="mt-4 flex flex-col gap-4">
+      {schedule && schedule.length > 0 && (
+        <Card>
+          <CardContent className="p-0">
+            <Accordion type="single" collapsible>
+              <AccordionItem value="schedule" className="border-0">
+                <AccordionTrigger className="px-6 py-4 text-lg font-semibold hover:no-underline">
+                  Payment Schedule
+                  <span className="ml-2 text-sm font-normal text-muted-foreground">
+                    ({schedule.length} item{schedule.length !== 1 ? 's' : ''})
+                  </span>
+                </AccordionTrigger>
+                <AccordionContent className="px-6 pb-4">
+                  <ScheduleTable
+                    schedule={schedule}
+                    payments={payments}
+                    accountId={record.account_id}
+                    contractId={record.id}
+                  />
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </CardContent>
+        </Card>
+      )}
+
       {payments && payments.length > 0 && (
         <Card>
-          <CardContent>
-            <h6 className="text-lg font-semibold mb-2">Payments</h6>
-            <div className="divide-y">
-              {payments.map((payment) => (
-                <PaymentRow
-                  key={payment.id}
-                  payment={payment}
-                  isAdmin={isAdmin}
-                  onEdit={setEditingPaymentId}
-                />
-              ))}
-            </div>
+          <CardContent className="p-0">
+            <Accordion type="single" collapsible>
+              <AccordionItem value="payments" className="border-0">
+                <AccordionTrigger className="px-6 py-4 text-lg font-semibold hover:no-underline">
+                  Payments
+                  <span className="ml-2 text-sm font-normal text-muted-foreground">
+                    ({payments.length} received)
+                  </span>
+                </AccordionTrigger>
+                <AccordionContent className="px-6 pb-4">
+                  <div className="divide-y">
+                    {payments.map((payment) => (
+                      <PaymentRow
+                        key={payment.id}
+                        payment={payment}
+                        isAdmin={isAdmin}
+                        onEdit={setEditingPaymentId}
+                      />
+                    ))}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </CardContent>
         </Card>
       )}
@@ -322,8 +623,47 @@ const ContractStatusSelect = () => {
   );
 };
 
+const RegenerateScheduleButton = ({ contractId }: { contractId: any }) => {
+  const notify = useNotify();
+  const refresh = useRefresh();
+  const [loading, setLoading] = useState(false);
+
+  const handleRegenerate = async () => {
+    setLoading(true);
+    try {
+      const { error } = await supabase.rpc("generate_payment_schedule", {
+        p_contract_id: contractId,
+      });
+      if (error) throw error;
+      notify("Payment schedule regenerated", { type: "success" });
+      refresh();
+    } catch {
+      notify("Could not regenerate schedule", { type: "error" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleRegenerate}
+      disabled={loading}
+      className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 disabled:opacity-50 text-left"
+    >
+      {loading ? "Regenerating…" : "Regenerate schedule"}
+    </button>
+  );
+};
+
 export const ContractAside = () => {
   const record = useRecordContext<AccountContract>();
+  const { identity } = useGetIdentity();
+  const { data: currentUser } = useGetOne<Sale>(
+    "users",
+    { id: identity?.id! },
+    { enabled: !!identity },
+  );
+  const isAdmin = !!currentUser?.administrator;
 
   if (!record) return null;
 
@@ -352,6 +692,9 @@ export const ContractAside = () => {
           account_id={record.account_id}
           contract_id={record.id}
         />
+        {isAdmin && (
+          <RegenerateScheduleButton contractId={record.id} />
+        )}
       </div>
 
       <div className="mt-6 pt-6 border-t hidden sm:flex flex-col gap-2 items-start">

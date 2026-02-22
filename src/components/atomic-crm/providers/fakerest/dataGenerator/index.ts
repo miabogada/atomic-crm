@@ -7,6 +7,7 @@ import { generateCompanies } from "./companies";
 import { generateContactNotes } from "./contactNotes";
 import { generateContactTypes } from "./contact_types";
 import { generateContacts } from "./contacts";
+import { generateContractPaymentSchedule } from "./contract_payment_schedule";
 import { generateDealNotes } from "./dealNotes";
 import { generateDeals } from "./deals";
 import { finalize } from "./finalize";
@@ -31,6 +32,7 @@ export default (): Db => {
   db.account_contracts = generateAccountContracts(db);
   db.account_payments = generateAccountPayments(db);
   db.account_activities = generateAccountActivities(db);
+  db.contract_payment_schedule = generateContractPaymentSchedule(db);
   db.tasks = generateTasks(db);
   finalize(db);
 

@@ -18,19 +18,30 @@ export const generateAccountContracts = (db: Db): AccountContract[] => {
       const created_at = randomDate(new Date(account.created_at)).toISOString();
       account.nb_contracts = (account.nb_contracts ?? 0) + 1;
 
+      const fee = randomFloat(1500, 8000);
+      const retainer = randomFloat(500, Math.min(3000, fee * 0.4));
+      const monthly = randomFloat(200, 800);
+      const numPayments = datatype.number({ min: 1, max: 12 });
+      // Final payment absorbs the remainder (may differ from monthly)
+      const remaining = fee - retainer;
+      const finalPayment = parseFloat(
+        (remaining - monthly * (numPayments - 1)).toFixed(2),
+      );
+
       contracts.push({
         id: id++,
         account_id: account.id,
         contract_number: `${account.account_number}${String.fromCharCode(65 + i)}`,
         case_type: random.arrayElement(defaultCaseTypes),
         status: random.arrayElement(defaultContractStatuses),
-        fee: randomFloat(1500, 8000),
-        retainer: randomFloat(500, 3000),
-        monthly_payment: randomFloat(200, 800),
-        num_payments: datatype.number({ min: 1, max: 12 }),
+        fee,
+        retainer,
+        monthly_payment: monthly,
+        num_payments: numPayments,
+        final_payment: finalPayment > 0 ? finalPayment : monthly,
         date_opened: created_at,
-        date_retainer: randomDate(new Date(created_at)).toISOString(),
-        date_first_payment: randomDate(new Date(created_at)).toISOString(),
+        date_retainer: randomDate(new Date(created_at)).toISOString().slice(0, 10),
+        date_first_payment: randomDate(new Date(created_at)).toISOString().slice(0, 10),
         work_description: lorem.sentence(),
         created_at,
         user_id: account.user_id,

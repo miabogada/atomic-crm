@@ -4,6 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { Account } from "../types";
 import { DashboardActivityLog } from "./DashboardActivityLog";
 import { Welcome } from "./Welcome";
+import { Receivables } from "./Receivables";
 import MobileHeader from "../layout/MobileHeader";
 import { MobileContent } from "../layout/MobileContent";
 import { useConfigurationContext } from "../root/ConfigurationContext";
@@ -56,6 +57,7 @@ export const MobileDashboard = () => {
     <Wrapper>
       <div className="grid grid-cols-1 gap-6 mt-1">
         {import.meta.env.VITE_IS_DEMO === "true" ? <Welcome /> : null}
+        <Receivables />
         <DashboardActivityLog />
       </div>
     </Wrapper>

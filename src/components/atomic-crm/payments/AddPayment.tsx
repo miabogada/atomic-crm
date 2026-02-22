@@ -7,6 +7,7 @@ import {
   useGetIdentity,
   useNotify,
   useRefresh,
+  useUpdate,
 } from "ra-core";
 import { SaveButton } from "@/components/admin/form";
 import { Button } from "@/components/ui/button";
@@ -30,12 +31,42 @@ export const AddPayment = ({
   const { identity } = useGetIdentity();
   const notify = useNotify();
   const refresh = useRefresh();
+  const [update] = useUpdate();
   const [open, setOpen] = useState(false);
+  const [selectedScheduleRowId, setSelectedScheduleRowId] = useState<Identifier | null>(null);
 
-  const handleSuccess = () => {
+  const close = () => {
     setOpen(false);
-    notify("Payment added");
-    refresh();
+    setSelectedScheduleRowId(null);
+  };
+
+  const handleSuccess = (newPayment: any) => {
+    if (selectedScheduleRowId != null) {
+      update(
+        "contract_payment_schedule",
+        {
+          id: Number(selectedScheduleRowId),
+          data: { payment_id: Number(newPayment.id) },
+          previousData: { id: selectedScheduleRowId },
+        },
+        {
+          onSuccess: () => {
+            notify("Payment added and linked to schedule", { type: "success" });
+            close();
+            refresh();
+          },
+          onError: () => {
+            notify("Payment added but could not link to schedule", { type: "warning" });
+            close();
+            refresh();
+          },
+        },
+      );
+    } else {
+      notify("Payment added");
+      close();
+      refresh();
+    }
   };
 
   if (!identity) return null;
@@ -70,13 +101,13 @@ export const AddPayment = ({
         })}
         mutationOptions={{ onSuccess: handleSuccess }}
       >
-        <Dialog open={open} onOpenChange={() => setOpen(false)}>
+        <Dialog open={open} onOpenChange={(o) => { if (!o) close(); }}>
           <DialogContent className="lg:max-w-xl overflow-y-auto max-h-9/10 top-1/20 translate-y-0">
             <Form className="flex flex-col gap-4">
               <DialogHeader>
                 <DialogTitle>Add payment</DialogTitle>
               </DialogHeader>
-              <AccountPaymentInputs />
+              <AccountPaymentInputs onScheduleRowSelect={setSelectedScheduleRowId} />
               <DialogFooter className="w-full justify-end">
                 <SaveButton />
               </DialogFooter>

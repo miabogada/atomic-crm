@@ -1,5 +1,31 @@
 # Changelog
 
+## 2026-02-22 — Payment schedule (cashflow forecasting & AR)
+
+Replaces the legacy Access `tblPaymentSchedule` with a native CRM feature. When a contract is created, a payment schedule is automatically generated from its terms. The schedule powers two new capabilities: cashflow forecasting and AR overdue identification.
+
+### Database (`20260222000001_contract_payment_schedule.sql`)
+- **`contract_payment_schedule` table** — one row per expected payment. `payment_number = 0` is the retainer; `1..N` are installments. `payment_id` FK to `account_payments` marks a row as paid (NULL = unpaid). Preserves paid rows when regenerating.
+- **`generate_payment_schedule(p_contract_id)` function** — generates the retainer row from `date_retainer`/`retainer`, then N installment rows using `make_interval(months=>)` to keep the same calendar day as `date_first_payment`. The final installment uses `final_payment` if set.
+- **`trg_generate_payment_schedule` trigger** — fires `AFTER INSERT` on `account_contracts`; auto-populates the schedule without any frontend action required.
+- **`contract_payment_schedule_view`** — joins with `account_contracts` and `accounts`; computes `status` (paid / late / due / upcoming) at query time so it never goes stale. Exposed via Supabase dataProvider routing (`contract_payment_schedule` → view).
+
+### Contract detail — Payment Schedule section
+- **`ContractShow.tsx`** — New "Payment Schedule" card rendered above the Payments section. Table columns: `#` (R = retainer, 1..N = installment), Due Date, Amount, Status badge (green/red/amber/muted).
+- **Regenerate schedule** link in the aside (admin-only) — calls `generate_payment_schedule` RPC; useful after editing contract terms without recreating the contract.
+
+### Dashboard — Receivables panel (`dashboard/Receivables.tsx`)
+New widget placed in the left column of the dashboard (alongside future Performance and Deadlines panels):
+- **Overdue section** — all unpaid past-due schedule rows, red-themed. Shows account name, contract number, days late, and amount. "All payments current" green indicator when nothing is overdue.
+- **Next 30 days section** — upcoming payments due within 30 days with per-item and total amounts. Retainer rows labeled accordingly.
+- **90-day lookahead** — aggregate count and total shown below the 30-day list.
+- Each row links directly to the contract show page.
+
+### FakeRest (demo mode)
+- New `dataGenerator/contract_payment_schedule.ts` — mirrors the DB function logic; includes denormalized `account_name`, `contract_number`, `account_number` fields for dashboard display.
+- `dataGenerator/account_contracts.ts` — now generates `final_payment` and normalises date fields to `YYYY-MM-DD`.
+- `Db` type and `index.ts` updated.
+
 ## 2026-02-21 — Mobile (phone viewport) support
 
 Comprehensive responsive design pass to make the app fully usable on phone viewports. The app now maintains two separate React component trees: `DesktopAdmin` (≥768px) and `MobileAdmin` (<768px), each with appropriate resource registrations and layouts.
