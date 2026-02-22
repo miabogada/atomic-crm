@@ -296,6 +296,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/providers/fakerest/dataGenerator/contract_payment_schedule.ts",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/providers/fakerest/dataGenerator/contacts.ts",
           "type": "registry:component"
         },
@@ -361,6 +365,10 @@
         },
         {
           "path": "src/components/atomic-crm/payments/index.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/payments/PaymentRow.tsx",
           "type": "registry:component"
         },
         {
@@ -668,6 +676,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/dashboard/Receivables.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/dashboard/MobileDashboard.tsx",
           "type": "registry:component"
         },
@@ -889,6 +901,14 @@
         },
         {
           "path": "src/components/atomic-crm/companies/AutocompleteCompanyInput.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/activity/ActivityLogTaskCompleted.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/activity/ActivityLogPaymentReceived.tsx",
           "type": "registry:component"
         },
         {

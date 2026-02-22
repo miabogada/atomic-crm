@@ -15,6 +15,10 @@ Dashboard
 - [ ] Contracts count, bookings, fees collected / mo graph or table
 	- [ ] A way to set monthly sales goal
 - [x] bug: Latest Activities not displaying any
+- [ ] Latest Activity should include activities, tasks completed, and payments received.
+
+Phone menu
+- [ ] bottom phone nav needs a back arrow, left side, only shown in detail views
 
 Tasks
 - [x] add a /tasks page with top menu item
@@ -24,20 +28,22 @@ Tasks
 - [x] If logged in as admin, then Dashboard should show tasks from all users
 - [ ] Task Status changes should be logged with a Date Status Change field.
 - [x] Tasks with status Done should show date of completion
-- [ ] kanban view
+- [ ] kanban view in desktop
 - [x] entire task item should be clickable, same for account_contacts
 - [x] editing task to Done status does not update the dashboard, maybe there's a separate task complete binary field
 
 account_contracts?create
-- [ ] contract number should be based on account number appended with uppercase alpha starting with A, which is the same scheme used in outlook script
-- [ ] when creating a contract, need an auto calculated field for final payment amount if different from monthly payment
-- [ ] generate a schedule of payments once amount fields are filled
+- [x] contract number should be based on account number appended with uppercase alpha starting with A, which is the same scheme used in outlook script
+- [x] when creating a contract, need an auto calculated field for final payment amount if different from monthly payment
+- [x] generate a schedule of payments once amount fields are filled
+- [ ] a payment?create item should be opened when saving the account_contract the first time if the Retainer field is non-zero amount
 
 account_contracts/1/show
 - [x] Task items should display Assignee
 - [ ] tasks and activities including payments made should have a view option of threaded or list
-- [ ] contract should show a running balance due (once the payments are hooked up)
-- [ ] contract should show a schedule of payments and due dates
+- [x] contract should show a running balance due (once the payments are hooked up)
+- [x] contract should show a schedule of payments and due dates when click "# Payments: 18" (under Terms)
+- [x] contract should show list of payments received 
 - [x] filter view by Contract Status = To do / In process / In progress - Past due / Stopped - Past due / In process - Paid / Done - Paid / Canceled
 	- [x] add status badge to contract items
 	- [x] add method to change contract status
@@ -50,7 +56,7 @@ Add Task dialog in any view
 /accounts/create
 - [ ] form fields:
 	- [x] Full Name vs. First, Last separately
-	- account name show as Last, First number
+	- [x] account name show as Last, First number
 	- Country should be dropdown w/ US pre selected
 	- does phone -> home?
 	- phone types should be home / cell / work / other (for all contacts context)
@@ -61,9 +67,10 @@ Add Task dialog in any view
 - [x] Task items should display Assignee
 - [x] need a way to add more contacts to an account
 - [ ] show tags as badges on account contact
-- [ ] click on a contract item should open it in /x/account_contracts/x/show
+- [x] click on a contract item should open it in /x/account_contracts/x/show
 - [x] click on a contact item should open it in /x/account_contacts/x/show
 	- [ ] expand clickable area of account_contact beyond description text
+- [x] account and each contract should show contracted amount, received amount, balance.  Each contract item should show this as well as payment x of n.
 
 Every item type
 - [ ] needs a Created by (user) and a Date Created (which could be different from Date Opened for example). This is for system logging and access records. Likely exists in db but needs to be displayed.
@@ -71,9 +78,15 @@ Every item type
 Activities
 - [ ] if type = document, then should have a pointer to the file
 	- [ ] google drive integration
-- [ ] if type = payment, then should have a pointer to the payment item (maybe reference stripe somehow)
+
+Payments
+- [x] add payments type
+- [x]  payment item should have fields similar to outlook payment form (amount, type, check number). maybe the payments are already a schedule created with contract and then the activity type=payment will link to the next payment item in the schedule
+- [x] Add Payment button from /account_contracts/x/show page
+- [x] Add Payment button from /accounts/x/show page if Payments tab selected
+- [ ] payment should have a pointer to the actual payment item (maybe reference stripe somehow)
 	- [ ] stripe integration
-- [ ] if type = payment, then should have fields similar to outlook payment form (amount, type, check number). maybe the payments are already a schedule created with contract and then the activity type=payment will link to the next payment item in the schedule
+- [ ]
 
 Users
 - [x] for some reason the path and headline are Sales instead of Users?
