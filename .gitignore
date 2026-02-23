@@ -39,3 +39,7 @@ public/r/
 
 !supabase/functions/.env
 .claude/settings.local.json
+
+# Migration — credentials and generated output are never committed
+migration/.env
+migration/output/
