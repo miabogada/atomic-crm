@@ -101,7 +101,7 @@ EXCHANGE_AUTH = (EXCHANGE_USER, EXCHANGE_PASS)
 _NS_MAPI      = "http://schemas.microsoft.com/mapi/proptag/"
 _NS_HTTPMAIL  = "urn:schemas:httpmail:"
 _NS_CALENDAR  = "urn:schemas:calendar:"
-_NS_TASKS     = "urn:schemas:tasks:"
+_NS_TASKS     = "http://schemas.microsoft.com/exchange/tasks/"
 _NS_CONTACTS  = "urn:schemas:contacts:"
 
 # Full property URI strings (used in the WebDAV SQL SELECT and WHERE clauses)
@@ -114,6 +114,7 @@ PROP_DTSTART          = f"{_NS_CALENDAR}dtstart"
 PROP_TASK_DUE         = f"{_NS_TASKS}duedate"
 PROP_TASK_COMPLETED   = f"{_NS_TASKS}datecompleted"
 PROP_TASK_STATUS      = f"{_NS_TASKS}status"
+PROP_TASK_PCT         = f"{_NS_TASKS}percentcomplete"
 PROP_GIVEN_NAME       = f"{_NS_CONTACTS}givenname"
 PROP_SURNAME          = f"{_NS_CONTACTS}sn"
 PROP_FULL_NAME        = f"{_NS_CONTACTS}cn"          # FullName / common name
@@ -131,6 +132,7 @@ PROP_JOURNAL_TYPE     = f"{_NS_CONTACTS}journaltype"
 ALL_PROPS = [
     PROP_MESSAGE_CLASS, PROP_CONV_TOPIC, PROP_SUBJECT, PROP_BODY, PROP_DATE,
     PROP_DTSTART, PROP_TASK_DUE, PROP_TASK_COMPLETED, PROP_TASK_STATUS,
+    PROP_TASK_PCT,
     PROP_GIVEN_NAME, PROP_SURNAME, PROP_FULL_NAME, PROP_EMAIL1,
     PROP_HOME_PHONE, PROP_BIZ_PHONE,
     PROP_BIZ_STREET, PROP_BIZ_CITY, PROP_BIZ_STATE, PROP_BIZ_ZIP,
@@ -179,8 +181,8 @@ def parse_date(s: str) -> Optional[date]:
     """Parse date strings from Access (M/D/YYYY, M/D/YY HH:MM:SS, YYYY-MM-DD, etc.)."""
     if not s or not str(s).strip():
         return None
-    # Strip any trailing time component before trying date-only formats
-    s = str(s).strip().split(" ")[0]
+    # Strip any trailing time component (space or T separator) before trying date-only formats
+    s = str(s).strip().split(" ")[0].split("T")[0]
     for fmt in ("%m/%d/%Y", "%Y-%m-%d", "%m/%d/%y"):
         try:
             return datetime.strptime(s, fmt).date()
@@ -344,6 +346,7 @@ def parse_search_response(xml_text: str, account_number: str) -> list:
             "task_due":       get(PROP_TASK_DUE),
             "task_completed": get(PROP_TASK_COMPLETED),
             "task_status":    get(PROP_TASK_STATUS),
+            "task_pct":       get(PROP_TASK_PCT),
             "given_name":     get(PROP_GIVEN_NAME),
             "surname":        get(PROP_SURNAME),
             "full_name":      get(PROP_FULL_NAME),
@@ -686,17 +689,26 @@ def transform_tasks(acct_num: str, exchange_items: list, uid: str) -> list:
     ]
     for item in task_items:
         text     = (item.get("subject") or "Task").strip() or "Task"
+
+        # Exchange rarely stores duedate on these items; use message creation date instead.
+        # That is the "Created" date shown in Outlook's Account Tracking column view.
         due_date = sql_date(item.get("task_due") or "")
         if due_date == "NULL":
-            due_date = "'2099-12-31'"  # placeholder for tasks with no due date
+            due_date = sql_date(item.get("date") or "")
+        if due_date == "NULL":
+            due_date = "'2099-12-31'"  # last-resort placeholder
 
         done_date = sql_date(item.get("task_completed") or "")
 
-        ex_status = (item.get("task_status") or "").strip().lower()
-        if done_date != "NULL" or "complet" in ex_status:
-            status = "Done"
-        else:
-            status = "To do"
+        ex_status = (item.get("task_status") or "").strip()
+        pct = (item.get("task_pct") or "").strip().rstrip(".")
+        is_complete = (
+            done_date != "NULL"
+            or ex_status == "2"                  # Exchange status 2 = Completed
+            or "complet" in ex_status.lower()
+            or pct in ("1", "1.0", "100")
+        )
+        status = "Done" if is_complete else "To do"
 
         lines.append(
             "INSERT INTO tasks "
