@@ -56,7 +56,7 @@ export const TaskEdit = ({
               <DialogHeader>
                 <DialogTitle>Edit task</DialogTitle>
               </DialogHeader>
-              <TaskFormContent />
+              <TaskFormContent showParentPicker />
               <DialogFooter className="w-full sm:justify-between gap-4">
                 <DeleteButton
                   mutationOptions={{

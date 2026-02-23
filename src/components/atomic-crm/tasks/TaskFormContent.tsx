@@ -6,12 +6,15 @@ import { TextInput } from "@/components/admin/text-input";
 import { required } from "ra-core";
 
 import { useConfigurationContext } from "../root/ConfigurationContext";
+import { ParentContractPicker } from "../misc/ParentContractPicker";
 import type { Sale } from "../types";
 
 export const TaskFormContent = ({
   selectAccount,
+  showParentPicker,
 }: {
   selectAccount?: boolean;
+  showParentPicker?: boolean;
 }) => {
   const { taskTypes, taskStatuses } = useConfigurationContext();
   return (
@@ -57,6 +60,7 @@ export const TaskFormContent = ({
           helperText={false}
         />
       </div>
+      {showParentPicker && <ParentContractPicker />}
       <ReferenceInput
         source="user_id"
         reference="users"

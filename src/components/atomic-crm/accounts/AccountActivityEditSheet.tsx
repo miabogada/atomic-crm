@@ -5,6 +5,7 @@ import { DateInput } from "@/components/admin/date-input";
 import { SelectInput } from "@/components/admin/select-input";
 import { TextInput } from "@/components/admin/text-input";
 import { EditSheet } from "../misc/EditSheet";
+import { ParentContractPicker } from "../misc/ParentContractPicker";
 import { defaultActivityTypes } from "../root/defaultConfiguration";
 
 export interface AccountActivityEditSheetProps {
@@ -64,6 +65,7 @@ export const AccountActivityEditSheet = ({
       <TextInput source="body" label="Details" multiline className="m-0" helperText={false} />
       <DateInput source="date" helperText={false} />
       <SelectInput source="type" choices={activityChoices} helperText={false} />
+      <ParentContractPicker />
     </EditSheet>
   );
 };

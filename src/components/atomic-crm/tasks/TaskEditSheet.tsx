@@ -45,7 +45,7 @@ export const TaskEditSheet = ({
         />
       }
     >
-      <TaskFormContent />
+      <TaskFormContent showParentPicker />
     </EditSheet>
   );
 };
