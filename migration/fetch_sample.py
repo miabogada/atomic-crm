@@ -72,8 +72,10 @@ SUPABASE_REST_URL    = _require("SUPABASE_REST_URL")
 SUPABASE_SERVICE_KEY = _require("SUPABASE_SERVICE_KEY")
 
 # Derived Exchange folder URLs (not in .env — computed from EXCHANGE_URL)
-EXCHANGE_FOLDER       = EXCHANGE_URL.rstrip("/") + "/public/Account%20Tracking/"
-EXCHANGE_FOLDER_SCOPE = EXCHANGE_URL.rstrip("/") + "/public/Account Tracking/"
+EXCHANGE_FOLDER              = EXCHANGE_URL.rstrip("/") + "/public/Account%20Tracking/"
+EXCHANGE_FOLDER_SCOPE        = EXCHANGE_URL.rstrip("/") + "/public/Account Tracking/"
+BILLING_CONTACTS_FOLDER      = EXCHANGE_URL.rstrip("/") + "/public/Billing%20Contacts/"
+BILLING_CONTACTS_FOLDER_SCOPE = EXCHANGE_URL.rstrip("/") + "/public/Billing Contacts/"
 
 try:
     import requests
@@ -116,11 +118,20 @@ PROP_TASK_COMPLETED   = f"{_NS_TASKS}datecompleted"
 PROP_TASK_STATUS      = f"{_NS_TASKS}status"
 PROP_TASK_PCT         = f"{_NS_TASKS}percentcomplete"
 PROP_GIVEN_NAME       = f"{_NS_CONTACTS}givenname"
+PROP_MIDDLE_NAME      = f"{_NS_CONTACTS}middlename"
 PROP_SURNAME          = f"{_NS_CONTACTS}sn"
 PROP_FULL_NAME        = f"{_NS_CONTACTS}cn"          # FullName / common name
 PROP_EMAIL1           = f"{_NS_CONTACTS}email1"
 PROP_HOME_PHONE       = f"{_NS_CONTACTS}homephone"   # HomeTelephoneNumber
+PROP_MOBILE           = f"{_NS_CONTACTS}mobile"
 PROP_BIZ_PHONE        = f"{_NS_CONTACTS}businessphone"
+# Billing contacts store addresses in HOME fields, not work/biz fields.
+# Exchange WebDAV property names are case-sensitive; these must match exactly.
+PROP_HOME_STREET      = f"{_NS_CONTACTS}homeStreet"
+PROP_HOME_CITY        = f"{_NS_CONTACTS}homeCity"
+PROP_HOME_STATE       = f"{_NS_CONTACTS}homeState"
+PROP_HOME_ZIP         = f"{_NS_CONTACTS}homePostalCode"
+PROP_HOME_COUNTRY     = f"{_NS_CONTACTS}homeCountry"
 PROP_BIZ_STREET       = f"{_NS_CONTACTS}workstreet"
 PROP_BIZ_CITY         = f"{_NS_CONTACTS}workcity"
 PROP_BIZ_STATE        = f"{_NS_CONTACTS}workstate"
@@ -133,8 +144,9 @@ ALL_PROPS = [
     PROP_MESSAGE_CLASS, PROP_CONV_TOPIC, PROP_SUBJECT, PROP_BODY, PROP_DATE,
     PROP_DTSTART, PROP_TASK_DUE, PROP_TASK_COMPLETED, PROP_TASK_STATUS,
     PROP_TASK_PCT,
-    PROP_GIVEN_NAME, PROP_SURNAME, PROP_FULL_NAME, PROP_EMAIL1,
-    PROP_HOME_PHONE, PROP_BIZ_PHONE,
+    PROP_GIVEN_NAME, PROP_MIDDLE_NAME, PROP_SURNAME, PROP_FULL_NAME, PROP_EMAIL1,
+    PROP_HOME_PHONE, PROP_MOBILE, PROP_BIZ_PHONE,
+    PROP_HOME_STREET, PROP_HOME_CITY, PROP_HOME_STATE, PROP_HOME_ZIP, PROP_HOME_COUNTRY,
     PROP_BIZ_STREET, PROP_BIZ_CITY, PROP_BIZ_STATE, PROP_BIZ_ZIP,
     PROP_BIZ_COUNTRY, PROP_JOURNAL_TYPE,
 ]
@@ -348,11 +360,18 @@ def parse_search_response(xml_text: str, account_number: str) -> list:
             "task_status":    get(PROP_TASK_STATUS),
             "task_pct":       get(PROP_TASK_PCT),
             "given_name":     get(PROP_GIVEN_NAME),
+            "middle_name":    get(PROP_MIDDLE_NAME),
             "surname":        get(PROP_SURNAME),
             "full_name":      get(PROP_FULL_NAME),
             "email1":         get(PROP_EMAIL1),
             "home_phone":     get(PROP_HOME_PHONE),
+            "mobile":         get(PROP_MOBILE),
             "biz_phone":      get(PROP_BIZ_PHONE),
+            "home_street":    get(PROP_HOME_STREET),
+            "home_city":      get(PROP_HOME_CITY),
+            "home_state":     get(PROP_HOME_STATE),
+            "home_zip":       get(PROP_HOME_ZIP),
+            "home_country":   get(PROP_HOME_COUNTRY),
             "biz_street":     get(PROP_BIZ_STREET),
             "biz_city":       get(PROP_BIZ_CITY),
             "biz_state":      get(PROP_BIZ_STATE),
@@ -407,6 +426,46 @@ def fetch_exchange_items(account_numbers: list) -> dict:
             print(f"    Warning: Request failed for {acct}: {e}")
             results[acct] = []
 
+    return results
+
+
+def fetch_billing_contacts(account_numbers: list) -> dict:
+    """
+    Search the Billing Contacts public folder for contacts linked to each account.
+    Returns dict: account_number → list of item dicts (same shape as exchange items).
+    Billing contacts are stored in a separate folder and hold the real name,
+    phone, and home address data — the Account Tracking folder contacts are sparse.
+    """
+    results = {acct: [] for acct in account_numbers}
+    select_cols = ",\n      ".join(f'"{p}"' for p in ALL_PROPS)
+    for acct in account_numbers:
+        search_body = f"""<?xml version="1.0"?>
+<searchrequest xmlns="DAV:">
+  <sql>
+    SELECT
+      "DAV:href",
+      {select_cols}
+    FROM SCOPE('shallow traversal of "{BILLING_CONTACTS_FOLDER_SCOPE}"')
+    WHERE "{PROP_CONV_TOPIC}" = '{acct}'
+  </sql>
+</searchrequest>"""
+        try:
+            resp = requests.request(
+                method="SEARCH",
+                url=BILLING_CONTACTS_FOLDER,
+                data=search_body.encode("utf-8"),
+                auth=EXCHANGE_AUTH,
+                headers={"Content-Type": "text/xml", "Depth": "0"},
+                timeout=30,
+            )
+            if resp.status_code not in (200, 207):
+                print(f"    Warning: Billing Contacts HTTP {resp.status_code} for {acct}")
+                continue
+            items = parse_search_response(resp.text, acct)
+            results[acct] = items
+            print(f"  Billing Contacts for {acct}: {len(items)} contact(s)")
+        except requests.RequestException as e:
+            print(f"    Warning: Billing Contacts request failed for {acct}: {e}")
     return results
 
 
@@ -546,42 +605,76 @@ def transform_accounts(clients_map: dict, exchange_by_acct: dict, uid: str) -> l
     return lines
 
 
+def _contact_name(item: dict) -> tuple:
+    """
+    Return (first_name, last_name) from a contact item.
+    Priority: givenname [+ middlename] > cn (full name minus surname) > subject.
+    """
+    last  = (item.get("surname")    or "").strip()
+    first = (item.get("given_name") or "").strip()
+    mid   = (item.get("middle_name") or "").strip()
+    if first and mid:
+        first = f"{first} {mid}"
+    if not first:
+        full = (item.get("full_name") or "").strip()
+        if full and last and full.upper().endswith(last.upper()):
+            first = full[: -len(last)].strip() or full
+        elif full:
+            first = full
+        else:
+            subj = (item.get("subject") or "").strip()
+            if last and subj.upper().endswith(last.upper()):
+                first = subj[: -len(last)].strip() or subj
+            else:
+                first = subj or "Unknown"
+    return first, last
+
+
+def _contact_address(item: dict) -> tuple:
+    """
+    Return (street, city, state, zip, country) preferring home address over biz address.
+    Billing contacts store addresses in HOME fields.
+    """
+    home = (
+        item.get("home_street", ""), item.get("home_city", ""),
+        item.get("home_state", ""),  item.get("home_zip", ""),
+        item.get("home_country", ""),
+    )
+    biz = (
+        item.get("biz_street", ""), item.get("biz_city", ""),
+        item.get("biz_state", ""),  item.get("biz_zip", ""),
+        item.get("biz_country", ""),
+    )
+    return home if any(home) else biz
+
+
 def transform_contacts(
     acct_num: str,
     exchange_items: list,
+    billing_contacts: list,
     client: dict,
     uid: str,
     type_id: str,
 ) -> list:
     lines = []
 
+    # Prefer Billing Contacts folder items; fall back to Account Tracking contacts
     # Case-insensitive match — Exchange returns "IPM.Contact.Account Contact" (capital C)
-    contact_items = [
-        it for it in exchange_items
-        if "ipm.contact.account contact" in (it.get("message_class") or "").lower()
-    ]
+    def is_contact(it):
+        return "ipm.contact.account contact" in (it.get("message_class") or "").lower()
+
+    contact_items = [it for it in billing_contacts if is_contact(it)]
+    if not contact_items:
+        contact_items = [it for it in exchange_items if is_contact(it)]
 
     if contact_items:
         for i, item in enumerate(contact_items):
             is_billing = "TRUE" if i == 0 else "FALSE"
-            first = (item.get("given_name") or "").strip()
-            last  = (item.get("surname")    or "").strip()
-            if not first:
-                # Try cn (FullName / common name) first
-                full = (item.get("full_name") or "").strip()
-                if full and last and full.endswith(last):
-                    first = full[: -len(last)].strip() or full
-                elif full:
-                    first = full
-                else:
-                    # Fall back to subject: "FIRSTNAME LASTNAME" or "FIRST & SECOND LASTNAME"
-                    subj = (item.get("subject") or "").strip()
-                    if last and subj.endswith(last):
-                        first = subj[: -len(last)].strip() or subj
-                    else:
-                        first = subj or "Unknown"
-            # Use home phone if biz phone is absent (VBScript uses HomeTelephoneNumber)
-            phone = (item.get("biz_phone") or item.get("home_phone") or "").strip() or None
+            first, last = _contact_name(item)
+            phone = (
+                item.get("biz_phone") or item.get("home_phone") or item.get("mobile") or ""
+            ).strip() or None
+            street, city, state, zip_, country = _contact_address(item)
             lines.append(
                 "INSERT INTO account_contacts "
                 "(account_id, contact_type_id, is_billing_contact, first_name, last_name, "
@@ -592,9 +685,8 @@ def transform_contacts(
                 f"{type_id}, {is_billing}, "
                 f"{sql_str(first)}, {sql_str(last)}, "
                 f"{sql_str(item.get('email1', ''))}, {sql_str(phone)}, "
-                f"{sql_str(item.get('biz_street', ''))}, {sql_str(item.get('biz_city', ''))}, "
-                f"{sql_str(item.get('biz_state', ''))}, "
-                f"{sql_str(item.get('biz_zip', ''))}, {sql_str(item.get('biz_country', ''))}, "
+                f"{sql_str(street)}, {sql_str(city)}, {sql_str(state)}, "
+                f"{sql_str(zip_)}, {sql_str(country)}, "
                 f"{uid}"
                 ");"
             )
@@ -767,6 +859,7 @@ def generate_sql(
     contracts_by_acct: dict,
     payments_by_acct: dict,
     exchange_by_acct: dict,
+    billing_contacts_by_acct: dict,
     admin_user_id: Optional[int],
     petitioner_type_id: Optional[int],
 ) -> str:
@@ -797,9 +890,10 @@ def generate_sql(
     # 2. account_contacts
     section("2. Account Contacts")
     for acct_num in account_numbers:
-        items  = exchange_by_acct.get(acct_num, [])
-        client = clients_map[acct_num]
-        lines.extend(transform_contacts(acct_num, items, client, uid, type_id))
+        items    = exchange_by_acct.get(acct_num, [])
+        billing  = billing_contacts_by_acct.get(acct_num, [])
+        client   = clients_map[acct_num]
+        lines.extend(transform_contacts(acct_num, items, billing, client, uid, type_id))
 
     # 3. account_contracts
     section("3. Account Contracts")
@@ -926,6 +1020,9 @@ def main():
     exchange_by_acct = fetch_exchange_items(account_numbers)
     total_items = sum(len(v) for v in exchange_by_acct.values())
 
+    print("Fetching Billing Contacts (WebDAV SEARCH)...")
+    billing_contacts_by_acct = fetch_billing_contacts(account_numbers)
+
     # Strip _raw from debug output to keep it readable
     debug_exchange = {
         acct: [
@@ -955,6 +1052,7 @@ def main():
         contracts_by_acct,
         payments_by_acct,
         exchange_by_acct,
+        billing_contacts_by_acct,
         admin_user_id,
         petitioner_type_id,
     )

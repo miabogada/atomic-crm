@@ -87,27 +87,33 @@ is formatted as `"LAST, FIRST ACCOUNTNUMBER"`. The trailing account number is st
 
 ---
 
-### `account_contacts` ← Exchange `IPM.Contact.Account Contact`
+### `account_contacts` ← Exchange `Billing Contacts` public folder
+
+Billing contacts are stored in a **separate** public folder (`/public/Billing Contacts/`),
+not inside Account Tracking. The script issues a second WebDAV SEARCH against that folder
+for each account number. If no Billing Contacts result is found, it falls back to the
+sparse `IPM.Contact.Account Contact` item inside Account Tracking.
 
 Exchange message class: `IPM.Contact.Account Contact` (capital C — case-sensitive).
 
 | Exchange WebDAV property | Atomic CRM column |
 |---|---|
-| `urn:schemas:contacts:cn` (FullName / common name) | used to derive `first_name` + `last_name` |
+| `urn:schemas:contacts:givenname` + `urn:schemas:contacts:middlename` | `first_name` |
 | `urn:schemas:contacts:sn` (surname) | `last_name` |
-| `urn:schemas:contacts:givenname` | `first_name` (often empty — see Notes) |
+| `urn:schemas:contacts:cn` (FullName) | fallback for `first_name` derivation |
 | `urn:schemas:contacts:email1` | `email` |
-| `urn:schemas:contacts:businessphone` | `phone` (falls back to `homephone`) |
-| `urn:schemas:contacts:workstreet/city/state/postalcode/country` | `address_*` |
+| `urn:schemas:contacts:businessphone` / `homephone` / `mobile` | `phone` (first non-empty) |
+| `urn:schemas:contacts:homeStreet/homeCity/homeState/homePostalCode/homeCountry` | `address_*` |
 | (first contact item) | `is_billing_contact = TRUE` |
-| (first admin user from Supabase) | `contact_type_id` (petitioner) |
+| (petitioner type from Supabase) | `contact_type_id` |
 
 **Notes:**
-- `givenname` is frequently empty on these contacts. The script uses `cn` (full name)
-  and strips the trailing surname to derive `first_name`.
-- If no Exchange contact exists, falls back to `tblClients` data (usually sparse).
-- The VBScript form identifies billing contacts via `JobTitle = "BILLING CONTACT"`,
-  but that field is not reliably populated; we use position (first contact) instead.
+- Billing contacts store their address in **HOME** fields (`homeStreet` etc.), not work/biz fields.
+- Exchange WebDAV property names are **case-sensitive**. Home address fields require
+  mixed case: `homeStreet`, `homeCity`, `homeState`, `homePostalCode`, `homeCountry`.
+- `givenname` returns empty for Account Tracking contacts but correctly returns the
+  first name for Billing Contacts folder items. Always use the Billing Contacts folder.
+- If no Billing Contacts item exists, falls back to `tblClients` data (usually sparse).
 
 ---
 
