@@ -30,15 +30,23 @@ export const AddActivity = ({
   account_id,
   parent_type,
   parent_id,
+  open: openProp,
+  onOpenChange,
 }: {
   account_id: Identifier;
   parent_type?: string;
   parent_id?: Identifier;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) => {
   const { identity } = useGetIdentity();
   const notify = useNotify();
   const refresh = useRefresh();
-  const [open, setOpen] = useState(false);
+  const [openInternal, setOpenInternal] = useState(false);
+
+  const controlled = openProp !== undefined;
+  const open = controlled ? openProp : openInternal;
+  const setOpen = controlled ? (onOpenChange ?? (() => {})) : setOpenInternal;
 
   const { data: account } = useGetOne<Account>(
     "accounts",
@@ -61,17 +69,19 @@ export const AddActivity = ({
 
   return (
     <>
-      <div className="my-2">
-        <Button
-          variant="outline"
-          className="h-6 cursor-pointer"
-          onClick={() => setOpen(true)}
-          size="sm"
-        >
-          <Activity className="w-4 h-4" />
-          Add activity
-        </Button>
-      </div>
+      {!controlled && (
+        <div className="my-2">
+          <Button
+            variant="outline"
+            className="h-6 cursor-pointer"
+            onClick={() => setOpen(true)}
+            size="sm"
+          >
+            <Activity className="w-4 h-4" />
+            Add activity
+          </Button>
+        </div>
+      )}
 
       <CreateBase
         resource="account_activities"

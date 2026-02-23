@@ -166,9 +166,11 @@ export function AccountActivityLog({ accountId }: { accountId: Identifier }) {
     );
   }
 
+  const chronological = [...data].reverse();
+
   return (
     <ActivityLogContext.Provider value="all">
-      <ThreadedActivityLogRenderer activities={data} />
+      <ThreadedActivityLogRenderer activities={chronological} />
     </ActivityLogContext.Provider>
   );
 }

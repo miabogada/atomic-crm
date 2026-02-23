@@ -37,7 +37,7 @@ export async function getActivityLog(
     const [newAccountActivities, completedTasks, paymentsReceived, newContracts] =
       await Promise.all([
         getNewAccountActivities(dataProvider, accountId),
-        getCompletedTasks(dataProvider, accountId),
+        getAllAccountTasks(dataProvider, accountId),
         getPaymentsReceived(dataProvider, accountId),
         getNewContracts(dataProvider, accountId),
       ]);
@@ -260,6 +260,29 @@ async function getCompletedTasks(
         task,
         date: task.done_date as string,
       }));
+  } catch {
+    return [];
+  }
+}
+
+async function getAllAccountTasks(
+  dataProvider: DataProvider,
+  accountId: Identifier,
+): Promise<Activity[]> {
+  try {
+    const { data: tasks } = await dataProvider.getList<Task>("tasks", {
+      filter: { account_id: accountId },
+      pagination: { page: 1, perPage: 250 },
+      sort: { field: "due_date", order: "DESC" },
+    });
+    return tasks.map((task) => ({
+      id: `task.${task.id}.completed`,
+      type: TASK_COMPLETED,
+      account_id: task.account_id,
+      user_id: task.user_id,
+      task,
+      date: task.done_date ?? task.due_date,
+    }));
   } catch {
     return [];
   }

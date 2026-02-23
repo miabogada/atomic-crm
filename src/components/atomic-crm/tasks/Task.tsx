@@ -20,6 +20,7 @@ import { taskStatusColors } from "./taskStatusColors";
 import { TaskEdit } from "./TaskEdit";
 import { TaskEditSheet } from "./TaskEditSheet";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { AddActivity } from "../accounts/AddActivity";
 
 export const Task = ({
   task,
@@ -31,6 +32,7 @@ export const Task = ({
   const queryClient = useQueryClient();
 
   const [openEdit, setOpenEdit] = useState(false);
+  const [openAddActivity, setOpenAddActivity] = useState(false);
 
   const handleCloseEdit = () => {
     setOpenEdit(false);
@@ -210,6 +212,14 @@ export const Task = ({
             >
               Edit
             </DropdownMenuItem>
+            {task.account_id && (
+              <DropdownMenuItem
+                className="cursor-pointer h-12 md:h-8 px-4 md:px-2 text-base md:text-sm"
+                onClick={() => setOpenAddActivity(true)}
+              >
+                Add Activity
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem
               className="cursor-pointer h-12 md:h-8 px-4 md:px-2 text-base md:text-sm"
               onClick={handleDelete}
@@ -228,6 +238,16 @@ export const Task = ({
         />
       ) : (
         <TaskEdit taskId={task.id} open={openEdit} close={handleCloseEdit} />
+      )}
+
+      {task.account_id && (
+        <AddActivity
+          open={openAddActivity}
+          onOpenChange={setOpenAddActivity}
+          account_id={task.account_id}
+          parent_type="tasks"
+          parent_id={task.id}
+        />
       )}
     </>
   );

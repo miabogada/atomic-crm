@@ -1,4 +1,4 @@
-import { CheckSquare } from "lucide-react";
+import { CheckSquare, Square } from "lucide-react";
 import { Link } from "react-router";
 
 import { ReferenceField } from "@/components/admin/reference-field";
@@ -13,18 +13,20 @@ type Props = {
 
 export function ActivityLogTaskCompleted({ activity }: Props) {
   const { task } = activity;
+  const isCompleted = !!task.done_date;
   const link = task.account_id ? `/accounts/${task.account_id}/show` : undefined;
+  const Icon = isCompleted ? CheckSquare : Square;
 
   return (
     <div className="p-0">
       <div className="flex flex-col space-y-2 w-full">
         <div className="flex items-start gap-2 w-full">
-          <CheckSquare className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
+          <Icon className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
           <span className="text-muted-foreground text-sm flex-grow">
             <ReferenceField source="user_id" reference="users" record={activity}>
               <UserName />
             </ReferenceField>{" "}
-            completed task{" "}
+            {isCompleted ? "completed" : "has open"} task{" "}
             {link ? (
               <Link to={link} className="text-foreground hover:underline">
                 {task.text}
