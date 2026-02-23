@@ -152,14 +152,21 @@ which Access writes to the `Contract` column. Do not prepend the account number.
 | Exchange WebDAV property | Atomic CRM column |
 |---|---|
 | `urn:schemas:httpmail:subject` | `text` |
-| `urn:schemas:tasks:duedate` | `due_date` (defaults to `2099-12-31` if not set) |
-| `urn:schemas:tasks:datecompleted` | `done_date` |
-| `urn:schemas:tasks:status` | `status` (`"Done"` if completed, else `"To do"`) |
+| `urn:schemas:httpmail:date` (message creation date) | `due_date` (see Notes) |
+| `http://schemas.microsoft.com/exchange/tasks/datecompleted` | `done_date` |
+| `http://schemas.microsoft.com/exchange/tasks/status` | `status` (`"Done"` if status=2 or pct=1, else `"To do"`) |
 | ConversationTopic → account number | `account_id` (FK lookup) |
 
-**Note:** These legacy tasks have no due dates stored in Exchange (the task form
-may not have set them). All import as `'2099-12-31'` placeholder. Update manually
-after import if needed.
+**Notes:**
+- Task items in Exchange public folders do **not** populate `duedate`. The script
+  uses the message creation date (`urn:schemas:httpmail:date`) as a proxy — this
+  is the "Created" column shown in Outlook's Account Tracking column view.
+- Task status/completion properties require the `http://schemas.microsoft.com/exchange/tasks/`
+  namespace. The `urn:schemas:tasks:` namespace is ignored for items in public
+  folders (returns empty for all properties). Status value `2` = Completed;
+  percent complete `1.` = 100% done.
+- Each task modification generates an `IPM.Post` audit entry ("modified by User")
+  in the same folder. These contain no actionable data and are not imported.
 
 ---
 
@@ -198,7 +205,9 @@ accordingly and strips NUL bytes (`\x00`) that appear in Access Unicode fields.
 
 ### Access DB date format
 Dates from `mdb-export` include a time component: `01/11/14 00:00:00`.
-The script splits on space before parsing.
+The script strips the time by splitting on space before parsing.
+Exchange dates use ISO 8601 with a `T` separator (`2018-04-30T16:42:23.377Z`);
+the parser also splits on `T` to handle both formats.
 
 ### Exchange SCOPE URL
 The WebDAV SQL `SCOPE` string must use a **literal space**, not `%20`:
@@ -221,6 +230,14 @@ the trailing surname to derive `first_name`.
 These are looked up from the local Supabase instance at runtime. If the database
 is empty (migrations not yet applied), they will be NULL in the generated SQL.
 Run `npx supabase migration up` before generating the final import.
+
+### Exchange task namespace for public folders
+Task items stored in Exchange public folders (not the standard Tasks folder) do
+**not** respond to the `urn:schemas:tasks:` WebDAV namespace. All task-specific
+properties (`status`, `percentcomplete`, `datecompleted`, `duedate`) return empty
+with that namespace. Use `http://schemas.microsoft.com/exchange/tasks/` instead —
+confirmed by inspecting the OWA HTML form, which embeds hidden inputs with that
+namespace (e.g. `name="http://schemas.microsoft.com/exchange/tasks/percentcomplete"`).
 
 ### Supabase key must be the Secret key
 The `SUPABASE_SERVICE_KEY` in `.env` must be the **Secret** key from
