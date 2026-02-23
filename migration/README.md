@@ -221,3 +221,9 @@ the trailing surname to derive `first_name`.
 These are looked up from the local Supabase instance at runtime. If the database
 is empty (migrations not yet applied), they will be NULL in the generated SQL.
 Run `npx supabase migration up` before generating the final import.
+
+### Supabase key must be the Secret key
+The `SUPABASE_SERVICE_KEY` in `.env` must be the **Secret** key from
+`npx supabase status`, not the Publishable key. The `contact_types` and `users`
+tables only grant SELECT to the `authenticated` role; the secret key bypasses RLS
+and can read them without an auth session.
