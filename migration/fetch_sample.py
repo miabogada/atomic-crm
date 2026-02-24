@@ -105,6 +105,8 @@ _NS_HTTPMAIL  = "urn:schemas:httpmail:"
 _NS_CALENDAR  = "urn:schemas:calendar:"
 _NS_TASKS     = "http://schemas.microsoft.com/exchange/tasks/"
 _NS_CONTACTS  = "urn:schemas:contacts:"
+# Outlook UserProperties (custom form fields) stored in the MAPI PS_PUBLIC_STRINGS set
+_NS_CONTRACT  = "http://schemas.microsoft.com/mapi/string/{00020329-0000-0000-C000-000000000046}/"
 
 # Full property URI strings (used in the WebDAV SQL SELECT and WHERE clauses)
 PROP_MESSAGE_CLASS    = f"{_NS_MAPI}x001a001e"
@@ -138,8 +140,21 @@ PROP_BIZ_STATE        = f"{_NS_CONTACTS}workstate"
 PROP_BIZ_ZIP          = f"{_NS_CONTACTS}workpostalcode"
 PROP_BIZ_COUNTRY      = f"{_NS_CONTACTS}workcountry"
 PROP_JOURNAL_TYPE     = f"{_NS_CONTACTS}journaltype"
+# Account contract UserProperties (stored in Exchange IPM.Post.Account contract items)
+PROP_CONTRACT_FEE         = f"{_NS_CONTRACT}curContractFee"
+PROP_CONTRACT_RETAINER    = f"{_NS_CONTRACT}curRetainer"
+PROP_CONTRACT_DATE_RET    = f"{_NS_CONTRACT}txtDateRetainer"
+PROP_CONTRACT_PAYMENT     = f"{_NS_CONTRACT}curPayment"
+PROP_CONTRACT_NUM_PMT     = f"{_NS_CONTRACT}txtNumPayments"
+PROP_CONTRACT_DATE_FIRST  = f"{_NS_CONTRACT}txtDateFirstPayment"
+PROP_CONTRACT_FINAL       = f"{_NS_CONTRACT}curFinalPayment"
+PROP_CONTRACT_DATE_FINAL  = f"{_NS_CONTRACT}txtDateFinalPayment"
+PROP_CONTRACT_WORK_DESC   = f"{_NS_CONTRACT}txtContractWorkDescription"
 
-# All properties to request in the SEARCH SELECT
+# All properties to request in the main SEARCH SELECT.
+# NOTE: Contract UserProperties (_NS_CONTRACT) use a namespace URI containing { } which
+# Python's expat XML parser rejects as invalid. Those are fetched separately via PROPFIND
+# using regex extraction — see fetch_contract_user_props().
 ALL_PROPS = [
     PROP_MESSAGE_CLASS, PROP_CONV_TOPIC, PROP_SUBJECT, PROP_BODY, PROP_DATE,
     PROP_DTSTART, PROP_TASK_DUE, PROP_TASK_COMPLETED, PROP_TASK_STATUS,
@@ -469,6 +484,68 @@ def fetch_billing_contacts(account_numbers: list) -> dict:
     return results
 
 
+def fetch_contract_user_props(exchange_by_acct: dict) -> dict:
+    """
+    For each IPM.Post.Account contract item already identified in exchange_by_acct,
+    do a targeted PROPFIND allprop and extract the contract UserProperties via regex.
+
+    Returns dict: account_number → {contract_number → {field: value}}.
+
+    Background: Contract UserProperties are stored in the MAPI PS_PUBLIC_STRINGS
+    namespace (http://schemas.microsoft.com/mapi/string/{GUID}/) which contains { }
+    characters invalid in XML namespace URIs. Python's expat parser rejects such
+    responses, so we skip ElementTree and use regex on the raw PROPFIND text instead.
+    """
+    import re
+    results: dict = {}
+
+    # Simple regex: match <tagname>value</tagname> or <tagname b:dt="...">value</tagname>
+    _val_re = re.compile(r'<(\w+)(?:\s[^>]*)?>([^<]+)</\1>')
+
+    _contract_fields = {
+        "curRetainer":              "contract_retainer",
+        "txtDateRetainer":          "contract_date_ret",
+        "curPayment":               "contract_payment",
+        "txtNumPayments":           "contract_num_pmt",
+        "txtDateFirstPayment":      "contract_date_first",
+        "curFinalPayment":          "contract_final",
+        "txtDateFinalPayment":      "contract_date_final",
+        "txtContractWorkDescription": "contract_work_desc",
+    }
+
+    for acct, items in exchange_by_acct.items():
+        results.setdefault(acct, {})
+        for item in items:
+            mc = (item.get("message_class") or "").lower()
+            if "ipm.post.account contract" not in mc:
+                continue
+            contract_number = (item.get("subject") or "").strip()
+            href = item.get("href", "")
+            if not href or not contract_number:
+                continue
+            try:
+                resp = requests.request(
+                    "PROPFIND", href,
+                    auth=EXCHANGE_AUTH,
+                    headers={"Depth": "0", "Content-Type": "text/xml"},
+                    data=b'<?xml version="1.0"?><propfind xmlns="DAV:"><allprop/></propfind>',
+                    timeout=30,
+                )
+                if resp.status_code not in (200, 207):
+                    print(f"    Warning: PROPFIND HTTP {resp.status_code} for {href}")
+                    continue
+                props: dict = {}
+                for m in _val_re.finditer(resp.text):
+                    tag, val = m.group(1), m.group(2).strip()
+                    if tag in _contract_fields and val:
+                        props[_contract_fields[tag]] = val
+                results[acct][contract_number] = props
+                print(f"  Contract {contract_number}: {list(props.keys())}")
+            except requests.RequestException as e:
+                print(f"    Warning: PROPFIND failed for {href}: {e}")
+    return results
+
+
 # ---------------------------------------------------------------------------
 # Step 4 — Look up Supabase IDs (admin user, contact type)
 # ---------------------------------------------------------------------------
@@ -710,33 +787,55 @@ def transform_contacts(
     return lines
 
 
-def transform_contracts(acct_num: str, contracts: list, uid: str) -> list:
+def transform_contracts(
+    acct_num: str,
+    contracts: list,
+    contract_user_props: dict,
+    uid: str,
+) -> list:
+    """
+    contract_user_props: {contract_number → {field: value}} from fetch_contract_user_props().
+    """
     lines = []
     for c in contracts:
         # Contract column already contains the full number (e.g. "14011101A1")
         contract_number = str(c.get("Contract") or "").strip()
         if not contract_number:
             continue
-        case_type        = (c.get("CaseType") or "").strip() or None
-        date_opened      = sql_date(c.get("DateOpen") or "")
-        fee              = sql_num(c.get("Fee") or "")
-        retainer         = sql_num(c.get("Retainer") or "")
-        monthly          = sql_num(c.get("Payment") or "")
-        num_payments     = sql_int(c.get("NumPayments") or "")
-        final_payment    = sql_num(c.get("FinalPayment") or "")
-        date_retainer    = sql_date(c.get("DateRetainer") or "")
-        date_first_pmt   = sql_date(c.get("DateFirstPayment") or "")
+
+        # Access DB has: Account, Contract, CaseType (=work description), DateOpen, Fee
+        case_type   = (c.get("CaseType") or "").strip() or None
+        date_opened = sql_date(c.get("DateOpen") or "")
+        fee         = sql_num(c.get("Fee") or "")
+
+        # Exchange UserProperties hold the full payment terms — Access only stores basics
+        ex = contract_user_props.get(contract_number, {})
+        retainer      = sql_num(ex.get("contract_retainer") or "")
+        date_retainer = sql_date(ex.get("contract_date_ret") or "")
+        monthly       = sql_num(ex.get("contract_payment") or "")
+        num_payments  = sql_int(ex.get("contract_num_pmt") or "")
+        date_first    = sql_date(ex.get("contract_date_first") or "")
+        final_payment = sql_num(ex.get("contract_final") or "")
+        work_desc     = (ex.get("contract_work_desc") or "").strip() or None
+
+        # Fall back to Access columns (may be empty for older contracts)
+        if retainer      == "NULL": retainer      = sql_num(c.get("Retainer") or "")
+        if date_retainer == "NULL": date_retainer = sql_date(c.get("DateRetainer") or "")
+        if monthly       == "NULL": monthly       = sql_num(c.get("Payment") or "")
+        if num_payments  == "NULL": num_payments  = sql_int(c.get("NumPayments") or "")
+        if date_first    == "NULL": date_first    = sql_date(c.get("DateFirstPayment") or "")
+        if final_payment == "NULL": final_payment = sql_num(c.get("FinalPayment") or "")
 
         lines.append(
             "INSERT INTO account_contracts "
             "(account_id, contract_number, case_type, status, fee, retainer, "
             "monthly_payment, num_payments, final_payment, "
-            "date_opened, date_retainer, date_first_payment, user_id) "
+            "date_opened, date_retainer, date_first_payment, work_description, user_id) "
             "VALUES ("
             f"(SELECT id FROM accounts WHERE account_number = {sql_str(acct_num)}), "
             f"{sql_str(contract_number)}, {sql_str(case_type)}, 'In progress', "
             f"{fee}, {retainer}, {monthly}, {num_payments}, {final_payment}, "
-            f"{date_opened}, {date_retainer}, {date_first_pmt}, {uid}"
+            f"{date_opened}, {date_retainer}, {date_first}, {sql_str(work_desc)}, {uid}"
             ");"
         )
     return lines
@@ -860,6 +959,7 @@ def generate_sql(
     payments_by_acct: dict,
     exchange_by_acct: dict,
     billing_contacts_by_acct: dict,
+    contract_user_props_by_acct: dict,
     admin_user_id: Optional[int],
     petitioner_type_id: Optional[int],
 ) -> str:
@@ -898,7 +998,8 @@ def generate_sql(
     # 3. account_contracts
     section("3. Account Contracts")
     for acct_num in account_numbers:
-        lines.extend(transform_contracts(acct_num, contracts_by_acct.get(acct_num, []), uid))
+        cup = contract_user_props_by_acct.get(acct_num, {})
+        lines.extend(transform_contracts(acct_num, contracts_by_acct.get(acct_num, []), cup, uid))
 
     # 4. account_payments
     section("4. Account Payments")
@@ -1023,6 +1124,9 @@ def main():
     print("Fetching Billing Contacts (WebDAV SEARCH)...")
     billing_contacts_by_acct = fetch_billing_contacts(account_numbers)
 
+    print("Fetching contract UserProperties (PROPFIND per contract item)...")
+    contract_user_props_by_acct = fetch_contract_user_props(exchange_by_acct)
+
     # Strip _raw from debug output to keep it readable
     debug_exchange = {
         acct: [
@@ -1053,6 +1157,7 @@ def main():
         payments_by_acct,
         exchange_by_acct,
         billing_contacts_by_acct,
+        contract_user_props_by_acct,
         admin_user_id,
         petitioner_type_id,
     )
