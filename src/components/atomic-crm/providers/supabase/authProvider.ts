@@ -125,6 +125,10 @@ export const authProvider: AuthProvider = {
     ) {
       return;
     }
+    // Recovery token in URL — StartPage will redirect to /set-password
+    if (window.location.hash.includes("type=recovery")) {
+      return;
+    }
 
     const isInitialized = await getIsInitialized();
 

@@ -21,6 +21,22 @@ export const StartPage = () => {
     },
   });
 
+  // Detect password recovery redirect from Supabase email link.
+  // GoTrue appends tokens as hash params (e.g. #access_token=xxx&type=recovery)
+  // which conflicts with hash routing. Extract and forward as query params so
+  // SetPasswordPage can read them via useSupabaseAccessToken / useSearchParams.
+  const hash = window.location.hash;
+  if (hash.includes("type=recovery") && hash.includes("access_token=")) {
+    const params = new URLSearchParams(hash.substring(1));
+    const access_token = params.get("access_token") ?? "";
+    const refresh_token = params.get("refresh_token") ?? "";
+    return (
+      <Navigate
+        to={`/set-password?access_token=${encodeURIComponent(access_token)}&refresh_token=${encodeURIComponent(refresh_token)}`}
+      />
+    );
+  }
+
   if (isPending) return <LoginSkeleton />;
   if (error) return <LoginPage />;
   if (isInitialized) return <LoginPage />;
