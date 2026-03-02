@@ -2,7 +2,7 @@ import type { AuthProvider } from "ra-core";
 import { supabaseAuthProvider } from "ra-supabase-core";
 
 import { canAccess } from "../commons/canAccess";
-import { supabase } from "./supabase";
+import { supabase, initialHash } from "./supabase";
 
 const baseAuthProvider = supabaseAuthProvider(supabase, {
   getIdentity: async () => {
@@ -126,7 +126,7 @@ export const authProvider: AuthProvider = {
       return;
     }
     // Recovery token in URL — StartPage will redirect to /set-password
-    if (window.location.hash.includes("type=recovery")) {
+    if (initialHash.includes("type=recovery")) {
       return;
     }
 

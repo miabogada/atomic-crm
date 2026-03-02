@@ -4,6 +4,7 @@ import { Navigate } from "react-router-dom";
 
 import { useConfigurationContext } from "../root/ConfigurationContext";
 import type { CrmDataProvider } from "../providers/types";
+import { initialHash } from "../providers/supabase/supabase";
 import { LoginSkeleton } from "./LoginSkeleton";
 import { LoginPage } from "./LoginPage";
 
@@ -25,8 +26,8 @@ export const StartPage = () => {
   // GoTrue appends tokens as hash params (e.g. #access_token=xxx&type=recovery)
   // which conflicts with hash routing. Extract and forward as query params so
   // SetPasswordPage can read them via useSupabaseAccessToken / useSearchParams.
-  const hash = window.location.hash;
-  if (hash.includes("type=recovery") && hash.includes("access_token=")) {
+  if (initialHash.includes("type=recovery") && initialHash.includes("access_token=")) {
+    const hash = initialHash;
     const params = new URLSearchParams(hash.substring(1));
     const access_token = params.get("access_token") ?? "";
     const refresh_token = params.get("refresh_token") ?? "";
