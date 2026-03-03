@@ -2,13 +2,16 @@ import { useMutation } from "@tanstack/react-query";
 import { CircleX, Copy, Pencil, Save } from "lucide-react";
 import {
   Form,
+  required,
   useDataProvider,
   useGetIdentity,
   useGetOne,
   useNotify,
   useRecordContext,
 } from "ra-core";
+import type { ValidateForm } from "ra-core";
 import { useState } from "react";
+import type { FieldValues, SubmitHandler } from "react-hook-form";
 import { useFormState } from "react-hook-form";
 import { RecordField } from "@/components/admin/record-field";
 import { TextInput } from "@/components/admin/text-input";
@@ -22,11 +25,13 @@ import {
 } from "@/components/ui/tooltip";
 
 import ImageEditorField from "../misc/ImageEditorField";
+import { supabase } from "../providers/supabase/supabase";
 import type { CrmDataProvider } from "../providers/types";
 import type { Sale, SalesFormData } from "../types";
 
 export const SettingsPage = () => {
   const [isEditMode, setEditMode] = useState(false);
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
   const { identity, refetch: refetchIdentity } = useGetIdentity();
   const { data, refetch: refetchUser } = useGetOne("users", {
     id: identity?.id,
@@ -62,10 +67,18 @@ export const SettingsPage = () => {
   };
 
   return (
-    <div className="max-w-lg mx-auto mt-8">
+    <div className="max-w-lg mx-auto mt-8 space-y-4">
       <Form onSubmit={handleOnSubmit} record={data}>
-        <SettingsForm isEditMode={isEditMode} setEditMode={setEditMode} />
+        <SettingsForm
+          isEditMode={isEditMode}
+          setEditMode={setEditMode}
+          showPasswordForm={showPasswordForm}
+          setShowPasswordForm={setShowPasswordForm}
+        />
       </Form>
+      {showPasswordForm && (
+        <ChangePasswordForm onClose={() => setShowPasswordForm(false)} />
+      )}
     </div>
   );
 };
@@ -73,33 +86,19 @@ export const SettingsPage = () => {
 const SettingsForm = ({
   isEditMode,
   setEditMode,
+  showPasswordForm,
+  setShowPasswordForm,
 }: {
   isEditMode: boolean;
   setEditMode: (value: boolean) => void;
+  showPasswordForm: boolean;
+  setShowPasswordForm: (value: boolean) => void;
 }) => {
   const notify = useNotify();
   const record = useRecordContext<Sale>();
   const { identity, refetch } = useGetIdentity();
   const { isDirty } = useFormState();
   const dataProvider = useDataProvider<CrmDataProvider>();
-
-  const { mutate: updatePassword } = useMutation({
-    mutationKey: ["updatePassword"],
-    mutationFn: async () => {
-      if (!identity) {
-        throw new Error("Record not found");
-      }
-      return dataProvider.updatePassword(identity.id);
-    },
-    onSuccess: () => {
-      notify("A reset password email has been sent to your email address");
-    },
-    onError: (e) => {
-      notify(`${e}`, {
-        type: "error",
-      });
-    },
-  });
 
   const { mutate: mutateSale } = useMutation({
     mutationKey: ["signup"],
@@ -118,10 +117,6 @@ const SettingsForm = ({
     },
   });
   if (!identity) return null;
-
-  const handleClickOpenPasswordChange = () => {
-    updatePassword();
-  };
 
   const handleAvatarUpdate = async (values: any) => {
     mutateSale(values);
@@ -151,15 +146,13 @@ const SettingsForm = ({
 
           <div className="flex flex-row justify-end gap-2">
             {!isEditMode && (
-              <>
-                <Button
-                  variant="outline"
-                  type="button"
-                  onClick={handleClickOpenPasswordChange}
-                >
-                  Change password
-                </Button>
-              </>
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => setShowPasswordForm(!showPasswordForm)}
+              >
+                Change password
+              </Button>
             )}
 
             <Button
@@ -200,6 +193,93 @@ const SettingsForm = ({
         </Card>
       )}
     </div>
+  );
+};
+
+interface PasswordFormData {
+  password: string;
+  confirmPassword: string;
+}
+
+const ChangePasswordForm = ({ onClose }: { onClose: () => void }) => {
+  const [loading, setLoading] = useState(false);
+  const notify = useNotify();
+
+  const validate = (values: PasswordFormData) => {
+    if (values.password !== values.confirmPassword) {
+      return {
+        password: "Passwords do not match",
+        confirmPassword: "Passwords do not match",
+      };
+    }
+    return {};
+  };
+
+  const handleSubmit = async (values: PasswordFormData) => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.updateUser({
+        password: values.password,
+      });
+      if (error) {
+        throw error;
+      }
+      notify("Your password has been updated");
+      onClose();
+    } catch (error: any) {
+      notify(error?.message ?? "An error occurred. Please try again.", {
+        type: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardContent>
+        <h2 className="text-xl font-semibold text-muted-foreground mb-4">
+          Change password
+        </h2>
+        <Form<PasswordFormData>
+          onSubmit={handleSubmit as SubmitHandler<FieldValues>}
+          validate={validate as ValidateForm}
+        >
+          <div className="space-y-4">
+            <TextInput
+              label="New password"
+              source="password"
+              type="password"
+              autoComplete="new-password"
+              validate={required()}
+              helperText={false}
+            />
+            <TextInput
+              label="Confirm password"
+              source="confirmPassword"
+              type="password"
+              autoComplete="new-password"
+              validate={required()}
+              helperText={false}
+            />
+            <div className="flex flex-row justify-end gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={onClose}
+              >
+                <CircleX />
+                Cancel
+              </Button>
+              <Button type="submit" variant="outline" disabled={loading}>
+                <Save />
+                Save
+              </Button>
+            </div>
+          </div>
+        </Form>
+      </CardContent>
+    </Card>
   );
 };
 
