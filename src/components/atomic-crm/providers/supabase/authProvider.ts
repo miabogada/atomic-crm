@@ -114,6 +114,14 @@ export const authProvider: AuthProvider = {
     }
     return baseAuthProvider.logout(params);
   },
+  setPassword: async ({ password }: { access_token: string; refresh_token: string; password: string }) => {
+    // The Supabase JS client already established a recovery session from the URL
+    // hash. Calling setSession() with the same tokens fails ("Auth session missing")
+    // because the recovery access_token is single-use. Use the existing session
+    // directly instead.
+    const { error } = await supabase.auth.updateUser({ password });
+    if (error) throw error;
+  },
   checkAuth: async (params) => {
     // Users are on the set-password page, nothing to do
     if (
@@ -136,10 +144,10 @@ export const authProvider: AuthProvider = {
     ) {
       return;
     }
-    // Recovery token in URL — redirect to set-password with tokens as query params.
-    // We must throw (not return) so react-admin doesn't treat the recovery
-    // session as a normal login and redirect to the dashboard.
-    if (initialHash.includes("type=recovery") && initialHash.includes("access_token=")) {
+    // Recovery token in URL — redirect to set-password.
+    // Use recoveryPending (not initialHash directly) so this only fires once;
+    // after logout() clears it, subsequent checkAuth calls proceed normally.
+    if (recoveryPending) {
       const hashParams = new URLSearchParams(initialHash.substring(1));
       const access_token = hashParams.get("access_token") ?? "";
       const refresh_token = hashParams.get("refresh_token") ?? "";
