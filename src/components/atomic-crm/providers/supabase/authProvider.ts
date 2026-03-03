@@ -125,9 +125,17 @@ export const authProvider: AuthProvider = {
     ) {
       return;
     }
-    // Recovery token in URL — StartPage will redirect to /set-password
-    if (initialHash.includes("type=recovery")) {
-      return;
+    // Recovery token in URL — redirect to set-password with tokens as query params.
+    // We must throw (not return) so react-admin doesn't treat the recovery
+    // session as a normal login and redirect to the dashboard.
+    if (initialHash.includes("type=recovery") && initialHash.includes("access_token=")) {
+      const params = new URLSearchParams(initialHash.substring(1));
+      const access_token = params.get("access_token") ?? "";
+      const refresh_token = params.get("refresh_token") ?? "";
+      throw {
+        redirectTo: `/set-password?access_token=${encodeURIComponent(access_token)}&refresh_token=${encodeURIComponent(refresh_token)}`,
+        message: false,
+      };
     }
 
     const isInitialized = await getIsInitialized();
