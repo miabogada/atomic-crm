@@ -20,6 +20,13 @@ const baseAuthProvider = supabaseAuthProvider(supabase, {
   },
 });
 
+// When a page load starts with a recovery hash, react-admin calls logout()
+// after checkAuth throws the redirect, which would invalidate the recovery
+// tokens via supabase.auth.signOut(). This one-shot flag skips the signOut
+// for that single logout call so the tokens remain valid for SetPasswordPage.
+let recoveryPending =
+  initialHash.includes("type=recovery") && initialHash.includes("access_token=");
+
 // To speed up checks, we cache the initialization state
 // and the current sale in the local storage. They are cleared on logout.
 const IS_INITIALIZED_CACHE_KEY = "RaStore.auth.is_initialized";
@@ -101,6 +108,10 @@ export const authProvider: AuthProvider = {
   },
   logout: async (params) => {
     clearCache();
+    if (recoveryPending) {
+      recoveryPending = false;
+      return;
+    }
     return baseAuthProvider.logout(params);
   },
   checkAuth: async (params) => {
@@ -129,9 +140,9 @@ export const authProvider: AuthProvider = {
     // We must throw (not return) so react-admin doesn't treat the recovery
     // session as a normal login and redirect to the dashboard.
     if (initialHash.includes("type=recovery") && initialHash.includes("access_token=")) {
-      const params = new URLSearchParams(initialHash.substring(1));
-      const access_token = params.get("access_token") ?? "";
-      const refresh_token = params.get("refresh_token") ?? "";
+      const hashParams = new URLSearchParams(initialHash.substring(1));
+      const access_token = hashParams.get("access_token") ?? "";
+      const refresh_token = hashParams.get("refresh_token") ?? "";
       throw {
         redirectTo: `/set-password?access_token=${encodeURIComponent(access_token)}&refresh_token=${encodeURIComponent(refresh_token)}`,
         message: false,
