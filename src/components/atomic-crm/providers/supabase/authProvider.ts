@@ -2,7 +2,7 @@ import type { AuthProvider } from "ra-core";
 import { supabaseAuthProvider } from "ra-supabase-core";
 
 import { canAccess } from "../commons/canAccess";
-import { supabase, initialHash } from "./supabase";
+import { supabase } from "./supabase";
 
 const baseAuthProvider = supabaseAuthProvider(supabase, {
   getIdentity: async () => {
@@ -19,13 +19,6 @@ const baseAuthProvider = supabaseAuthProvider(supabase, {
     };
   },
 });
-
-// When a page load starts with a recovery hash, react-admin calls logout()
-// after checkAuth throws the redirect, which would invalidate the recovery
-// tokens via supabase.auth.signOut(). This one-shot flag skips the signOut
-// for that single logout call so the tokens remain valid for SetPasswordPage.
-let recoveryPending =
-  initialHash.includes("type=recovery") && initialHash.includes("access_token=");
 
 // To speed up checks, we cache the initialization state
 // and the current sale in the local storage. They are cleared on logout.
@@ -108,19 +101,7 @@ export const authProvider: AuthProvider = {
   },
   logout: async (params) => {
     clearCache();
-    if (recoveryPending) {
-      recoveryPending = false;
-      return;
-    }
     return baseAuthProvider.logout(params);
-  },
-  setPassword: async ({ password }: { access_token: string; refresh_token: string; password: string }) => {
-    // The Supabase JS client already established a recovery session from the URL
-    // hash. Calling setSession() with the same tokens fails ("Auth session missing")
-    // because the recovery access_token is single-use. Use the existing session
-    // directly instead.
-    const { error } = await supabase.auth.updateUser({ password });
-    if (error) throw error;
   },
   checkAuth: async (params) => {
     // Users are on the set-password page, nothing to do
@@ -143,18 +124,6 @@ export const authProvider: AuthProvider = {
       window.location.hash.includes("#/sign-up")
     ) {
       return;
-    }
-    // Recovery token in URL — redirect to set-password.
-    // Use recoveryPending (not initialHash directly) so this only fires once;
-    // after logout() clears it, subsequent checkAuth calls proceed normally.
-    if (recoveryPending) {
-      const hashParams = new URLSearchParams(initialHash.substring(1));
-      const access_token = hashParams.get("access_token") ?? "";
-      const refresh_token = hashParams.get("refresh_token") ?? "";
-      throw {
-        redirectTo: `/set-password?access_token=${encodeURIComponent(access_token)}&refresh_token=${encodeURIComponent(refresh_token)}`,
-        message: false,
-      };
     }
 
     const isInitialized = await getIsInitialized();
