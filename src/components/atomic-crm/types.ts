@@ -37,6 +37,7 @@ export type Sale = {
   avatar?: RAFile;
   disabled?: boolean;
   user_id: string;
+  role?: "attorney" | "law_clerk" | "legal_assistant" | null;
 
   /**
    * This is a copy of the user's email, to make it easier to handle by react admin

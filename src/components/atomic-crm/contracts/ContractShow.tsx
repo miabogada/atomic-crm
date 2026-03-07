@@ -602,7 +602,7 @@ const ContractStatusSelect = () => {
 
   return (
     <AsideSection title="Status">
-      <Select value={record.status || "To do"} onValueChange={handleChange}>
+      <Select value={record.status || "In process"} onValueChange={handleChange}>
         <SelectTrigger className="w-full h-8 text-xs">
           <SelectValue />
         </SelectTrigger>

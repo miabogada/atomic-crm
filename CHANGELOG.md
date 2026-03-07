@@ -1,25 +1,62 @@
 # Changelog
 
-## 2026-03-07 — LMC feedback batch (planned)
+## 2026-03-07 — LMC feedback batch
 
 Address feedback from LMC review covering account/contact/contract creation forms and task filters.
 
 ### Database migrations
 
-1. **Add `role` to `users` table** — `text` column (values: `attorney`, `law_clerk`, `legal_assistant`). Backfill existing users. Used to auto-assign team fields on new account creation. When a staff member is replaced: disable the old user, assign the role to the new user. Completed tasks, activities, and closed accounts retain the original user. Only open accounts and unfinished tasks get reassigned to the new role holder.
-2. **Change contract status default** — `'To do'` → `'In process'` on `account_contracts.status`. Update any existing rows with status "To do" to "In process". Remove "To do" from contract statuses only (tasks keep "To do").
-3. **Add "child" to `contact_types`** — `INSERT INTO contact_types (name) VALUES ('child')`.
+- `20260307200304_add_user_roles.sql` — Adds `role text` column to `users` table. Backfills: Linnette = `attorney`, Victor = `law_clerk`, Maria = `legal_assistant`. Used to auto-assign team fields on new account creation. When a staff member is replaced: disable the old user, assign the role to the new user. Completed tasks, activities, and closed accounts retain the original user. Only open accounts and unfinished tasks get reassigned to the new role holder.
+- `20260307200326_contract_status_default.sql` — Changes `account_contracts.status` default from `'To do'` to `'In process'`. Updates all existing rows with status "To do" to "In process". Contract-only; task statuses keep "To do".
+- `20260307200340_add_child_contact_type.sql` — Inserts "child" into `contact_types`.
+- `20260307200900_fix_final_payment_calc.sql` — Fixes `generate_payment_schedule()`: when `final_payment` is 0 or null, uses `monthly_payment` for the last installment instead of creating a $0 row.
 
-### Frontend changes
+### Phone input (`misc/PhoneInput.tsx`, `misc/phoneUtils.ts`)
+New `PhoneInput` component accepts numeric-only entry, displays formatted US phone numbers as `(555) 123-4567`, and stores in E.164 format (`+1XXXXXXXXXX`). Applied to billing phone on account create and phone on account_contacts create/edit. No DB schema change needed — existing `text` columns are sufficient.
 
-1. **Phone input mask** (accounts + account_contacts) — Numeric-only input, displays as `(555) 123-4567`, stores E.164 format (`+15551234567`). No DB schema change needed (already `text` columns).
-2. **Hide team fields on account create** — Auto-assign `attorney_id`, `law_clerk_id`, `legal_assistant_id` by looking up users with the matching `role`. Keep fields read-only on account show page.
-3. **Remove "To do" from contract statuses** — Remove from `defaultContractStatuses` array, `contractStatusColors` map, `ContractShow.tsx` fallback, and contract status filter. Contract-only; task statuses unchanged.
-4. **Hide "Date first consult"** on account create form.
-5. **Title case transforms** on name, street, city inputs (accounts + account_contacts).
-6. **Country dropdown default to US** (accounts + account_contacts).
-7. **Task filters** — Reorder "Assigned To" to first position; add filter options for all users (not just "Me"); add "Not done" composite filter (To do OR In Process OR Blocked).
-8. **Fix final payment calculation bug** — When `fee - retainer` divides evenly by `monthly_payment`, final payment should be `$0` not another monthly payment. E.g. $1000 fee = $250 retainer + $150/mo × 5 + $0.
+### Team auto-assignment (`accounts/AccountInputs.tsx`)
+`AccountTeamInputs` now fetches users and auto-assigns `attorney_id`, `law_clerk_id`, `legal_assistant_id` based on each user's `role` column. The three role pickers are hidden from the create form. Only the Account Manager (`user_id`) picker remains user-selectable. Team fields remain read-only on the account show page aside.
+
+### Remove "To do" from contract statuses
+- `defaultContractStatuses` in `defaultConfiguration.ts` — removed "To do"
+- `contractStatusColors` in `statusColors.ts` — removed "To do" color entry
+- `ContractShow.tsx` — fallback status changed from "To do" to "In process"
+
+### Title case transforms (`misc/titleCase.ts`)
+New `toTitleCase()` utility applied via `parse` prop to name, street, and city fields on both account create (billing contact) and account_contacts create/edit forms.
+
+### Country dropdown
+Replaced free-text country input with `SelectInput` dropdown defaulting to "US". Choices include common countries for an immigration law firm (US, Mexico, Canada, Guatemala, Honduras, El Salvador, Nicaragua, Colombia, Peru, Brazil, Other). Applied to both account create and account_contacts forms.
+
+### Hide "Date first consult"
+Removed `date_first_consult` from `AccountDatesInputs`. Field remains in the DB for existing data.
+
+### Task filters (`tasks/TaskListFilter.tsx`)
+- "Assigned To" category moved to first position
+- Now lists all active users (not just "Me"), with "Me" still first
+- Added "Not done" composite filter (`status@in: (To do,In Process,Blocked)`) at the top of the Status category
+
+### Fix final payment calculation
+- `ContractInputs.tsx` — When `fee - retainer` divides evenly by `monthly_payment`, `final_payment` is now set to `$0` instead of repeating the monthly amount. E.g. $1000 fee = $250 retainer + $150/mo × 5 + $0 final.
+- DB trigger `generate_payment_schedule()` — Now treats `final_payment = 0` the same as null, using `monthly_payment` for the last installment.
+- FakeRest `account_contracts.ts` — Same fix applied to demo data generator.
+
+### New files
+- `src/components/atomic-crm/misc/PhoneInput.tsx`
+- `src/components/atomic-crm/misc/phoneUtils.ts`
+- `src/components/atomic-crm/misc/titleCase.ts`
+
+### Modified files
+- `src/components/atomic-crm/types.ts` — Added `role` to `Sale` type
+- `src/components/atomic-crm/accounts/AccountInputs.tsx` — Team auto-assign, phone input, title case, country dropdown, hide date_first_consult
+- `src/components/atomic-crm/accounts/AccountCreate.tsx` — Added `billing_address_country: "US"` default
+- `src/components/atomic-crm/account-contacts/ContactInputs.tsx` — Phone input, title case, country dropdown
+- `src/components/atomic-crm/contracts/ContractInputs.tsx` — Final payment calculation fix
+- `src/components/atomic-crm/contracts/ContractShow.tsx` — Status fallback "To do" → "In process"
+- `src/components/atomic-crm/root/defaultConfiguration.ts` — Removed "To do" from contract statuses
+- `src/components/atomic-crm/misc/statusColors.ts` — Removed "To do" contract color
+- `src/components/atomic-crm/tasks/TaskListFilter.tsx` — Reordered filters, added all-users and "Not done"
+- `src/components/atomic-crm/providers/fakerest/dataGenerator/account_contracts.ts` — Final payment fix in demo data
 
 ## 2026-02-22 — Payment schedule (cashflow forecasting & AR)
 

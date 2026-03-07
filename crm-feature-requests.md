@@ -5,23 +5,33 @@ date: 2026-02-18T01:06:00
 
 ### LMC feedback
 /accounts/create
-- [ ] remove or hide Date first consult
-- [ ] title case the name, street, city field inputs
-- [ ] unclear if phone should be numeric only or formatted input
-- [ ] country dropdown default to US
-- [ ] Team fields not needed or can hide. Attorney and Account Manager always Linnette
+- [x] remove or hide Date first consult
+- [x] title case the name, street, city field inputs
+- [x] unclear if phone should be numeric only or formatted input
+- [x] country dropdown default to US
+- [x] Team fields not needed or can hide. 
+- [ ] Attorney and Account Manager always Linnette, make default
+- [ ] add State field dropdown picker
+- [ ] bug: phone field accepted more than 10 digits but only displayed 10, so once saved there were extra digits shown. e.g. +15551212111
 /account_contacts/create
-- [ ] Contact Type add child
-- [ ] unclear if phone should be numeric only
-- [ ] title case phone, address, city
-- [ ] country dropdown default to US
+- [x] Contact Type add child
+- [x] unclear if phone should be numeric only
+- [x] title case phone, address, city
+- [x] country dropdown default to US
+- [ ] State field dropdown picker
 /account_contracts/create
-- [ ] status picker default to In process (To do is not needed)
-- [ ] bug when final payment = monthly payment, expect $0
+- [x] status picker default to In process (To do is not needed)
+- [ ] bug: observed Status empty in form, expected Status = In process selected in form
+- [x] bug when final payment = monthly payment, expect $0
 	- e.g. $1000 fee = $250 retainer + $150/mo x 5 + $0 but shows $150 as final payment
+- [ ] after saving a contract, it's difficult to navigate back to the accounts//show with Contracts tab selected. Is there a way to make this automatic?
+/accounts//show
+- [ ] if more than 1 account contact, show billing contact item first in list
 /tasks
 - [ ] left column filters: Assigned To should be first, should include filters for any user not just Me
 - [ ] need status filter "Not done" = To do OR In Process OR Blocked
+/users/create
+- [ ] bug: expected the user role (attorney, law clerk, etc.) field is exposed in the form, observed no role field visible, other than Administrator toggle.
 
 All views
 - [x] make a reusable filter panel based on the one in /contacts, apply it to /accounts, /contracts, /tasks 

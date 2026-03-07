@@ -7,6 +7,22 @@ import { BooleanInput } from "@/components/admin/boolean-input";
 import { Separator } from "@/components/ui/separator";
 
 import type { Account } from "../types";
+import { PhoneInput } from "../misc/PhoneInput";
+import { toTitleCase } from "../misc/titleCase";
+
+const countryChoices = [
+  { id: "US", name: "United States" },
+  { id: "MX", name: "Mexico" },
+  { id: "CA", name: "Canada" },
+  { id: "GT", name: "Guatemala" },
+  { id: "HN", name: "Honduras" },
+  { id: "SV", name: "El Salvador" },
+  { id: "NI", name: "Nicaragua" },
+  { id: "CO", name: "Colombia" },
+  { id: "PE", name: "Peru" },
+  { id: "BR", name: "Brazil" },
+  { id: "OTHER", name: "Other" },
+];
 
 const accountOptionText = (record: Account) =>
   record?.name
@@ -54,6 +70,7 @@ export const ContactInputs = () => (
           label="First Name"
           validate={required()}
           helperText={false}
+          parse={(v: string) => toTitleCase(v)}
         />
       </div>
       <div className="flex-1">
@@ -61,6 +78,7 @@ export const ContactInputs = () => (
           source="last_name"
           label="Last Name"
           helperText={false}
+          parse={(v: string) => toTitleCase(v)}
         />
       </div>
     </div>
@@ -70,17 +88,17 @@ export const ContactInputs = () => (
         <TextInput source="email" label="Email" helperText={false} />
       </div>
       <div className="flex-1">
-        <TextInput source="phone" label="Phone" helperText={false} />
+        <PhoneInput source="phone" label="Phone" helperText={false} />
       </div>
     </div>
 
     <Separator className="my-2" />
 
     <h6 className="text-lg font-semibold">Address</h6>
-    <TextInput source="address_street" label="Street" helperText={false} />
+    <TextInput source="address_street" label="Street" helperText={false} parse={(v: string) => toTitleCase(v)} />
     <div className="flex gap-4 flex-col md:flex-row">
       <div className="flex-1">
-        <TextInput source="address_city" label="City" helperText={false} />
+        <TextInput source="address_city" label="City" helperText={false} parse={(v: string) => toTitleCase(v)} />
       </div>
       <div className="flex-1">
         <TextInput source="address_state" label="State" helperText={false} />
@@ -89,7 +107,13 @@ export const ContactInputs = () => (
         <TextInput source="address_postal_code" label="Postal Code" helperText={false} />
       </div>
     </div>
-    <TextInput source="address_country" label="Country" helperText={false} />
+    <SelectInput
+      source="address_country"
+      label="Country"
+      helperText={false}
+      choices={countryChoices}
+      defaultValue="US"
+    />
 
     <BooleanInput source="is_billing_contact" label="Billing Contact" />
   </div>

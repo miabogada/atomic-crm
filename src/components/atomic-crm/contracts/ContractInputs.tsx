@@ -168,8 +168,10 @@ const FinalPayment = () => {
 
     if (numPay > 0 && monthlyNum > 0) {
       const remaining = feeNum - retainerNum;
-      const finalPay = remaining - monthlyNum * (numPay - 1);
-      setValue("final_payment", Math.round(finalPay * 100) / 100);
+      const regularTotal = monthlyNum * (numPay - 1);
+      const finalPay = remaining - regularTotal;
+      // If final payment equals monthly payment, set to 0 (no special final payment needed)
+      setValue("final_payment", Math.abs(finalPay - monthlyNum) < 0.01 ? 0 : Math.round(finalPay * 100) / 100);
     }
   }, [fee, retainer, monthlyPayment, numPayments, setValue]);
 

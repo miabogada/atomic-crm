@@ -4,8 +4,6 @@
  */
 
 export const contractStatusColors: Record<string, string> = {
-  "To do":
-    "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
   "In process":
     "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
   "In process - Past due":

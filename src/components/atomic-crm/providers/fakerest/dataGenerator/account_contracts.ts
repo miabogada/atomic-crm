@@ -38,7 +38,7 @@ export const generateAccountContracts = (db: Db): AccountContract[] => {
         retainer,
         monthly_payment: monthly,
         num_payments: numPayments,
-        final_payment: finalPayment > 0 ? finalPayment : monthly,
+        final_payment: Math.abs(finalPayment - monthly) < 0.01 ? 0 : (finalPayment > 0 ? finalPayment : 0),
         date_opened: created_at,
         date_retainer: randomDate(new Date(created_at)).toISOString().slice(0, 10),
         date_first_payment: randomDate(new Date(created_at)).toISOString().slice(0, 10),

@@ -111,6 +111,7 @@ export const AccountCreate = () => {
               categories: "In Process",
               archived: false,
               date_opened: new Date().toISOString().split("T")[0],
+              billing_address_country: "US",
             }}
           >
             <Card>

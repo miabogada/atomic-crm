@@ -1,6 +1,6 @@
-import { required, useDataProvider } from "ra-core";
+import { required, useDataProvider, useGetList } from "ra-core";
 import { useFormContext } from "react-hook-form";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { Separator } from "@/components/ui/separator";
 import { ReferenceInput } from "@/components/admin/reference-input";
 import { TextInput } from "@/components/admin/text-input";
@@ -13,6 +13,8 @@ import type { AccountContact, Sale } from "../types";
 import {
   defaultAccountCategories,
 } from "../root/defaultConfiguration";
+import { PhoneInput } from "../misc/PhoneInput";
+import { toTitleCase } from "../misc/titleCase";
 
 export const BILLING_FIELDS = [
   "_billing_contact_lookup",
@@ -98,52 +100,40 @@ const AccountDatesInputs = () => {
     <div className="flex flex-col gap-4">
       <h6 className="text-lg font-semibold">Dates</h6>
       <DateInput source="date_opened" helperText={false} />
-      <DateInput source="date_first_consult" helperText={false} />
       <DateInput source="date_closed" helperText={false} />
     </div>
   );
 };
 
+/**
+ * Auto-assigns attorney_id, law_clerk_id, legal_assistant_id based on user roles.
+ * Only shows the Account Manager picker (user_id) which remains user-selectable.
+ */
 const AccountTeamInputs = () => {
+  const { setValue, getValues } = useFormContext();
+  const { data: users } = useGetList<Sale & { role?: string }>("users", {
+    filter: { "disabled@neq": true },
+    pagination: { page: 1, perPage: 100 },
+  });
+
+  useEffect(() => {
+    if (!users) return;
+    const roleMap: Record<string, string> = {
+      attorney: "attorney_id",
+      law_clerk: "law_clerk_id",
+      legal_assistant: "legal_assistant_id",
+    };
+    for (const [role, field] of Object.entries(roleMap)) {
+      if (!getValues(field)) {
+        const user = users.find((u) => u.role === role);
+        if (user) setValue(field, user.id);
+      }
+    }
+  }, [users, setValue, getValues]);
+
   return (
     <div className="flex flex-col gap-4">
       <h6 className="text-lg font-semibold">Team</h6>
-      <ReferenceInput
-        reference="users"
-        source="attorney_id"
-        sort={{ field: "last_name", order: "ASC" }}
-        filter={{ "disabled@neq": true }}
-      >
-        <SelectInput
-          helperText={false}
-          label="Attorney"
-          optionText={saleOptionRenderer}
-        />
-      </ReferenceInput>
-      <ReferenceInput
-        reference="users"
-        source="law_clerk_id"
-        sort={{ field: "last_name", order: "ASC" }}
-        filter={{ "disabled@neq": true }}
-      >
-        <SelectInput
-          helperText={false}
-          label="Law Clerk"
-          optionText={saleOptionRenderer}
-        />
-      </ReferenceInput>
-      <ReferenceInput
-        reference="users"
-        source="legal_assistant_id"
-        sort={{ field: "last_name", order: "ASC" }}
-        filter={{ "disabled@neq": true }}
-      >
-        <SelectInput
-          helperText={false}
-          label="Legal Assistant"
-          optionText={saleOptionRenderer}
-        />
-      </ReferenceInput>
       <ReferenceInput
         reference="users"
         source="user_id"
@@ -215,19 +205,19 @@ const BillingContactInputs = () => {
         />
       </ReferenceInput>
       <div className="flex gap-2">
-        <TextInput source="billing_first_name" label="First Name" validate={required()} helperText={false} className="flex-1" />
-        <TextInput source="billing_last_name" label="Last Name" helperText={false} className="flex-1" />
+        <TextInput source="billing_first_name" label="First Name" validate={required()} helperText={false} className="flex-1" parse={(v: string) => toTitleCase(v)} />
+        <TextInput source="billing_last_name" label="Last Name" helperText={false} className="flex-1" parse={(v: string) => toTitleCase(v)} />
       </div>
       <TextInput source="billing_email" label="Email" helperText={false} />
-      <TextInput source="billing_phone" label="Phone" helperText={false} />
-      <TextInput source="billing_address_street" label="Street" helperText={false} />
+      <PhoneInput source="billing_phone" label="Phone" helperText={false} />
+      <TextInput source="billing_address_street" label="Street" helperText={false} parse={(v: string) => toTitleCase(v)} />
       <div className="flex gap-2">
-        <TextInput source="billing_address_city" label="City" helperText={false} className="flex-1" />
+        <TextInput source="billing_address_city" label="City" helperText={false} className="flex-1" parse={(v: string) => toTitleCase(v)} />
         <TextInput source="billing_address_state" label="State" helperText={false} className="w-20" />
       </div>
       <div className="flex gap-2">
         <TextInput source="billing_address_postal_code" label="Postal Code" helperText={false} className="flex-1" />
-        <TextInput source="billing_address_country" label="Country" helperText={false} className="flex-1" />
+        <CountrySelect source="billing_address_country" label="Country" helperText={false} className="flex-1" />
       </div>
     </div>
   );
@@ -235,3 +225,25 @@ const BillingContactInputs = () => {
 
 const saleOptionRenderer = (choice: Sale) =>
   `${choice.first_name} ${choice.last_name}`;
+
+const countryChoices = [
+  { id: "US", name: "United States" },
+  { id: "MX", name: "Mexico" },
+  { id: "CA", name: "Canada" },
+  { id: "GT", name: "Guatemala" },
+  { id: "HN", name: "Honduras" },
+  { id: "SV", name: "El Salvador" },
+  { id: "NI", name: "Nicaragua" },
+  { id: "CO", name: "Colombia" },
+  { id: "PE", name: "Peru" },
+  { id: "BR", name: "Brazil" },
+  { id: "OTHER", name: "Other" },
+];
+
+const CountrySelect = (props: { source: string; label: string; helperText: any; className?: string }) => (
+  <SelectInput
+    {...props}
+    choices={countryChoices}
+    defaultValue="US"
+  />
+);

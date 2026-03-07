@@ -95,7 +95,6 @@ export const defaultActivityTypes = [
 ];
 
 export const defaultContractStatuses = [
-  "To do",
   "In process",
   "In process - Past due",
   "Stopped - Past due",

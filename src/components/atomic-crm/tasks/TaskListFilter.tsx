@@ -5,8 +5,9 @@ import {
   startOfToday,
 } from "date-fns";
 import { CircleDot, Clock, Tag, Users } from "lucide-react";
-import { useGetIdentity } from "ra-core";
+import { useGetIdentity, useGetList } from "ra-core";
 import { ToggleFilterButton } from "@/components/admin/toggle-filter-button";
+import type { Sale } from "../types";
 
 import { FilterCategory } from "../filters/FilterCategory";
 import { useConfigurationContext } from "../root/ConfigurationContext";
@@ -54,9 +55,52 @@ export const TaskListFilter = () => {
   const { taskStatuses, taskTypes } = useConfigurationContext();
   const isMobile = useIsMobile();
   const { identity } = useGetIdentity();
+  const { data: users } = useGetList<Sale>("users", {
+    filter: { "disabled@neq": true },
+    sort: { field: "last_name", order: "ASC" },
+    pagination: { page: 1, perPage: 100 },
+  });
 
   return (
     <ResponsiveFilters searchInput={{ placeholder: "Search tasks..." }}>
+      <FilterCategory icon={<Users />} label="Assigned to">
+        <ToggleFilterButton
+          className="w-full justify-between h-10 md:h-8"
+          label="Me"
+          value={{ user_id: identity?.id }}
+          size={isMobile ? "lg" : undefined}
+        />
+        {users
+          ?.filter((u) => u.id !== identity?.id)
+          .map((user) => (
+            <ToggleFilterButton
+              key={user.id}
+              className="w-full justify-between h-10 md:h-8"
+              label={`${user.first_name} ${user.last_name}`}
+              value={{ user_id: user.id }}
+              size={isMobile ? "lg" : undefined}
+            />
+          ))}
+      </FilterCategory>
+
+      <FilterCategory label="Status" icon={<CircleDot />}>
+        <ToggleFilterButton
+          className="w-auto md:w-full justify-between h-10 md:h-8"
+          label="Not done"
+          value={{ "status@in": "(To do,In Process,Blocked)" }}
+          size={isMobile ? "lg" : undefined}
+        />
+        {taskStatuses.map((status) => (
+          <ToggleFilterButton
+            key={status}
+            className="w-auto md:w-full justify-between h-10 md:h-8"
+            label={status}
+            value={{ status, "status@in": undefined }}
+            size={isMobile ? "lg" : undefined}
+          />
+        ))}
+      </FilterCategory>
+
       <FilterCategory label="Due Date" icon={<Clock />}>
         <ToggleFilterButton
           className="w-auto md:w-full justify-between h-10 md:h-8"
@@ -90,18 +134,6 @@ export const TaskListFilter = () => {
         />
       </FilterCategory>
 
-      <FilterCategory label="Status" icon={<CircleDot />}>
-        {taskStatuses.map((status) => (
-          <ToggleFilterButton
-            key={status}
-            className="w-auto md:w-full justify-between h-10 md:h-8"
-            label={status}
-            value={{ status }}
-            size={isMobile ? "lg" : undefined}
-          />
-        ))}
-      </FilterCategory>
-
       <FilterCategory label="Type" icon={<Tag />}>
         {taskTypes.map((type) => (
           <ToggleFilterButton
@@ -112,15 +144,6 @@ export const TaskListFilter = () => {
             size={isMobile ? "lg" : undefined}
           />
         ))}
-      </FilterCategory>
-
-      <FilterCategory icon={<Users />} label="Assigned to">
-        <ToggleFilterButton
-          className="w-full justify-between h-10 md:h-8"
-          label="Me"
-          value={{ user_id: identity?.id }}
-          size={isMobile ? "lg" : undefined}
-        />
       </FilterCategory>
     </ResponsiveFilters>
   );
