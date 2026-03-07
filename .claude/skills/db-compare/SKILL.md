@@ -69,19 +69,85 @@ Show a comparison table like:
 |---|---|---|---|
 | accounts | X | Y | +N on prod / in sync |
 
-## Syncing Data (if requested)
+## Syncing Data: Prod -> Local
 
-### Prod -> Local (make local match prod)
+This replaces all local data with production data. Confirm with the user first.
+
+### Step 1: Dump prod data
+
+Exclude Supabase internals, realtime, and migration tracking. Include auth.users/identities (needed for FK constraints) and all public tables. Use `--disable-triggers` to avoid FK ordering issues during load.
 
 ```bash
-# Dump prod data
-docker run --rm -e PGPASSWORD=<PASSWORD> postgres:15 pg_dump -h 10.0.10.228 -p 5433 -U postgres --data-only postgres > prod_data.sql
-
-# Reset local and reload
-npx supabase db reset   # WARNING: destroys all local data
-docker exec -i supabase_db_atomic-crm-demo psql -U postgres -d postgres < prod_data.sql
+docker run --rm -e PGPASSWORD=<PASSWORD> postgres:15 pg_dump \
+  -h 10.0.10.228 -p 5433 -U postgres \
+  --data-only --disable-triggers \
+  --exclude-schema='extensions' \
+  --exclude-schema='_analytics' \
+  --exclude-schema='vault' \
+  --exclude-schema='pgsodium' \
+  --exclude-schema='_realtime' \
+  --exclude-schema='realtime' \
+  --exclude-schema='supabase_migrations' \
+  --exclude-schema='supabase_functions' \
+  --exclude-table='auth.schema_migrations' \
+  --exclude-table='auth.flow_state' \
+  --exclude-table='auth.refresh_tokens' \
+  --exclude-table='auth.sessions' \
+  --exclude-table='auth.mfa_*' \
+  --exclude-table='auth.saml_*' \
+  --exclude-table='auth.sso_*' \
+  --exclude-table='auth.one_time_tokens' \
+  --exclude-table='storage.s3_multipart*' \
+  --exclude-table='storage.migrations' \
+  postgres > /tmp/prod_data.sql
 ```
 
-### Local -> Prod (make prod match local)
+### Step 2: Reset local database
+
+```bash
+npx supabase db reset
+```
+
+This drops and recreates the local DB, re-runs all migrations, and seeds from `supabase/seed.sql`.
+
+### Step 3: Clear seeded data that would conflict
+
+The seed creates default rows in `users`, `contact_types`, `favicons_excluded_domains`, and `contract_payment_schedule`. These must be cleared before loading the prod dump.
+
+```bash
+docker exec supabase_db_atomic-crm-demo psql -U postgres -d postgres -c "
+TRUNCATE public.contract_payment_schedule CASCADE;
+TRUNCATE public.account_payments CASCADE;
+TRUNCATE public.account_contracts CASCADE;
+TRUNCATE public.account_contacts CASCADE;
+TRUNCATE public.account_activities CASCADE;
+TRUNCATE public.tasks CASCADE;
+TRUNCATE public.accounts CASCADE;
+TRUNCATE public.users CASCADE;
+TRUNCATE public.contact_types CASCADE;
+TRUNCATE public.favicons_excluded_domains CASCADE;
+DELETE FROM auth.identities;
+DELETE FROM auth.users;
+"
+```
+
+### Step 4: Load prod data
+
+Must use `supabase_admin` role (not `postgres`) to have ownership of auth.* and storage.* tables. Password is `postgres`.
+
+```bash
+docker exec -i -e PGPASSWORD=postgres supabase_db_atomic-crm-demo \
+  psql -U supabase_admin -d postgres < /tmp/prod_data.sql
+```
+
+**Expected benign errors** (safe to ignore):
+- `duplicate key value violates unique constraint "audit_log_entries_pkey"` — pre-existing audit logs
+- `duplicate key value violates unique constraint "buckets_pkey"` — storage bucket already exists from seed
+
+### Step 5: Verify
+
+Run the row count comparison query (Step 2 above) on both local and prod to confirm they match.
+
+## Syncing Data: Local -> Prod
 
 This is destructive to production data. Always confirm with the user before proceeding.
