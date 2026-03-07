@@ -1,5 +1,26 @@
 # Changelog
 
+## 2026-03-07 — LMC feedback batch (planned)
+
+Address feedback from LMC review covering account/contact/contract creation forms and task filters.
+
+### Database migrations
+
+1. **Add `role` to `users` table** — `text` column (values: `attorney`, `law_clerk`, `legal_assistant`). Backfill existing users. Used to auto-assign team fields on new account creation. When a staff member is replaced: disable the old user, assign the role to the new user. Completed tasks, activities, and closed accounts retain the original user. Only open accounts and unfinished tasks get reassigned to the new role holder.
+2. **Change contract status default** — `'To do'` → `'In process'` on `account_contracts.status`. Update any existing rows with status "To do" to "In process". Remove "To do" from contract statuses only (tasks keep "To do").
+3. **Add "child" to `contact_types`** — `INSERT INTO contact_types (name) VALUES ('child')`.
+
+### Frontend changes
+
+1. **Phone input mask** (accounts + account_contacts) — Numeric-only input, displays as `(555) 123-4567`, stores E.164 format (`+15551234567`). No DB schema change needed (already `text` columns).
+2. **Hide team fields on account create** — Auto-assign `attorney_id`, `law_clerk_id`, `legal_assistant_id` by looking up users with the matching `role`. Keep fields read-only on account show page.
+3. **Remove "To do" from contract statuses** — Remove from `defaultContractStatuses` array, `contractStatusColors` map, `ContractShow.tsx` fallback, and contract status filter. Contract-only; task statuses unchanged.
+4. **Hide "Date first consult"** on account create form.
+5. **Title case transforms** on name, street, city inputs (accounts + account_contacts).
+6. **Country dropdown default to US** (accounts + account_contacts).
+7. **Task filters** — Reorder "Assigned To" to first position; add filter options for all users (not just "Me"); add "Not done" composite filter (To do OR In Process OR Blocked).
+8. **Fix final payment calculation bug** — When `fee - retainer` divides evenly by `monthly_payment`, final payment should be `$0` not another monthly payment. E.g. $1000 fee = $250 retainer + $150/mo × 5 + $0.
+
 ## 2026-02-22 — Payment schedule (cashflow forecasting & AR)
 
 Replaces the legacy Access `tblPaymentSchedule` with a native CRM feature. When a contract is created, a payment schedule is automatically generated from its terms. The schedule powers two new capabilities: cashflow forecasting and AR overdue identification.

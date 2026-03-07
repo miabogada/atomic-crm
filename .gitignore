@@ -44,3 +44,4 @@ public/r/
 # PII data lives in migration/output/ only; .md/.py files in migration/ are safe
 migration/.env
 migration/output/
+migration/backups/
