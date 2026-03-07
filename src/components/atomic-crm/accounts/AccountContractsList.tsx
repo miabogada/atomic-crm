@@ -58,18 +58,16 @@ export const AccountContractsList = () => {
             const numPayments = contract.num_payments;
 
             return (
-              <div
+              <Link
                 key={contract.id}
-                className="flex items-start gap-4 py-3 px-2"
+                to={`/account_contracts/${contract.id}/show`}
+                className="flex items-start gap-4 py-3 px-2 rounded-md hover:bg-accent transition-colors"
               >
                 <div className="flex-1">
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <Link
-                      to={`/account_contracts/${contract.id}/show`}
-                      className="font-medium text-primary hover:underline"
-                    >
+                    <span className="font-medium text-primary">
                       {contract.contract_number || `Contract #${contract.id}`}
-                    </Link>
+                    </span>
                     {contract.status && (
                       <Badge
                         variant="outline"
@@ -118,7 +116,7 @@ export const AccountContractsList = () => {
                     </div>
                   )}
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>

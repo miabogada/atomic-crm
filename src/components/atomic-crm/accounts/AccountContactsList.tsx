@@ -1,29 +1,17 @@
-import { useState } from "react";
 import { useListContext, useRecordContext } from "ra-core";
 import { Link } from "react-router";
-import { ClipboardPlus, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { ReferenceField } from "@/components/admin/reference-field";
 import { TextField } from "@/components/admin/text-field";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 import type { Account, AccountContact } from "../types";
-import { TaskCreateSheet } from "../tasks/TaskCreateSheet";
 
 export const AccountContactsList = () => {
   const { data, isPending } = useListContext<AccountContact>();
   const account = useRecordContext<Account>();
-  const [taskSheetOpen, setTaskSheetOpen] = useState(false);
-  const [selectedContactId, setSelectedContactId] = useState<
-    string | number | null
-  >(null);
-
   if (isPending) return null;
-
-  const handleAddTask = (contactId: string | number) => {
-    setSelectedContactId(contactId);
-    setTaskSheetOpen(true);
-  };
 
   return (
     <>
@@ -45,18 +33,16 @@ export const AccountContactsList = () => {
       ) : (
         <div className="divide-y">
           {data.map((contact) => (
-            <div
+            <Link
               key={contact.id}
-              className="flex items-center gap-4 py-3 px-2"
+              to={`/account_contacts/${contact.id}/show`}
+              className="flex items-center gap-4 py-3 px-2 rounded-md hover:bg-accent transition-colors"
             >
               <div className="flex-1">
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <Link
-                    to={`/account_contacts/${contact.id}/show`}
-                    className="font-medium text-primary hover:underline"
-                  >
+                  <span className="font-medium text-primary">
                     {contact.first_name} {contact.last_name}
-                  </Link>
+                  </span>
                   {contact.contact_type_id && (
                     <ReferenceField
                       source="contact_type_id"
@@ -90,30 +76,9 @@ export const AccountContactsList = () => {
                   </div>
                 )}
               </div>
-              {account && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  title="Add task for this contact"
-                  onClick={() => handleAddTask(contact.id)}
-                >
-                  <ClipboardPlus className="w-4 h-4" />
-                </Button>
-              )}
-            </div>
+            </Link>
           ))}
         </div>
-      )}
-
-      {account && selectedContactId != null && (
-        <TaskCreateSheet
-          open={taskSheetOpen}
-          onOpenChange={setTaskSheetOpen}
-          account_id={account.id}
-          parent_type="account_contact"
-          parent_id={selectedContactId}
-        />
       )}
     </>
   );
