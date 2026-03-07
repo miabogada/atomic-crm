@@ -70,6 +70,7 @@ export const ContractInputs = () => {
             source="status"
             label="Status"
             choices={statusChoices}
+            defaultValue="In process"
             helperText={false}
           />
         </div>

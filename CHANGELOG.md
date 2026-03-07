@@ -41,21 +41,46 @@ Removed `date_first_consult` from `AccountDatesInputs`. Field remains in the DB 
 - DB trigger `generate_payment_schedule()` — Now treats `final_payment = 0` the same as null, using `monthly_payment` for the last installment.
 - FakeRest `account_contracts.ts` — Same fix applied to demo data generator.
 
+### Phone input bug fix
+`parsePhoneDigits` now strips leading country code `1` and caps at 10 digits. Previously accepted unlimited digits, causing stored values like `+15551212111` with extra digits.
+
+### Contract status default in form
+Added `defaultValue="In process"` to the status `SelectInput` in `ContractInputs.tsx`. Previously the select appeared empty on create even though the DB default was set.
+
+### Contract create redirect
+`ContractCreate.tsx` now sets `redirect="show"` on `CreateBase`, sending the user to the contract show page after saving. This lets them immediately add the retainer payment.
+
+### User role field
+Added `role` `SelectInput` (Attorney, Law Clerk, Legal Assistant) to `UsersInputs.tsx`. Also added `role` to the `SalesFormData` type so it persists through the create/edit flow.
+
+### Account Manager default
+`AccountTeamInputs` now defaults `user_id` (Account Manager) to the user with role `attorney`, in addition to auto-assigning the three team role fields.
+
+### Billing contact sort order
+`AccountContactsList` now sorts billing contacts to the top of the list on the account show page.
+
+### State dropdown picker (`misc/usStates.ts`)
+Replaced free-text state input with `SelectInput` dropdown listing all US states and territories. Applied to both account create (billing contact) and account_contacts forms.
+
 ### New files
 - `src/components/atomic-crm/misc/PhoneInput.tsx`
 - `src/components/atomic-crm/misc/phoneUtils.ts`
 - `src/components/atomic-crm/misc/titleCase.ts`
+- `src/components/atomic-crm/misc/usStates.ts`
 
 ### Modified files
-- `src/components/atomic-crm/types.ts` — Added `role` to `Sale` type
-- `src/components/atomic-crm/accounts/AccountInputs.tsx` — Team auto-assign, phone input, title case, country dropdown, hide date_first_consult
+- `src/components/atomic-crm/types.ts` — Added `role` to `Sale` and `SalesFormData` types
+- `src/components/atomic-crm/accounts/AccountInputs.tsx` — Team auto-assign, phone input, title case, country/state dropdowns, hide date_first_consult, Account Manager default
 - `src/components/atomic-crm/accounts/AccountCreate.tsx` — Added `billing_address_country: "US"` default
-- `src/components/atomic-crm/account-contacts/ContactInputs.tsx` — Phone input, title case, country dropdown
-- `src/components/atomic-crm/contracts/ContractInputs.tsx` — Final payment calculation fix
+- `src/components/atomic-crm/accounts/AccountContactsList.tsx` — Billing contact sort
+- `src/components/atomic-crm/account-contacts/ContactInputs.tsx` — Phone input, title case, country/state dropdowns
+- `src/components/atomic-crm/contracts/ContractInputs.tsx` — Final payment fix, status default
+- `src/components/atomic-crm/contracts/ContractCreate.tsx` — Redirect to contract show
 - `src/components/atomic-crm/contracts/ContractShow.tsx` — Status fallback "To do" → "In process"
 - `src/components/atomic-crm/root/defaultConfiguration.ts` — Removed "To do" from contract statuses
 - `src/components/atomic-crm/misc/statusColors.ts` — Removed "To do" contract color
 - `src/components/atomic-crm/tasks/TaskListFilter.tsx` — Reordered filters, added all-users and "Not done"
+- `src/components/atomic-crm/users/UsersInputs.tsx` — Added role picker
 - `src/components/atomic-crm/providers/fakerest/dataGenerator/account_contracts.ts` — Final payment fix in demo data
 
 ## 2026-02-22 — Payment schedule (cashflow forecasting & AR)

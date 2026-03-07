@@ -28,6 +28,7 @@ export type SalesFormData = {
   last_name: string;
   administrator: boolean;
   disabled: boolean;
+  role?: "attorney" | "law_clerk" | "legal_assistant" | null;
 };
 
 export type Sale = {

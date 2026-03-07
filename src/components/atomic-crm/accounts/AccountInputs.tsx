@@ -15,6 +15,7 @@ import {
 } from "../root/defaultConfiguration";
 import { PhoneInput } from "../misc/PhoneInput";
 import { toTitleCase } from "../misc/titleCase";
+import { usStateChoices } from "../misc/usStates";
 
 export const BILLING_FIELDS = [
   "_billing_contact_lookup",
@@ -129,6 +130,11 @@ const AccountTeamInputs = () => {
         if (user) setValue(field, user.id);
       }
     }
+    // Default Account Manager to the attorney
+    const attorney = users.find((u) => u.role === "attorney");
+    if (attorney && !getValues("user_id")) {
+      setValue("user_id", attorney.id);
+    }
   }, [users, setValue, getValues]);
 
   return (
@@ -213,7 +219,7 @@ const BillingContactInputs = () => {
       <TextInput source="billing_address_street" label="Street" helperText={false} parse={(v: string) => toTitleCase(v)} />
       <div className="flex gap-2">
         <TextInput source="billing_address_city" label="City" helperText={false} className="flex-1" parse={(v: string) => toTitleCase(v)} />
-        <TextInput source="billing_address_state" label="State" helperText={false} className="w-20" />
+        <SelectInput source="billing_address_state" label="State" choices={usStateChoices} helperText={false} className="w-24" />
       </div>
       <div className="flex gap-2">
         <TextInput source="billing_address_postal_code" label="Postal Code" helperText={false} className="flex-1" />

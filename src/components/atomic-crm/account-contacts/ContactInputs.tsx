@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import type { Account } from "../types";
 import { PhoneInput } from "../misc/PhoneInput";
 import { toTitleCase } from "../misc/titleCase";
+import { usStateChoices } from "../misc/usStates";
 
 const countryChoices = [
   { id: "US", name: "United States" },
@@ -101,7 +102,7 @@ export const ContactInputs = () => (
         <TextInput source="address_city" label="City" helperText={false} parse={(v: string) => toTitleCase(v)} />
       </div>
       <div className="flex-1">
-        <TextInput source="address_state" label="State" helperText={false} />
+        <SelectInput source="address_state" label="State" choices={usStateChoices} helperText={false} />
       </div>
       <div className="flex-1">
         <TextInput source="address_postal_code" label="Postal Code" helperText={false} />

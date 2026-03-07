@@ -26,6 +26,7 @@ export const ContractCreate = () => {
 
   return (
     <CreateBase
+      redirect="show"
       transform={(data: any) => ({
         ...data,
         created_at: new Date().toISOString(),

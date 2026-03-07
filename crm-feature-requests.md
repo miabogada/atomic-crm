@@ -10,28 +10,28 @@ date: 2026-02-18T01:06:00
 - [x] unclear if phone should be numeric only or formatted input
 - [x] country dropdown default to US
 - [x] Team fields not needed or can hide. 
-- [ ] Attorney and Account Manager always Linnette, make default
-- [ ] add State field dropdown picker
-- [ ] bug: phone field accepted more than 10 digits but only displayed 10, so once saved there were extra digits shown. e.g. +15551212111
+- [x] Attorney and Account Manager always Linnette, make default
+- [x] add State field dropdown picker
+- [x] bug: phone field accepted more than 10 digits but only displayed 10, so once saved there were extra digits shown. e.g. +15551212111
 /account_contacts/create
 - [x] Contact Type add child
 - [x] unclear if phone should be numeric only
 - [x] title case phone, address, city
 - [x] country dropdown default to US
-- [ ] State field dropdown picker
+- [x] State field dropdown picker
 /account_contracts/create
 - [x] status picker default to In process (To do is not needed)
-- [ ] bug: observed Status empty in form, expected Status = In process selected in form
+- [x] bug: observed Status empty in form, expected Status = In process selected in form
 - [x] bug when final payment = monthly payment, expect $0
 	- e.g. $1000 fee = $250 retainer + $150/mo x 5 + $0 but shows $150 as final payment
-- [ ] after saving a contract, it's difficult to navigate back to the accounts//show with Contracts tab selected. Is there a way to make this automatic?
+- [x] after saving a contract, it's difficult to navigate back to the accounts//show with Contracts tab selected and the new contract shown so that the first payment / retainer could be created. Is there a way to make this automatic?
 /accounts//show
-- [ ] if more than 1 account contact, show billing contact item first in list
+- [x] if more than 1 account contact, show billing contact item first in list
 /tasks
-- [ ] left column filters: Assigned To should be first, should include filters for any user not just Me
-- [ ] need status filter "Not done" = To do OR In Process OR Blocked
+- [x] left column filters: Assigned To should be first, should include filters for any user not just Me
+- [x] need status filter "Not done" = To do OR In Process OR Blocked
 /users/create
-- [ ] bug: expected the user role (attorney, law clerk, etc.) field is exposed in the form, observed no role field visible, other than Administrator toggle.
+- [x] bug: expected the user role (attorney, law clerk, etc.) field is exposed in the form, observed no role field visible, other than Administrator toggle.
 
 All views
 - [x] make a reusable filter panel based on the one in /contacts, apply it to /accounts, /contracts, /tasks 
@@ -40,11 +40,11 @@ All views
 
 Dashboard
 - [x] Task items should display Assignee
-- [ ] Hot Contacts left side is not needed, maybe replace with Performance (booked contracts, booked sales, payment volume, maybe against targets) / 
-- [ ] Late Payments (contract list and amounts) 
+- [x] Hot Contacts left side is not needed, 
+- [x] Late Payments (contract list and amounts) 
 - [ ] Deadlines panel (not sure if linked to tasks or contracts directly)
 - [x] Add Completed Tasks
-- [ ] Contracts count, bookings, fees collected / mo graph or table
+- [ ] Left panel "Performance" show new Contracts count, bookings, fees collected / mo graph or table
 	- [ ] A way to set monthly sales goal
 - [x] bug: Latest Activities not displaying any
 - [x] Latest Activity should include activities, tasks completed, and payments received.

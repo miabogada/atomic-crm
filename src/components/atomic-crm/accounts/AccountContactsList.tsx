@@ -9,9 +9,14 @@ import { Button } from "@/components/ui/button";
 import type { Account, AccountContact } from "../types";
 
 export const AccountContactsList = () => {
-  const { data, isPending } = useListContext<AccountContact>();
+  const { data: rawData, isPending } = useListContext<AccountContact>();
   const account = useRecordContext<Account>();
   if (isPending) return null;
+
+  // Sort billing contacts to top
+  const data = rawData
+    ? [...rawData].sort((a, b) => (b.is_billing_contact ? 1 : 0) - (a.is_billing_contact ? 1 : 0))
+    : rawData;
 
   return (
     <>
