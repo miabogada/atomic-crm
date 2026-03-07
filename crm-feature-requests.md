@@ -3,6 +3,26 @@ date: 2026-02-18T01:06:00
 ---
 # List of things that need fix
 
+### LMC feedback
+/accounts/create
+- [ ] remove or hide Date first consult
+- [ ] title case the name, street, city field inputs
+- [ ] unclear if phone should be numeric only or formatted input
+- [ ] country dropdown default to US
+- [ ] Team fields not needed or can hide. Attorney and Account Manager always Linnette
+/account_contacts/create
+- [ ] Contact Type add child
+- [ ] unclear if phone should be numeric only
+- [ ] title case phone, address, city
+- [ ] country dropdown default to US
+/account_contracts/create
+- [ ] status picker default to In process (To do is not needed)
+- [ ] bug when final payment = monthly payment, expect $0
+	- e.g. $1000 fee = $250 retainer + $150/mo x 5 + $0 but shows $150 as final payment
+/tasks
+- [ ] left column filters: Assigned To should be first, should include filters for any user not just Me
+- [ ] need status filter "Not done" = To do OR In Process OR Blocked
+
 All views
 - [x] make a reusable filter panel based on the one in /contacts, apply it to /accounts, /contracts, /tasks 
 	- [x] bug: /x/contacts?filter Contact Type filters error: "column contact_summary.contact_type_id does not exist"
@@ -10,12 +30,14 @@ All views
 
 Dashboard
 - [x] Task items should display Assignee
-- [ ] Hot Contacts left side is not needed, maybe replace with Performance (booked contracts, booked sales, payment volume, maybe against targets) / Late Payments (contract list and amounts) / Deadlines panel (not sure if linked to tasks or contracts directly)
+- [ ] Hot Contacts left side is not needed, maybe replace with Performance (booked contracts, booked sales, payment volume, maybe against targets) / 
+- [ ] Late Payments (contract list and amounts) 
+- [ ] Deadlines panel (not sure if linked to tasks or contracts directly)
 - [x] Add Completed Tasks
 - [ ] Contracts count, bookings, fees collected / mo graph or table
 	- [ ] A way to set monthly sales goal
 - [x] bug: Latest Activities not displaying any
-- [ ] Latest Activity should include activities, tasks completed, and payments received.
+- [x] Latest Activity should include activities, tasks completed, and payments received.
 
 Phone menu
 - [ ] bottom phone nav needs a back arrow, left side, only shown in detail views
@@ -40,7 +62,7 @@ account_contracts?create
 
 account_contracts/1/show
 - [x] Task items should display Assignee
-- [ ] tasks and activities including payments made should have a view option of threaded or list
+- [x] tasks and activities including payments made should have a view option of threaded
 - [x] contract should show a running balance due (once the payments are hooked up)
 - [x] contract should show a schedule of payments and due dates when click "# Payments: 18" (under Terms)
 - [x] contract should show list of payments received 
