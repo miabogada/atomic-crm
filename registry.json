@@ -464,11 +464,23 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/misc/usStates.ts",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/misc/unsupportedDomains.const.ts",
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/misc/titleCase.ts",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/misc/statusColors.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/misc/phoneUtils.ts",
           "type": "registry:component"
         },
         {
@@ -489,6 +501,10 @@
         },
         {
           "path": "src/components/atomic-crm/misc/RelativeDate.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/misc/PhoneInput.tsx",
           "type": "registry:component"
         },
         {

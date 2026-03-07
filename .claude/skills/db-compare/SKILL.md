@@ -11,143 +11,103 @@ description: Compare local dev database with production (703 VM) database. Use w
 - **Prod DB (703 VM)**: Runs on `10.0.10.228:5433`, requires `PGSSLMODE=disable`
 - **Prod Postgres password**: Stored in user's Bitwarden under "supabase crm". Ask the user for it if needed — do NOT guess or hardcode it.
 
-## How to Query Each Database
+## Scripts
 
-### Local (via docker exec — no password needed)
+Three shell scripts in `scripts/` automate the most common database operations. All scripts prompt for the prod password at runtime (never hardcoded). Prefer using these scripts over running the commands manually.
 
+| Script | Purpose | Destructive? |
+|---|---|---|
+| `scripts/db-compare.sh` | Compare row counts + migration status | No |
+| `scripts/db-sync-prod-to-local.sh` | Replace local data with prod data | Local only |
+| `scripts/db-sync-local-to-prod.sh` | Replace prod data with local data | **Prod** (requires typing "yes") |
+
+### Usage
+
+```bash
+# Quick health check — are databases in sync?
+./scripts/db-compare.sh
+
+# Pull production data down to local dev
+./scripts/db-sync-prod-to-local.sh
+
+# Push local data up to production
+./scripts/db-sync-local-to-prod.sh
+```
+
+### Pushing schema changes to prod
+
+If `db-compare.sh` shows migrations missing on prod, push them:
+
+```bash
+PGSSLMODE=disable npx supabase db push --db-url "postgresql://supabase_admin:<PASSWORD>@10.0.10.228:5433/postgres"
+```
+
+## Manual Reference
+
+The sections below document the underlying commands for reference, or for cases where the scripts need to be adapted.
+
+### Querying Each Database
+
+**Local** (via docker exec — no password needed):
 ```bash
 docker exec supabase_db_atomic-crm-demo psql -U postgres -d postgres -c "YOUR SQL HERE"
 ```
 
-### Prod (via dockerized psql client — password via env var)
-
+**Prod** (via dockerized psql client — password via env var):
 ```bash
-docker run --rm -e PGPASSWORD=<PASSWORD> postgres:15 psql -h 10.0.10.228 -p 5433 -U postgres -d postgres -c "YOUR SQL HERE"
+docker run --rm -e PGPASSWORD=<PASSWORD> postgres:15 psql -h 10.0.10.228 -p 5433 -U supabase_admin -d postgres -c "YOUR SQL HERE"
 ```
 
-The `postgres:15` image is already pulled locally.
+### Key Details
 
-## Step 1: Compare Migrations (Schema Sync)
+- Use `supabase_admin` (not `postgres`) for dump/load operations — it has ownership of auth.* and storage.* tables
+- Local `supabase_admin` password is `postgres`
+- Prod `supabase_admin` password is in Bitwarden under "supabase crm" — ask the user if needed, do NOT guess or hardcode
+- `--disable-triggers` is required on pg_dump to avoid FK ordering issues during load
+- Expected benign errors during load:
+  - `duplicate key value violates unique constraint "audit_log_entries_pkey"` — pre-existing audit logs
+  - `duplicate key value violates unique constraint "buckets_pkey"` — storage bucket already exists from seed
 
-Run this to see if both environments have the same migrations applied:
+## Known Issue: User ID Mismatch After Sync
 
-```bash
-PGSSLMODE=disable npx supabase migration list --db-url "postgresql://postgres:<PASSWORD>@10.0.10.228:5433/postgres"
-```
+**Problem:** When syncing data between environments, the `users` table uses auto-increment IDs. If the target database is reset (`npx supabase db reset`) before loading, the seed runs first and creates users with IDs starting at 1. When the dump is then loaded, auth.users/identities are restored (which triggers user creation via the `on_auth_user_created` trigger), but the `users` table's auto-increment counter has advanced — so users get new IDs (e.g. 5–8 instead of 1–4). Meanwhile, all FK references in the data (tasks, accounts, account_contacts, account_contracts, account_activities, account_payments) still point to the old IDs.
 
-The output shows Local vs Remote columns. If all rows have both versions filled in, schemas are in sync. Missing Remote versions mean prod is behind; run `npx supabase db push --db-url "postgresql://postgres:<PASSWORD>@10.0.10.228:5433/postgres"` to push.
+**Symptoms:** Filters like "Assigned To" on tasks return no results. Activities don't display. Account team fields (attorney_id, law_clerk_id, legal_assistant_id) point to nonexistent users.
 
-## Step 2: Compare Data (Row Counts)
-
-Use this query on both local and prod to compare row counts across all CRM tables:
+**Detection:** After a sync, verify that user_ids in data tables match actual user IDs:
 
 ```sql
-SELECT 'accounts' as tbl, count(*) FROM accounts
-UNION ALL SELECT 'account_contacts', count(*) FROM account_contacts
-UNION ALL SELECT 'account_contracts', count(*) FROM account_contracts
-UNION ALL SELECT 'account_payments', count(*) FROM account_payments
-UNION ALL SELECT 'companies', count(*) FROM companies
-UNION ALL SELECT 'contacts', count(*) FROM contacts
-UNION ALL SELECT 'contact_types', count(*) FROM contact_types
-UNION ALL SELECT 'contract_payment_schedule', count(*) FROM contract_payment_schedule
-UNION ALL SELECT 'deals', count(*) FROM deals
-UNION ALL SELECT 'contact_notes', count(*) FROM contact_notes
-UNION ALL SELECT 'deal_notes', count(*) FROM deal_notes
-UNION ALL SELECT 'tags', count(*) FROM tags
-UNION ALL SELECT 'tasks', count(*) FROM tasks
-UNION ALL SELECT 'users', count(*) FROM users
-ORDER BY tbl;
+-- Should return 0 rows if everything is correct
+SELECT 'tasks' as tbl, user_id FROM tasks WHERE user_id NOT IN (SELECT id FROM users)
+UNION ALL SELECT 'accounts', user_id FROM accounts WHERE user_id NOT IN (SELECT id FROM users)
+UNION ALL SELECT 'account_activities', user_id FROM account_activities WHERE user_id NOT IN (SELECT id FROM users);
 ```
 
-**Important**: If new tables are added via migrations, update this query to include them.
+**Fix:** Remap old IDs to new IDs. Determine the mapping by comparing user emails, then run (as `supabase_admin`):
 
-## Step 3: Present Results
+```sql
+BEGIN;
+SET session_replication_role = 'replica';  -- disable FK checks
 
-Show a comparison table like:
+-- Example mapping: old 1->8, 2->7, 3->5, 4->6
+UPDATE tasks SET user_id = CASE user_id WHEN 1 THEN 8 WHEN 2 THEN 7 WHEN 3 THEN 5 WHEN 4 THEN 6 END WHERE user_id IN (1,2,3,4);
+UPDATE accounts SET user_id = CASE user_id WHEN 1 THEN 8 WHEN 2 THEN 7 END WHERE user_id IN (1,2);
+UPDATE accounts SET attorney_id = CASE attorney_id WHEN 1 THEN 8 WHEN 2 THEN 7 WHEN 3 THEN 5 WHEN 4 THEN 6 END WHERE attorney_id IN (1,2,3,4);
+UPDATE accounts SET law_clerk_id = CASE law_clerk_id WHEN 1 THEN 8 WHEN 2 THEN 7 WHEN 3 THEN 5 WHEN 4 THEN 6 END WHERE law_clerk_id IN (1,2,3,4);
+UPDATE accounts SET legal_assistant_id = CASE legal_assistant_id WHEN 1 THEN 8 WHEN 2 THEN 7 WHEN 3 THEN 5 WHEN 4 THEN 6 END WHERE legal_assistant_id IN (1,2,3,4);
+UPDATE account_contacts SET user_id = CASE user_id WHEN 1 THEN 8 WHEN 2 THEN 7 END WHERE user_id IN (1,2);
+UPDATE account_contracts SET user_id = CASE user_id WHEN 1 THEN 8 WHEN 2 THEN 7 END WHERE user_id IN (1,2);
+UPDATE account_activities SET user_id = CASE user_id WHEN 1 THEN 8 WHEN 2 THEN 7 END WHERE user_id IN (1,2);
+UPDATE account_payments SET user_id = CASE user_id WHEN 1 THEN 8 WHEN 2 THEN 7 END WHERE user_id IN (1,2);
 
-| Table | Local | Prod (703) | Diff |
-|---|---|---|---|
-| accounts | X | Y | +N on prod / in sync |
+SET session_replication_role = 'origin';
 
-## Syncing Data: Prod -> Local
+-- Also re-apply roles if they were lost
+UPDATE users SET role = 'attorney' WHERE email = 'lmc@tanoclark.com';
+UPDATE users SET role = 'law_clerk' WHERE email = 'clerk@tanoclark.com';
+UPDATE users SET role = 'legal_assistant' WHERE email = 'assistant@tanoclark.com';
 
-This replaces all local data with production data. Confirm with the user first.
-
-### Step 1: Dump prod data
-
-Exclude Supabase internals, realtime, and migration tracking. Include auth.users/identities (needed for FK constraints) and all public tables. Use `--disable-triggers` to avoid FK ordering issues during load.
-
-```bash
-docker run --rm -e PGPASSWORD=<PASSWORD> postgres:15 pg_dump \
-  -h 10.0.10.228 -p 5433 -U postgres \
-  --data-only --disable-triggers \
-  --exclude-schema='extensions' \
-  --exclude-schema='_analytics' \
-  --exclude-schema='vault' \
-  --exclude-schema='pgsodium' \
-  --exclude-schema='_realtime' \
-  --exclude-schema='realtime' \
-  --exclude-schema='supabase_migrations' \
-  --exclude-schema='supabase_functions' \
-  --exclude-table='auth.schema_migrations' \
-  --exclude-table='auth.flow_state' \
-  --exclude-table='auth.refresh_tokens' \
-  --exclude-table='auth.sessions' \
-  --exclude-table='auth.mfa_*' \
-  --exclude-table='auth.saml_*' \
-  --exclude-table='auth.sso_*' \
-  --exclude-table='auth.one_time_tokens' \
-  --exclude-table='storage.s3_multipart*' \
-  --exclude-table='storage.migrations' \
-  postgres > /tmp/prod_data.sql
+COMMIT;
 ```
 
-### Step 2: Reset local database
-
-```bash
-npx supabase db reset
-```
-
-This drops and recreates the local DB, re-runs all migrations, and seeds from `supabase/seed.sql`.
-
-### Step 3: Clear seeded data that would conflict
-
-The seed creates default rows in `users`, `contact_types`, `favicons_excluded_domains`, and `contract_payment_schedule`. These must be cleared before loading the prod dump.
-
-```bash
-docker exec supabase_db_atomic-crm-demo psql -U postgres -d postgres -c "
-TRUNCATE public.contract_payment_schedule CASCADE;
-TRUNCATE public.account_payments CASCADE;
-TRUNCATE public.account_contracts CASCADE;
-TRUNCATE public.account_contacts CASCADE;
-TRUNCATE public.account_activities CASCADE;
-TRUNCATE public.tasks CASCADE;
-TRUNCATE public.accounts CASCADE;
-TRUNCATE public.users CASCADE;
-TRUNCATE public.contact_types CASCADE;
-TRUNCATE public.favicons_excluded_domains CASCADE;
-DELETE FROM auth.identities;
-DELETE FROM auth.users;
-"
-```
-
-### Step 4: Load prod data
-
-Must use `supabase_admin` role (not `postgres`) to have ownership of auth.* and storage.* tables. Password is `postgres`.
-
-```bash
-docker exec -i -e PGPASSWORD=postgres supabase_db_atomic-crm-demo \
-  psql -U supabase_admin -d postgres < /tmp/prod_data.sql
-```
-
-**Expected benign errors** (safe to ignore):
-- `duplicate key value violates unique constraint "audit_log_entries_pkey"` — pre-existing audit logs
-- `duplicate key value violates unique constraint "buckets_pkey"` — storage bucket already exists from seed
-
-### Step 5: Verify
-
-Run the row count comparison query (Step 2 above) on both local and prod to confirm they match.
-
-## Syncing Data: Local -> Prod
-
-This is destructive to production data. Always confirm with the user before proceeding.
+**Note:** The exact ID mapping will vary. Always check `SELECT id, email FROM users ORDER BY id` on the target to determine the correct new IDs before running the remap.

@@ -83,6 +83,45 @@ Atomic CRM components are published as a Shadcn Registry file:
 > [!WARNING]  
 > If the `registry.json` misses some changes you made, you MUST update the `scripts/generate-registry.mjs` to include those changes.
 
+## Database Management
+
+### Migrations
+
+```sh
+npx supabase migration new <name>  # Create new migration
+npx supabase migration up          # Apply migrations locally
+npx supabase db push               # Push migrations to remote
+npx supabase db reset              # Reset local database (destructive)
+```
+
+### Syncing Local and Production Databases
+
+Three scripts in `scripts/` handle database comparison and data sync between local dev and the production Supabase instance (VM 703). All scripts prompt for the production database password at runtime.
+
+```sh
+# Compare row counts and migration status between local and prod
+./scripts/db-compare.sh
+
+# Replace local data with production data (resets local DB)
+./scripts/db-sync-prod-to-local.sh
+
+# Replace production data with local data (requires typing "yes" to confirm)
+./scripts/db-sync-local-to-prod.sh
+```
+
+**Typical workflows:**
+- After setting up a new dev environment: `db-sync-prod-to-local.sh`
+- After migrating data locally and verifying it: `db-sync-local-to-prod.sh`
+- Quick health check before/after sync: `db-compare.sh`
+
+**Known issue — user ID mismatch after sync:** When the target database is reset before loading a dump, the `users` table auto-increment counter advances past the original IDs. Data rows (tasks, accounts, contacts, contracts, activities, payments) still reference the old user IDs, causing broken filters and missing assignments. After syncing, verify with:
+
+```sql
+SELECT 'tasks' as tbl, user_id FROM tasks WHERE user_id NOT IN (SELECT id FROM users);
+```
+
+If rows are returned, user IDs need to be remapped. See `.claude/skills/db-compare/SKILL.md` for the full detection and fix procedure.
+
 ## Clark Law Customizations
 
 This fork is customized for a law firm practice management workflow. Key differences from upstream:
