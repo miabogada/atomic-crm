@@ -76,15 +76,19 @@ def run_sql_local(sql: str) -> str:
 
 
 def run_sql_prod(sql: str, password: str) -> str:
-    """Run SQL against production database."""
+    """Run SQL against production database via dockerized psql client."""
     host = os.environ.get("PROD_DB_HOST", "10.0.10.228")
     port = os.environ.get("PROD_DB_PORT", "5433")
-    env = {**os.environ, "PGPASSWORD": password, "PGSSLMODE": "disable"}
+    user = os.environ.get("PROD_DB_USER", "supabase_admin")
     result = subprocess.run(
-        ["psql", "-h", host, "-p", port, "-U", "postgres", "-c", sql],
+        [
+            "docker", "run", "--rm",
+            "-e", f"PGPASSWORD={password}",
+            "postgres:15",
+            "psql", "-h", host, "-p", port, "-U", user, "-d", "postgres", "-c", sql,
+        ],
         capture_output=True,
         text=True,
-        env=env,
     )
     if result.returncode != 0:
         print(f"Error: {result.stderr.strip()}", file=sys.stderr)
