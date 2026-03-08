@@ -96,8 +96,12 @@ export const AddPayment = ({
         }}
         transform={(data: any) => {
           const isAdjustment = data.type === "discount" || data.type === "write_off";
+          const amount = data.type === "refund"
+            ? -Math.abs(Number(data.amount))
+            : Math.abs(Number(data.amount));
           return {
             ...data,
+            amount,
             account_id,
             contract_id: isAdjustment ? null : (data.contract_id || null),
             payment_method: isAdjustment ? "N/A" : data.payment_method,

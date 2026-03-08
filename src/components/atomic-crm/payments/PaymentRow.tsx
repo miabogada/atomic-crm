@@ -31,9 +31,9 @@ export const PaymentRow = ({ payment, isAdmin, onEdit, contractLabel }: Props) =
               {config.label}
             </Badge>
           )}
-          <span className={`font-medium ${type === "refund" ? "text-destructive" : ""}`}>
-            {type === "refund" ? "-" : ""}$
-            {Number(payment.amount).toLocaleString("en-US", {
+          <span className={`font-medium ${Number(payment.amount) < 0 ? "text-destructive" : ""}`}>
+            {Number(payment.amount) < 0 ? "-" : ""}$
+            {Math.abs(Number(payment.amount)).toLocaleString("en-US", {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}

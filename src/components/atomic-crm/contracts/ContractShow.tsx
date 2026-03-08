@@ -42,6 +42,7 @@ import { DeleteButton } from "@/components/admin";
 import { SaveButton } from "@/components/admin/form";
 
 import { AsideSection } from "../misc/AsideSection";
+import { ContractDeleteWarning } from "../misc/DeleteWarnings";
 import { useConfigurationContext } from "../root/ConfigurationContext";
 import { activityTypeColors, accountCategoryColors, contractStatusColors } from "../misc/statusColors";
 import { AddPayment } from "../payments/AddPayment";
@@ -213,7 +214,7 @@ const ScheduleTable = ({
     schedule.filter((r) => r.payment_id != null).map((r) => Number(r.payment_id)),
   );
   const availablePayments = (payments ?? []).filter(
-    (p) => !linkedPaymentIds.has(Number(p.id)),
+    (p) => !linkedPaymentIds.has(Number(p.id)) && p.type === "payment",
   );
   const hasPaid = schedule.some((r) => r.payment_id != null);
 
@@ -374,12 +375,20 @@ const ScheduleTable = ({
             amount: pendingLinkRow.amount,
             date_received: pendingLinkRow.due_date,
           }}
-          transform={(data: any) => ({
-            ...data,
-            account_id: accountId,
-            contract_id: data.contract_id || null,
-            user_id: identity.id,
-          })}
+          transform={(data: any) => {
+            const isAdjustment = data.type === "discount" || data.type === "write_off";
+            const amount = data.type === "refund"
+              ? -Math.abs(Number(data.amount))
+              : Math.abs(Number(data.amount));
+            return {
+              ...data,
+              amount,
+              account_id: accountId,
+              contract_id: isAdjustment ? null : (data.contract_id || null),
+              payment_method: isAdjustment ? "N/A" : data.payment_method,
+              user_id: identity.id,
+            };
+          }}
           mutationOptions={{ onSuccess: handleCreateSuccess }}
         >
           <Dialog
@@ -701,6 +710,7 @@ export const ContractAside = () => {
         <DeleteButton
           className="h-6 cursor-pointer hover:bg-destructive/10! text-destructive! border-destructive! focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40"
           size="sm"
+          confirmContent={<ContractDeleteWarning />}
         />
       </div>
     </div>

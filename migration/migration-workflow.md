@@ -147,21 +147,18 @@ The `account_payments.type` column supports four values:
 | Type | Amount | Effect on balance | When to use |
 |------|--------|-------------------|-------------|
 | `payment` | positive | reduces balance | Normal payment received |
-| `refund` | positive | increases balance | Money returned to client |
+| `refund` | **negative** | increases balance | Money returned to client |
 | `discount` | positive | reduces balance | Fee reduction (e.g. "lmc discount") |
 | `write_off` | positive | reduces balance | Unpaid amount forgiven by attorney |
 
 ### Balance formula
 
 ```
-balance_due = total_contracted
-            - SUM(payments)
-            + SUM(refunds)
-            - SUM(discounts + write_offs)
+balance_due = total_contracted - SUM(all payment amounts)
 ```
 
-All amounts are stored as positive numbers. The `type` determines the
-accounting direction.
+Refunds are stored as negative amounts. All other types are positive.
+The formula works because negative refunds naturally increase the balance.
 
 ### Write-offs
 
