@@ -2,7 +2,9 @@ import { DeleteButton } from "@/components/admin";
 import { type Identifier } from "ra-core";
 
 import { EditSheet } from "../misc/EditSheet";
+import { ContactDeleteWarning } from "../misc/DeleteWarnings";
 import { ContactInputs } from "./ContactInputs";
+import type { AccountContact } from "../types";
 
 export interface ContactEditSheetProps {
   open: boolean;
@@ -29,6 +31,7 @@ export const ContactEditSheet = ({
           className="flex-1"
           redirect="/account_contacts"
           onClick={() => onOpenChange(false)}
+          confirmContent={<ContactDeleteWarning />}
         />
       }
     >

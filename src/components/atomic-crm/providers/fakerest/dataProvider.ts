@@ -109,8 +109,43 @@ async function fetchAndUpdateCompanyData(
   return { ...params, data: newData };
 }
 
+// Resources that support soft delete
+const SOFT_DELETE_RESOURCES = new Set([
+  "accounts",
+  "account_contacts",
+  "account_contracts",
+  "account_payments",
+  "account_activities",
+  "tasks",
+]);
+
 const dataProviderWithCustomMethod: CrmDataProvider = {
   ...baseDataProvider,
+  async delete(resource: string, params: any) {
+    if (SOFT_DELETE_RESOURCES.has(resource)) {
+      return baseDataProvider.update(resource, {
+        id: params.id,
+        data: { deleted_at: new Date().toISOString() },
+        previousData: params.previousData,
+      });
+    }
+    return baseDataProvider.delete(resource, params);
+  },
+  async deleteMany(resource: string, params: any) {
+    if (SOFT_DELETE_RESOURCES.has(resource)) {
+      const results = await Promise.all(
+        params.ids.map((id: Identifier) =>
+          baseDataProvider.update(resource, {
+            id,
+            data: { deleted_at: new Date().toISOString() },
+            previousData: { id },
+          }),
+        ),
+      );
+      return { data: results.map((r: any) => r.data.id) };
+    }
+    return baseDataProvider.deleteMany(resource, params);
+  },
   unarchiveDeal: async (deal: Deal) => {
     // get all deals where stage is the same as the deal to unarchive
     const { data: deals } = await baseDataProvider.getList<Deal>("deals", {

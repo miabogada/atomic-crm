@@ -6,6 +6,7 @@ import { ReferenceField } from "@/components/admin/reference-field";
 import { TextField } from "@/components/admin/text-field";
 
 import { AsideSection } from "../misc/AsideSection";
+import { AccountDeleteWarning } from "../misc/DeleteWarnings";
 import type { Account } from "../types";
 
 export const AccountAside = ({
@@ -128,6 +129,7 @@ export const AccountAside = ({
           <DeleteButton
             className="h-6 cursor-pointer hover:bg-destructive/10! text-destructive! border-destructive! focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40"
             size="sm"
+            confirmContent={<AccountDeleteWarning />}
           />
         </div>
       )}

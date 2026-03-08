@@ -51,8 +51,46 @@ const processCompanyLogo = async (params: any) => {
   };
 };
 
+// Resources that support soft delete (have a deleted_at column)
+const SOFT_DELETE_RESOURCES = new Set([
+  "accounts",
+  "accounts_summary",
+  "account_contacts",
+  "account_contracts",
+  "account_payments",
+  "account_activities",
+  "tasks",
+]);
+
 const dataProviderWithCustomMethods = {
   ...baseDataProvider,
+  async delete(resource: string, params: any) {
+    // Soft delete: set deleted_at instead of hard delete
+    if (SOFT_DELETE_RESOURCES.has(resource)) {
+      return baseDataProvider.update(resource, {
+        id: params.id,
+        data: { deleted_at: new Date().toISOString() },
+        previousData: params.previousData,
+      });
+    }
+    return baseDataProvider.delete(resource, params);
+  },
+  async deleteMany(resource: string, params: any) {
+    // Soft delete: set deleted_at on each record
+    if (SOFT_DELETE_RESOURCES.has(resource)) {
+      const results = await Promise.all(
+        params.ids.map((id: Identifier) =>
+          baseDataProvider.update(resource, {
+            id,
+            data: { deleted_at: new Date().toISOString() },
+            previousData: { id },
+          }),
+        ),
+      );
+      return { data: results.map((r: any) => r.data.id) };
+    }
+    return baseDataProvider.deleteMany(resource, params);
+  },
   async getList(resource: string, params: GetListParams) {
     if (resource === "companies") {
       return baseDataProvider.getList("companies_summary", params);
@@ -65,6 +103,15 @@ const dataProviderWithCustomMethods = {
     }
     if (resource === "contract_payment_schedule") {
       return baseDataProvider.getList("contract_payment_schedule_view", params);
+    }
+
+    // For soft-delete resources queried directly (not via views),
+    // inject deleted_at IS NULL filter
+    if (SOFT_DELETE_RESOURCES.has(resource)) {
+      return baseDataProvider.getList(resource, {
+        ...params,
+        filter: { ...params.filter, "deleted_at@is": null },
+      });
     }
 
     return baseDataProvider.getList(resource, params);

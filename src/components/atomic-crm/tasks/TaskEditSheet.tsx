@@ -1,6 +1,7 @@
 import { DeleteButton } from "@/components/admin";
 import { type Identifier } from "ra-core";
 import { EditSheet } from "../misc/EditSheet";
+import { TaskDeleteWarning } from "../misc/DeleteWarnings";
 import { TaskFormContent } from "./TaskFormContent";
 import type { Task } from "../types";
 
@@ -42,6 +43,7 @@ export const TaskEditSheet = ({
           onClick={() => {
             onOpenChange(false);
           }}
+          confirmContent={<TaskDeleteWarning />}
         />
       }
     >

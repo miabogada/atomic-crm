@@ -1,5 +1,6 @@
 import { EditBase, Form, useNotify, type Identifier } from "ra-core";
 import { DeleteButton } from "@/components/admin/delete-button";
+import { TaskDeleteWarning } from "../misc/DeleteWarnings";
 import { SaveButton } from "@/components/admin/form";
 import {
   Dialog,
@@ -64,11 +65,11 @@ export const TaskEdit = ({
                       close();
                       notify("Task deleted", {
                         type: "info",
-                        undoable: true,
                       });
                     },
                   }}
                   redirect={false}
+                  confirmContent={<TaskDeleteWarning />}
                 />
                 <SaveButton label="Save" />
               </DialogFooter>

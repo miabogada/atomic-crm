@@ -10,6 +10,7 @@ import { ChevronLeft, Pencil } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 import { AsideSection } from "../misc/AsideSection";
+import { ContactDeleteWarning } from "../misc/DeleteWarnings";
 import { accountCategoryColors } from "../misc/statusColors";
 import { ContactEditSheet } from "./ContactEditSheet";
 import type { Account, AccountContact, ContactType } from "../types";
@@ -138,6 +139,7 @@ const ContactAside = () => {
         <DeleteButton
           className="h-6 cursor-pointer hover:bg-destructive/10! text-destructive! border-destructive! focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40"
           size="sm"
+          confirmContent={<ContactDeleteWarning />}
         />
       </div>
     </div>

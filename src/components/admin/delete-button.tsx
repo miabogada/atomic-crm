@@ -1,25 +1,32 @@
 import * as React from "react";
+import { useState } from "react";
 import { Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { humanize, singularize } from "inflection";
-import type { UseDeleteOptions, RedirectionSideEffect } from "ra-core";
+import type { RedirectionSideEffect } from "ra-core";
 import {
-  useDeleteWithUndoController,
+  useDelete,
+  useGetIdentity,
+  useGetOne,
   useGetRecordRepresentation,
-  useResourceTranslation,
+  useNotify,
   useRecordContext,
+  useRedirect,
   useResourceContext,
+  useResourceTranslation,
   useTranslate,
 } from "ra-core";
+import { Confirm } from "./confirm";
 
 export type DeleteButtonProps = {
   label?: string;
   size?: "default" | "sm" | "lg" | "icon";
   onClick?: React.ReactEventHandler<HTMLButtonElement>;
-  mutationOptions?: UseDeleteOptions;
+  mutationOptions?: any;
   redirect?: RedirectionSideEffect;
   resource?: string;
   successMessage?: string;
+  confirmContent?: React.ReactNode;
   className?: string;
   variant?:
     | "default"
@@ -31,21 +38,10 @@ export type DeleteButtonProps = {
 };
 
 /**
- * A button that deletes a record with undo capability.
+ * Admin-only delete button with confirmation dialog.
  *
- * Renders a destructive button that deletes the current record and shows an undo notification.
- * Automatically redirects after deletion and works with the RecordContext.
- *
- * @see {@link https://marmelab.com/shadcn-admin-kit/docs/deletebutton/ DeleteButton documentation}
- *
- * @example
- * import { DeleteButton, Edit } from '@/components/admin';
- *
- * const PostEdit = () => (
- *     <Edit actions={<DeleteButton />}>
- *         ...
- *     </Edit>
- * );
+ * Hidden for non-admin users. Shows a confirmation dialog before deleting.
+ * Uses soft delete (sets deleted_at) for resources that support it.
  */
 export const DeleteButton = (props: DeleteButtonProps) => {
   const {
@@ -53,22 +49,28 @@ export const DeleteButton = (props: DeleteButtonProps) => {
     onClick,
     size,
     mutationOptions,
-    redirect = "list",
+    redirect: redirectTo = "list",
     successMessage,
+    confirmContent,
     variant = "outline",
     className = "cursor-pointer hover:bg-destructive/10! text-destructive! border-destructive! focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40",
   } = props;
   const record = useRecordContext(props);
   const resource = useResourceContext(props);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
-  const { isPending, handleDelete } = useDeleteWithUndoController({
-    record,
-    resource,
-    redirect,
-    onClick,
-    mutationOptions,
-    successMessage,
-  });
+  // Admin-only: hide for non-admin users
+  const { identity } = useGetIdentity();
+  const { data: currentUser } = useGetOne(
+    "users",
+    { id: identity?.id! },
+    { enabled: !!identity },
+  );
+
+  const [deleteOne, { isPending }] = useDelete();
+  const redirect = useRedirect();
+  const notify = useNotify();
+
   const translate = useTranslate();
   const getRecordRepresentation = useGetRecordRepresentation(resource);
   let recordRepresentation = getRecordRepresentation(record);
@@ -82,7 +84,6 @@ export const DeleteButton = (props: DeleteButtonProps) => {
       true,
     ),
   });
-  // We don't support React elements for this
   if (React.isValidElement(recordRepresentation)) {
     recordRepresentation = `#${record?.id}`;
   }
@@ -96,18 +97,65 @@ export const DeleteButton = (props: DeleteButtonProps) => {
     userText: labelProp,
   });
 
+  if (!currentUser?.administrator) return null;
+
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    onClick?.(e);
+    setConfirmOpen(true);
+  };
+
+  const handleConfirm = () => {
+    deleteOne(
+      resource,
+      { id: record?.id, previousData: record },
+      {
+        onSuccess: () => {
+          notify(successMessage ?? "ra.notification.deleted", {
+            type: "info",
+            messageArgs: { smart_count: 1 },
+          });
+          setConfirmOpen(false);
+          redirect(redirectTo, resource);
+        },
+        onError: (error: any) => {
+          notify(
+            typeof error === "string"
+              ? error
+              : error?.message || "ra.notification.http_error",
+            { type: "error" },
+          );
+          setConfirmOpen(false);
+        },
+        ...mutationOptions,
+      },
+    );
+  };
+
   return (
-    <Button
-      variant={variant}
-      type="button"
-      onClick={handleDelete}
-      disabled={isPending}
-      aria-label={typeof label === "string" ? label : undefined}
-      size={size}
-      className={className}
-    >
-      <Trash />
-      {label}
-    </Button>
+    <>
+      <Button
+        variant={variant}
+        type="button"
+        onClick={handleClick}
+        disabled={isPending}
+        aria-label={typeof label === "string" ? label : undefined}
+        size={size}
+        className={className}
+      >
+        <Trash />
+        {label}
+      </Button>
+      <Confirm
+        isOpen={confirmOpen}
+        title={`Delete ${resourceName}?`}
+        content={confirmContent ?? `Are you sure you want to delete ${recordRepresentation || "this item"}? This action can be reversed by a database administrator.`}
+        onConfirm={handleConfirm}
+        onClose={() => setConfirmOpen(false)}
+        loading={isPending}
+        confirm="Delete"
+        confirmColor="warning"
+      />
+    </>
   );
 };
