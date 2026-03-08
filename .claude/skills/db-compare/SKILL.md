@@ -68,13 +68,25 @@ docker run --rm -e PGPASSWORD=<PASSWORD> postgres:15 psql -h 10.0.10.228 -p 5433
   - `duplicate key value violates unique constraint "audit_log_entries_pkey"` — pre-existing audit logs
   - `duplicate key value violates unique constraint "buckets_pkey"` — storage bucket already exists from seed
 
-## Known Issue: User ID Mismatch After Sync
+## User ID Mismatch — Root Cause and Fix
 
-**Problem:** When syncing data between environments, the `users` table uses auto-increment IDs. If the target database is reset (`npx supabase db reset`) before loading, the seed runs first and creates users with IDs starting at 1. When the dump is then loaded, auth.users/identities are restored (which triggers user creation via the `on_auth_user_created` trigger), but the `users` table's auto-increment counter has advanced — so users get new IDs (e.g. 5–8 instead of 1–4). Meanwhile, all FK references in the data (tasks, accounts, account_contacts, account_contracts, account_activities, account_payments) still point to the old IDs.
+**Root cause:** The `on_auth_user_created` trigger on `auth.users` calls `handle_new_user()`, which auto-creates a row in `public.users` with an auto-increment ID. When loading a data dump that includes both `auth.users` and `public.users` with matching IDs, the trigger fires during the `auth.users` COPY and creates **duplicate** `public.users` rows with **wrong** IDs. All FK references in the dumped data still point to the original IDs, causing orphaned references.
 
-**Symptoms:** Filters like "Assigned To" on tasks return no results. Activities don't display. Account team fields (attorney_id, law_clerk_id, legal_assistant_id) point to nonexistent users.
+**Fix (implemented in sync scripts):** The sync scripts now disable the trigger before loading and re-enable it after:
 
-**Detection:** After a sync, verify that user_ids in data tables match actual user IDs:
+```sql
+-- Before loading dump
+ALTER TABLE auth.users DISABLE TRIGGER on_auth_user_created;
+
+-- ... load dump ...
+
+-- After loading dump
+ALTER TABLE auth.users ENABLE TRIGGER on_auth_user_created;
+```
+
+The scripts also use `npx supabase migration up` (incremental) instead of `npx supabase db reset` (destructive), eliminating the seed-data ID collision.
+
+**Detection (still runs automatically after sync):**
 
 ```sql
 -- Should return 0 rows if everything is correct
@@ -83,31 +95,4 @@ UNION ALL SELECT 'accounts', user_id FROM accounts WHERE user_id NOT IN (SELECT 
 UNION ALL SELECT 'account_activities', user_id FROM account_activities WHERE user_id NOT IN (SELECT id FROM users);
 ```
 
-**Fix:** Remap old IDs to new IDs. Determine the mapping by comparing user emails, then run (as `supabase_admin`):
-
-```sql
-BEGIN;
-SET session_replication_role = 'replica';  -- disable FK checks
-
--- Example mapping: old 1->8, 2->7, 3->5, 4->6
-UPDATE tasks SET user_id = CASE user_id WHEN 1 THEN 8 WHEN 2 THEN 7 WHEN 3 THEN 5 WHEN 4 THEN 6 END WHERE user_id IN (1,2,3,4);
-UPDATE accounts SET user_id = CASE user_id WHEN 1 THEN 8 WHEN 2 THEN 7 END WHERE user_id IN (1,2);
-UPDATE accounts SET attorney_id = CASE attorney_id WHEN 1 THEN 8 WHEN 2 THEN 7 WHEN 3 THEN 5 WHEN 4 THEN 6 END WHERE attorney_id IN (1,2,3,4);
-UPDATE accounts SET law_clerk_id = CASE law_clerk_id WHEN 1 THEN 8 WHEN 2 THEN 7 WHEN 3 THEN 5 WHEN 4 THEN 6 END WHERE law_clerk_id IN (1,2,3,4);
-UPDATE accounts SET legal_assistant_id = CASE legal_assistant_id WHEN 1 THEN 8 WHEN 2 THEN 7 WHEN 3 THEN 5 WHEN 4 THEN 6 END WHERE legal_assistant_id IN (1,2,3,4);
-UPDATE account_contacts SET user_id = CASE user_id WHEN 1 THEN 8 WHEN 2 THEN 7 END WHERE user_id IN (1,2);
-UPDATE account_contracts SET user_id = CASE user_id WHEN 1 THEN 8 WHEN 2 THEN 7 END WHERE user_id IN (1,2);
-UPDATE account_activities SET user_id = CASE user_id WHEN 1 THEN 8 WHEN 2 THEN 7 END WHERE user_id IN (1,2);
-UPDATE account_payments SET user_id = CASE user_id WHEN 1 THEN 8 WHEN 2 THEN 7 END WHERE user_id IN (1,2);
-
-SET session_replication_role = 'origin';
-
--- Also re-apply roles if they were lost
-UPDATE users SET role = 'attorney' WHERE email = 'lmc@tanoclark.com';
-UPDATE users SET role = 'law_clerk' WHERE email = 'clerk@tanoclark.com';
-UPDATE users SET role = 'legal_assistant' WHERE email = 'assistant@tanoclark.com';
-
-COMMIT;
-```
-
-**Note:** The exact ID mapping will vary. Always check `SELECT id, email FROM users ORDER BY id` on the target to determine the correct new IDs before running the remap.
+If the detection still finds mismatches (should not happen with the trigger-disable approach), see git history for the manual remap procedure that was previously used.

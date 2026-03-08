@@ -114,13 +114,30 @@ Three scripts in `scripts/` handle database comparison and data sync between loc
 - After migrating data locally and verifying it: `db-sync-local-to-prod.sh`
 - Quick health check before/after sync: `db-compare.sh`
 
-**Known issue — user ID mismatch after sync:** When the target database is reset before loading a dump, the `users` table auto-increment counter advances past the original IDs. Data rows (tasks, accounts, contacts, contracts, activities, payments) still reference the old user IDs, causing broken filters and missing assignments. After syncing, verify with:
+**User ID mismatch prevention:** The sync scripts disable the `on_auth_user_created` trigger before loading data and re-enable it afterward. This prevents the trigger from auto-creating duplicate `public.users` rows with mismatched IDs during the `auth.users` COPY. See `.claude/skills/db-compare/SKILL.md` for details.
 
-```sql
-SELECT 'tasks' as tbl, user_id FROM tasks WHERE user_id NOT IN (SELECT id FROM users);
+### Production Backups
+
+Automated daily backups run on the production server (VM 703) via cron.
+
+| Item | Details |
+|------|---------|
+| Script | `/opt/supabase/backups/backup-db.sh` |
+| Schedule | Daily at 2:00 AM UTC |
+| Output | `/opt/supabase/backups/prod_backup_YYYY-MM-DD_HHMM.sql.gz` |
+| Retention | 30 days (older backups auto-pruned) |
+| Log | `/opt/supabase/backups/backup.log` |
+| Password | Read from `/opt/supabase/docker/.env` (`POSTGRES_PASSWORD`) |
+
+The backup is a `pg_dump --data-only` dump (schema is managed by migrations), compressed with gzip. It excludes ephemeral Supabase tables (sessions, tokens, analytics, etc.) — the same exclusion set used by the sync scripts.
+
+**Manual backup:**
+```sh
+ssh root@10.0.10.228
+/opt/supabase/backups/backup-db.sh
 ```
 
-If rows are returned, user IDs need to be remapped. See `.claude/skills/db-compare/SKILL.md` for the full detection and fix procedure.
+**Restoring from backup:** Use `db-sync-prod-to-local.sh` for normal dev refreshes. For disaster recovery, decompress the backup and load it with the trigger-disable procedure documented in the sync scripts.
 
 ## Clark Law Customizations
 
