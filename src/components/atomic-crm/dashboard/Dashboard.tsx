@@ -1,13 +1,20 @@
-import { useGetList } from "ra-core";
+import { useGetList, useGetIdentity, useGetOne } from "ra-core";
+import { Navigate } from "react-router";
 
-import { DashboardActivityLog } from "./DashboardActivityLog";
 import { DealsChart } from "./DealsChart";
 import { CompletedTasksList } from "./CompletedTasksList";
 import { TasksList } from "./TasksList";
 import { Welcome } from "./Welcome";
 import { Receivables } from "./Receivables";
+import type { Sale } from "../types";
 
 export const Dashboard = () => {
+  const { identity } = useGetIdentity();
+  const { data: currentUser, isPending: isPendingUser } = useGetOne<Sale>(
+    "users",
+    { id: identity?.id! },
+    { enabled: !!identity },
+  );
   const { total: totalDeal, isPending: isPendingDeal } = useGetList(
     "deals",
     {
@@ -15,8 +22,12 @@ export const Dashboard = () => {
     },
   );
 
-  if (isPendingDeal) {
+  if (isPendingDeal || isPendingUser) {
     return null;
+  }
+
+  if (!currentUser?.administrator) {
+    return <Navigate to="/accounts" replace />;
   }
 
   return (
@@ -29,17 +40,13 @@ export const Dashboard = () => {
           {/* Performance and Deadlines panels: future */}
         </div>
       </div>
-      <div className="md:col-span-6">
+      <div className="md:col-span-9">
         <div className="flex flex-col gap-6">
           {totalDeal ? <DealsChart /> : null}
-          <DashboardActivityLog />
-        </div>
-      </div>
-
-      <div className="md:col-span-3">
-        <div className="flex flex-col gap-6">
-          <TasksList />
-          <CompletedTasksList />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <TasksList />
+            <CompletedTasksList />
+          </div>
         </div>
       </div>
     </div>

@@ -1,8 +1,8 @@
-import { useGetList, useTimeout } from "ra-core";
+import { useGetList, useGetIdentity, useGetOne, useTimeout } from "ra-core";
+import { Navigate } from "react-router";
 import { Skeleton } from "@/components/ui/skeleton";
 
-import type { Account } from "../types";
-import { DashboardActivityLog } from "./DashboardActivityLog";
+import type { Account, Sale } from "../types";
 import { Welcome } from "./Welcome";
 import { Receivables } from "./Receivables";
 import MobileHeader from "../layout/MobileHeader";
@@ -44,13 +44,23 @@ const Loading = () => (
 );
 
 export const MobileDashboard = () => {
+  const { identity } = useGetIdentity();
+  const { data: currentUser, isPending: isPendingUser } = useGetOne<Sale>(
+    "users",
+    { id: identity?.id! },
+    { enabled: !!identity },
+  );
   const { isPending } = useGetList<Account>("account_contacts", {
     pagination: { page: 1, perPage: 1 },
   });
   const oneSecondHasPassed = useTimeout(1000);
 
-  if (isPending) {
+  if (isPending || isPendingUser) {
     return oneSecondHasPassed ? <Loading /> : null;
+  }
+
+  if (!currentUser?.administrator) {
+    return <Navigate to="/accounts" replace />;
   }
 
   return (
@@ -58,7 +68,6 @@ export const MobileDashboard = () => {
       <div className="grid grid-cols-1 gap-6 mt-1">
         {import.meta.env.VITE_IS_DEMO === "true" ? <Welcome /> : null}
         <Receivables />
-        <DashboardActivityLog />
       </div>
     </Wrapper>
   );

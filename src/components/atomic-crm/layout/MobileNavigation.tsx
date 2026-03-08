@@ -40,10 +40,17 @@ import { ActivityCreateSheet } from "../accounts/ActivityCreateSheet";
 import { ContactCreateSheet } from "../account-contacts/ContactCreateSheet";
 import { ContractCreateSheet } from "../contracts/ContractCreateSheet";
 import { PaymentCreateSheet } from "../payments/PaymentCreateSheet";
-import type { AccountContract } from "../types";
+import type { AccountContract, Sale } from "../types";
 
 export const MobileNavigation = () => {
   const location = useLocation();
+  const { identity } = useGetIdentity();
+  const { data: currentUser } = useGetOne<Sale>(
+    "users",
+    { id: identity?.id! },
+    { enabled: !!identity },
+  );
+  const isAdmin = !!currentUser?.administrator;
 
   // Hide the nav entirely on edit and create form pages — FormToolbar handles the bottom actions
   const isFormRoute =
@@ -101,10 +108,10 @@ export const MobileNavigation = () => {
       <div className="flex justify-center">
         <>
           <NavigationButton
-            href="/"
+            href={isAdmin ? "/" : "/accounts"}
             Icon={Home}
             label="Home"
-            isActive={currentPath === "/"}
+            isActive={isAdmin ? currentPath === "/" : currentPath === "/accounts"}
           />
           <NavigationButton
             href="/accounts"

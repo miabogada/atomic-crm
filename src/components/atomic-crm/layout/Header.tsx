@@ -1,6 +1,7 @@
 import { Import, Settings, User } from "lucide-react";
-import { CanAccess, useUserMenu } from "ra-core";
+import { CanAccess, useGetIdentity, useGetOne, useUserMenu } from "ra-core";
 import { Link, matchPath, useLocation } from "react-router";
+import type { Sale } from "../types";
 import { RefreshButton } from "@/components/admin/refresh-button";
 import { ThemeModeToggle } from "@/components/admin/theme-mode-toggle";
 import { UserMenu } from "@/components/admin/user-menu";
@@ -12,6 +13,13 @@ import { ImportPage } from "../misc/ImportPage";
 const Header = () => {
   const { darkModeLogo, lightModeLogo, title } = useConfigurationContext();
   const location = useLocation();
+  const { identity } = useGetIdentity();
+  const { data: currentUser } = useGetOne<Sale>(
+    "users",
+    { id: identity?.id! },
+    { enabled: !!identity },
+  );
+  const isAdmin = !!currentUser?.administrator;
 
   let currentPath: string | boolean = "/";
   if (matchPath("/", location.pathname)) {
@@ -35,7 +43,7 @@ const Header = () => {
           <div className="px-4">
             <div className="flex justify-between items-center flex-1">
               <Link
-                to="/"
+                to={isAdmin ? "/" : "/accounts"}
                 className="flex items-center gap-2 text-secondary-foreground no-underline"
               >
                 <img
@@ -52,11 +60,13 @@ const Header = () => {
               </Link>
               <div>
                 <nav className="flex">
-                  <NavigationTab
-                    label="Dashboard"
-                    to="/"
-                    isActive={currentPath === "/"}
-                  />
+                  {isAdmin && (
+                    <NavigationTab
+                      label="Dashboard"
+                      to="/"
+                      isActive={currentPath === "/"}
+                    />
+                  )}
                   <NavigationTab
                     label="Accounts"
                     to="/accounts"
