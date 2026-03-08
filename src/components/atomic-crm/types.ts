@@ -306,6 +306,8 @@ export type Account = {
   nb_open_tasks?: number;
   // From accounts_summary payment aggregates
   total_received?: number;
+  total_refunds?: number;
+  total_adjustments?: number;
   total_contracted?: number;
   balance_due?: number;
 } & Pick<RaRecord, "id">;
@@ -366,11 +368,14 @@ export type ContractPaymentSchedule = {
   status?: 'upcoming' | 'due' | 'late' | 'paid';
 } & Pick<RaRecord, "id">;
 
+export type PaymentType = 'payment' | 'refund' | 'discount' | 'write_off';
+
 export type AccountPayment = {
   account_id: Identifier;
   contract_id?: Identifier | null;
   date_received: string;
   amount: number;
+  type: PaymentType;
   payment_method: string;
   reference_number?: string;
   notes?: string;

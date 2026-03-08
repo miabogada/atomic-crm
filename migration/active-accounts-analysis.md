@@ -178,6 +178,70 @@ but are not yet on a payment schedule (e.g., recently opened, flat-fee paid).
 
 ---
 
+## Balance calculation — critical data source issue
+
+### Problem (identified 2026-03-08)
+
+`tblPaymentSchedule.AmtRecd` is **almost never updated** after the initial
+retainer payment. The actual payments are recorded in `tblPaymentsReceived`,
+where most entries have a **blank Contract field** (linked only by account number).
+
+Using `tblPaymentSchedule.AmtRecd` for balance overstated balances by thousands
+of dollars on 75 out of 82 migration accounts.
+
+### Correct balance formula
+
+```
+balance = sum(Fee across all contracts for account) - sum(tblPaymentsReceived.AmtRecd)
+```
+
+`fetch_active_accounts.py` was fixed (2026-03-08) to use `tblPaymentsReceived`.
+
+### Access vs Exchange discrepancies
+
+A QA spot-check of account 22121601 revealed that `tblPaymentsReceived` (Access)
+and `IPM.Post.Account payment` items (Exchange) can disagree:
+
+- Exchange captures payment reversals (negative amounts) that Access does not
+- Recent payments may exist in Exchange but not yet in Access
+- In the 22121601 example: Access shows $12,600 received, Exchange shows $12,000
+  (due to an unrecorded $300 reversal and a recent $400 payment)
+
+**Exchange is the authoritative source** for payment history. The VBScript
+`Account payment` form triggers the Access insert, but corrections/reversals
+done in Exchange may not propagate back to Access.
+
+See `migration/migration-workflow.md` for the reconciliation procedure.
+
+---
+
+## Payment-to-contract association gap
+
+Most rows in `tblPaymentsReceived` have a **blank `Contract` field**. The
+client makes one payment per month that may cover installments across multiple
+active contracts. The billing system tracks received amounts at the account
+level, not per-contract.
+
+### Known complications for migration
+
+1. **Single-contract accounts** — safe to auto-associate all payments
+2. **Multi-contract with one active** — associate payments dated after the
+   active contract's open date
+3. **Multi-contract with stacked payments** — monthly payment amounts may be
+   the sum of two or more contract installments. Splitting requires comparing
+   against `tblPaymentSchedule` amounts and dates.
+4. **Lump sum payments** — client pays more than a single scheduled installment.
+   The existing balance formula handles this (balance = fee - total received),
+   but the payment schedule rows won't match 1:1 with actual payment records.
+
+### Future: split payment support
+
+Atomic CRM currently assigns each payment to at most one contract. A future
+feature is needed to split a single payment across multiple contracts (e.g.,
+one $800 check covering $400 to contract A and $400 to contract B).
+
+---
+
 ## Files referenced
 
 | File | Location |

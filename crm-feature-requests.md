@@ -37,6 +37,7 @@ All views
 - [x] make a reusable filter panel based on the one in /contacts, apply it to /accounts, /contracts, /tasks 
 	- [x] bug: /x/contacts?filter Contact Type filters error: "column contact_summary.contact_type_id does not exist"
 - [x] badge colors: To do (yellow), In process (blue)
+- [x] bug: balances in the proposed migration list csv file identified discrepancy between balance and actual balance, depending on what table claude was looking at in access. root cause was identified. Claude identified root cause as incorrect table reference in Access, found correct table. Also minor discrepancy between Exchange payments and Access due to end user workaround for discount and payment reversals. 
 
 Dashboard
 - [x] Task items should display Assignee
@@ -48,6 +49,8 @@ Dashboard
 	- [ ] A way to set monthly sales goal
 - [x] bug: Latest Activities not displaying any
 - [x] Latest Activity should include activities, tasks completed, and payments received.
+- [ ] non-admin users should not see the Dashboard. they can go to accounts after login
+- [ ] admin user attorney doesn't like business of Latest Activity panel. Just hide it. 
 
 Phone menu
 - [ ] bottom phone nav needs a back arrow, left side, only shown in detail views
@@ -118,7 +121,9 @@ Payments
 - [x] Add Payment button from /accounts/x/show page if Payments tab selected
 - [ ] payment should have a pointer to the actual payment item (maybe reference stripe somehow)
 	- [ ] stripe integration
-- [ ]
+- [ ] ability to apply a discount to the contract amount later after the fact that should come out of the balance
+- [ ] ability to reverse a payment later or apply a partial reversal to a payment that should come out of the balance
+- [ ] ability to mark unpaid balances as a write-off
 
 Users
 - [x] for some reason the path and headline are Sales instead of Users?

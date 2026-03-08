@@ -59,7 +59,7 @@ const AccountShowContent = () => {
             </div>
 
             {(record.total_contracted != null || record.total_received != null) && (
-              <div className="flex gap-6 mb-4 text-sm">
+              <div className="flex flex-wrap gap-x-6 gap-y-1 mb-4 text-sm">
                 <div>
                   <span className="text-muted-foreground">Contracted: </span>
                   <span className="font-medium">
@@ -72,6 +72,22 @@ const AccountShowContent = () => {
                     ${Number(record.total_received ?? 0).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                   </span>
                 </div>
+                {Number(record.total_refunds ?? 0) > 0 && (
+                  <div>
+                    <span className="text-muted-foreground">Refunds: </span>
+                    <span className="font-medium text-destructive">
+                      ${Number(record.total_refunds).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                    </span>
+                  </div>
+                )}
+                {Number(record.total_adjustments ?? 0) > 0 && (
+                  <div>
+                    <span className="text-muted-foreground">Adjustments: </span>
+                    <span className="font-medium">
+                      -${Number(record.total_adjustments).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                    </span>
+                  </div>
+                )}
                 <div>
                   <span className="text-muted-foreground">Balance: </span>
                   <span className={`font-medium ${Number(record.balance_due ?? 0) > 0 ? "text-destructive" : "text-green-600"}`}>

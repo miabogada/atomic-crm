@@ -28,6 +28,14 @@ export const AccountPaymentEditSheet = ({
       title="Edit Payment"
       redirect={false}
       mutationMode="pessimistic"
+      transform={(data: any) => {
+        const isAdjustment = data.type === "discount" || data.type === "write_off";
+        return {
+          ...data,
+          contract_id: isAdjustment ? null : (data.contract_id || null),
+          payment_method: isAdjustment ? "N/A" : data.payment_method,
+        };
+      }}
       mutationOptions={{
         onSuccess: () => {
           notify("Payment updated");

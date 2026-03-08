@@ -15,10 +15,17 @@ import {
 } from "@/components/ui/select";
 
 import { useConfigurationContext } from "../root/ConfigurationContext";
-import type { ContractPaymentSchedule } from "../types";
+import type { ContractPaymentSchedule, PaymentType } from "../types";
 
 const fmt = (n: number) =>
   n.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
+const paymentTypeChoices: { id: PaymentType; name: string }[] = [
+  { id: "payment", name: "Payment" },
+  { id: "refund", name: "Refund" },
+  { id: "discount", name: "Discount" },
+  { id: "write_off", name: "Write-off" },
+];
 
 export const AccountPaymentInputs = ({
   onScheduleRowSelect,
@@ -29,10 +36,19 @@ export const AccountPaymentInputs = ({
   const methodChoices = paymentMethods.map((m) => ({ id: m, name: m }));
   const account_id = useWatch({ name: "account_id" });
   const contract_id = useWatch({ name: "contract_id" });
+  const paymentType = useWatch({ name: "type" }) as PaymentType | undefined;
+  const isAdjustment = paymentType === "discount" || paymentType === "write_off";
 
   return (
     <div className="flex flex-col gap-4 p-1">
-      {account_id && (
+      <SelectInput
+        source="type"
+        label="Type"
+        choices={paymentTypeChoices}
+        validate={required()}
+        helperText={false}
+      />
+      {account_id && !isAdjustment && (
         <ReferenceInput
           source="contract_id"
           reference="account_contracts"
@@ -45,7 +61,7 @@ export const AccountPaymentInputs = ({
           />
         </ReferenceInput>
       )}
-      {contract_id && onScheduleRowSelect && (
+      {contract_id && !isAdjustment && onScheduleRowSelect && (
         <ScheduledPaymentPicker
           contractId={contract_id}
           onSelect={onScheduleRowSelect}
@@ -59,23 +75,26 @@ export const AccountPaymentInputs = ({
       />
       <DateInput
         source="date_received"
-        label="Date Received"
+        label={isAdjustment ? "Date" : "Date Received"}
         validate={required()}
         helperText={false}
       />
-      <SelectInput
-        source="payment_method"
-        label="Payment Method"
-        choices={methodChoices}
-        validate={required()}
-        helperText={false}
-      />
-      <ReferenceNumberInput />
+      {!isAdjustment && (
+        <SelectInput
+          source="payment_method"
+          label="Payment Method"
+          choices={methodChoices}
+          validate={required()}
+          helperText={false}
+        />
+      )}
+      {!isAdjustment && <ReferenceNumberInput />}
       <TextInput
         source="notes"
-        label="Notes"
+        label={isAdjustment ? "Reason" : "Notes"}
         multiline
         helperText={false}
+        validate={isAdjustment ? required() : undefined}
       />
     </div>
   );

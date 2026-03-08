@@ -34,6 +34,7 @@ export const generateAccountPayments = (db: Db): AccountPayment[] => {
         contract_id: contract.id,
         date_received,
         amount,
+        type: "payment",
         payment_method,
         reference_number:
           payment_method === "CHECK"

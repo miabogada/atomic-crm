@@ -27,15 +27,20 @@ export const PaymentCreateSheet = ({
       resource="account_payments"
       title="Add Payment"
       redirect={false}
-      transform={(data: any) => ({
-        ...data,
-        account_id,
-        contract_id: data.contract_id || null,
-        user_id: identity.id,
-      })}
+      transform={(data: any) => {
+        const isAdjustment = data.type === "discount" || data.type === "write_off";
+        return {
+          ...data,
+          account_id,
+          contract_id: isAdjustment ? null : (data.contract_id || null),
+          payment_method: isAdjustment ? "N/A" : data.payment_method,
+          user_id: identity.id,
+        };
+      }}
       defaultValues={{
         account_id,
         contract_id: contract_id ?? null,
+        type: "payment",
         user_id: identity.id,
         date_received: new Date().toISOString().slice(0, 10),
       }}
