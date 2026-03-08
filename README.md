@@ -139,6 +139,34 @@ ssh root@10.0.10.228
 
 **Restoring from backup:** Use `db-sync-prod-to-local.sh` for normal dev refreshes. For disaster recovery, decompress the backup and load it with the trigger-disable procedure documented in the sync scripts.
 
+### Soft Delete & Undelete
+
+Admin users can delete records from the UI. Deletes are soft (set `deleted_at` timestamp) — records remain in the database and can be restored.
+
+Cascade rules:
+- Deleting an **account** soft-deletes its contacts, contracts, payments, tasks, and activities
+- Deleting a **contract** soft-deletes its payments, tasks, and activities
+- Deleting a **task** soft-deletes its child activities
+- Restoring a parent automatically restores cascade-deleted children
+
+**To restore a deleted record**, run `scripts/undelete.py` from your local dev machine. The repo is not cloned on the production VM (703) — the script connects to production directly over the local network (10.0.10.228:5433).
+
+```sh
+# List all soft-deleted records (local)
+python scripts/undelete.py --list
+
+# List soft-deleted records on production
+python scripts/undelete.py --prod --list
+
+# Restore an account and all its children
+python scripts/undelete.py --prod accounts 7
+
+# Restore a single contract (cascades to its children)
+python scripts/undelete.py --prod account_contracts 9
+```
+
+For manual SQL reference, see `migration/dba_soft_delete.sql`.
+
 ## Clark Law Customizations
 
 This fork is customized for a law firm practice management workflow. Key differences from upstream:

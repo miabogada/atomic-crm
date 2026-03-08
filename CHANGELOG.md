@@ -1,5 +1,58 @@
 # Changelog
 
+## 2026-03-08 — Soft delete, admin-only delete with confirmation
+
+Replaced hard deletes with soft deletes across the CRM. Records are never permanently removed from the UI — the `deleted_at` timestamp is set instead. Only a DBA can permanently purge records via SQL.
+
+### Migration (`20260308200000_soft_delete.sql`)
+- Added `deleted_at timestamptz` to 6 tables: accounts, account_contacts, account_contracts, account_payments, account_activities, tasks
+- **Cascade trigger**: soft-deleting an account automatically soft-deletes all its children (contacts, contracts, payments, activities, tasks). Restoring an account restores its children.
+- **FK constraints changed** from `ON DELETE CASCADE` to `ON DELETE RESTRICT` — hard deletes are blocked at the DB level
+- All views (`accounts_summary`, `contract_payment_schedule_view`, `contacts_summary`, `companies_summary`) updated to filter out soft-deleted records
+
+### DataProvider (Supabase + FakeRest)
+- `delete` and `deleteMany` overridden to do `UPDATE SET deleted_at = NOW()` instead of real DELETE
+- `getList` injects `deleted_at IS NULL` filter for all soft-delete resources
+
+### Frontend
+- **DeleteButton** (`admin/delete-button.tsx`): hidden for non-admin users; admin deletes now show a confirmation dialog instead of the undo toast
+- **BulkDeleteButton** (`admin/bulk-delete-button.tsx`): hidden for non-admin users
+
+### DBA script (`migration/dba_soft_delete.sql`)
+- View all soft-deleted records with child counts
+- Restore a specific account (cascade trigger handles children automatically)
+- Hard-delete records older than 90 days (children first, parents last)
+
+## 2026-03-08 — Dashboard: admin-only, hide Latest Activity
+
+Dashboard is now restricted to admin users. Non-admins are redirected to `/accounts`. The "Latest Activity" panel has been removed from both desktop and mobile dashboards. The Dashboard nav tab and logo link route non-admins directly to `/accounts`.
+
+## 2026-03-08 — Fix refund/discount balance calculation
+
+Refunds were stored as positive amounts with a `type` column determining accounting direction. This required every consumer of payment data to check the type — and the contract detail page didn't, causing refund amounts to be *added* to "Received" instead of subtracted (e.g. $1,000 payment + $50 refund showed $1,050 received instead of $950).
+
+### Fix: store refunds as negative amounts
+Refunds are now stored as negative values in `account_payments.amount`. Discounts and write-offs remain positive (they reduce the balance, same as payments). This simplifies the balance formula to `balance = contracted - SUM(all amounts)` — no type-aware logic needed.
+
+### Migration (`20260308100000_signed_refund_amounts.sql`)
+- Replaced `amount > 0` constraint with `amount != 0`
+- Negated existing refund rows (`SET amount = -abs(amount) WHERE type = 'refund'`)
+- Simplified `accounts_summary` view: `balance_due = total_contracted - SUM(all amounts)`
+
+### Frontend
+- **AddPayment, AccountPaymentEditSheet, ContractShow inline create** — transform now negates amount for refund type (`-Math.abs()`)
+- **PaymentRow** — display uses `Math.abs()` with sign/color based on actual amount value instead of checking type string
+- **ContractShow schedule table** — available payments dropdown filtered to `type === 'payment'` only (refunds shouldn't be linkable to schedule rows)
+- **ContractShow balance** — `fee - SUM(all amounts)` now works correctly with no changes needed to the formula itself
+
+## 2026-03-08 — DB sync scripts: disable trigger to prevent user ID mismatch
+
+Rewrote the database sync scripts (`db-sync-prod-to-local.sh`, `db-sync-local-to-prod.sh`) to disable the `on_auth_user_created` trigger before loading data dumps and re-enable it after. The trigger was firing during `auth.users` inserts and creating duplicate rows in `public.users` with wrong auto-increment IDs. Also replaced `db reset` with `migration up` in the sync flow to avoid data loss.
+
+## 2026-03-08 — Payment adjustments: refund, discount, write-off support
+
+Added `type` column to `account_payments` supporting four payment types: `payment` (default), `refund`, `discount`, `write_off`. UI shows colored badges for non-payment types, conditionally hides irrelevant fields (payment method, reference number) for adjustments, and requires a reason note for discounts/write-offs. Updated `accounts_summary` view with `total_refunds` and `total_adjustments` columns. Also updated migration balance scripts to use `tblPaymentsReceived` (correct source) and documented the 3-phase migration workflow.
+
 ## 2026-03-07 — LMC feedback batch
 
 Address feedback from LMC review covering account/contact/contract creation forms and task filters.

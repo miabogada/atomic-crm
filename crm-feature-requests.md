@@ -32,6 +32,14 @@ date: 2026-02-18T01:06:00
 - [x] need status filter "Not done" = To do OR In Process OR Blocked
 /users/create
 - [x] bug: expected the user role (attorney, law clerk, etc.) field is exposed in the form, observed no role field visible, other than Administrator toggle.
+- [ ] Delete should not be available to non-admin users. Delete for admin users should have a confirmation step. Deleted items should not really be deleted in db.
+ - Delete account → cascade to contacts, contracts, payments, tasks, activities (already works)
+ - Delete contract → cascade to payments linked to that contract, Tasks/activities with parent_type=account_contract, parent_id=contract.id, and Payment schedule rows
+ - Delete contact → standalone, no cascade needed, warn if Billing contact
+ - Delete payment → standalone (for now, may require additional if linked to Stripe at some point)
+ - Delete task → cascade to child activities
+ - Delete activity → standalone  
+ - Any Delete warning dialog should list the child items to also be deleted.
 
 All views
 - [x] make a reusable filter panel based on the one in /contacts, apply it to /accounts, /contracts, /tasks 
@@ -49,8 +57,8 @@ Dashboard
 	- [ ] A way to set monthly sales goal
 - [x] bug: Latest Activities not displaying any
 - [x] Latest Activity should include activities, tasks completed, and payments received.
-- [ ] non-admin users should not see the Dashboard. they can go to accounts after login
-- [ ] admin user attorney doesn't like business of Latest Activity panel. Just hide it. 
+- [x] non-admin users should not see the Dashboard. they can go to accounts after login
+- [x] admin user attorney doesn't like business of Latest Activity panel. Just hide it. 
 
 Phone menu
 - [ ] bottom phone nav needs a back arrow, left side, only shown in detail views
