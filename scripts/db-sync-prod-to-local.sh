@@ -100,7 +100,7 @@ ALTER TABLE auth.users ENABLE TRIGGER on_auth_user_created;
 "
 
 echo "Step 7/7: Verifying..."
-COUNT_SQL="SELECT 'accounts' as tbl, count(*) FROM accounts UNION ALL SELECT 'users', count(*) FROM users UNION ALL SELECT 'tasks', count(*) FROM tasks ORDER BY tbl;"
+COUNT_SQL="SELECT 'accounts' as tbl, count(*) FROM accounts UNION ALL SELECT 'account_contacts', count(*) FROM account_contacts UNION ALL SELECT 'account_contracts', count(*) FROM account_contracts UNION ALL SELECT 'account_payments', count(*) FROM account_payments UNION ALL SELECT 'account_activities', count(*) FROM account_activities UNION ALL SELECT 'tasks', count(*) FROM tasks UNION ALL SELECT 'users', count(*) FROM users ORDER BY tbl;"
 echo "--- Local ---"
 docker exec "$LOCAL_CONTAINER" psql -U postgres -d postgres -c "$COUNT_SQL"
 echo "--- Prod ---"
