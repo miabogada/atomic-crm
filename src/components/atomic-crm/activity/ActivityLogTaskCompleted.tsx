@@ -1,11 +1,15 @@
 import { CheckSquare, Square } from "lucide-react";
-import { Link } from "react-router";
+import { useState } from "react";
 
 import { ReferenceField } from "@/components/admin/reference-field";
 import { TextField } from "@/components/admin/text-field";
 import { RelativeDate } from "../misc/RelativeDate";
 import { UserName } from "../users/UserName";
-import type { ActivityTaskCompleted } from "../types";
+import { TaskView } from "../tasks/TaskView";
+import { TaskEdit } from "../tasks/TaskEdit";
+import { TaskEditSheet } from "../tasks/TaskEditSheet";
+import { useIsMobile } from "@/hooks/use-mobile";
+import type { ActivityTaskCompleted, Task } from "../types";
 
 type Props = {
   activity: ActivityTaskCompleted;
@@ -14,8 +18,11 @@ type Props = {
 export function ActivityLogTaskCompleted({ activity }: Props) {
   const { task } = activity;
   const isCompleted = !!task.done_date;
-  const link = task.account_id ? `/accounts/${task.account_id}/show` : undefined;
   const Icon = isCompleted ? CheckSquare : Square;
+  const isMobile = useIsMobile();
+
+  const [openView, setOpenView] = useState(false);
+  const [openEdit, setOpenEdit] = useState(false);
 
   return (
     <div className="p-0">
@@ -27,13 +34,12 @@ export function ActivityLogTaskCompleted({ activity }: Props) {
               <UserName />
             </ReferenceField>{" "}
             {isCompleted ? "completed" : "has open"} task{" "}
-            {link ? (
-              <Link to={link} className="text-foreground hover:underline">
-                {task.text}
-              </Link>
-            ) : (
-              <span className="text-foreground">{task.text}</span>
-            )}
+            <span
+              className="text-foreground hover:underline cursor-pointer"
+              onClick={() => setOpenView(true)}
+            >
+              {task.text}
+            </span>
             {task.account_id && (
               <>
                 {" "}on{" "}
@@ -51,6 +57,27 @@ export function ActivityLogTaskCompleted({ activity }: Props) {
           </span>
         </div>
       </div>
+
+      <TaskView
+        task={task as Task}
+        open={openView}
+        close={() => setOpenView(false)}
+        onEdit={() => setOpenEdit(true)}
+      />
+
+      {isMobile ? (
+        <TaskEditSheet
+          taskId={task.id}
+          open={openEdit}
+          onOpenChange={setOpenEdit}
+        />
+      ) : (
+        <TaskEdit
+          taskId={task.id}
+          open={openEdit}
+          close={() => setOpenEdit(false)}
+        />
+      )}
     </div>
   );
 }

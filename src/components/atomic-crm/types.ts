@@ -154,6 +154,7 @@ export type Task = {
   contact_id?: Identifier | null;
   type: string;
   text: string;
+  notes?: string | null;
   due_date: string;
   done_date?: string | null;
   status?: string;

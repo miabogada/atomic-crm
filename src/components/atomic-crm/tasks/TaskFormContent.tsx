@@ -60,6 +60,14 @@ export const TaskFormContent = ({
           helperText={false}
         />
       </div>
+      <TextInput
+        source="notes"
+        label="Notes"
+        multiline
+        minRows={3}
+        className="m-0"
+        helperText={false}
+      />
       {showParentPicker && <ParentContractPicker />}
       <ReferenceInput
         source="user_id"

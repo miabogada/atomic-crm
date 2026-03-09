@@ -1,12 +1,13 @@
 import { Banknote, FileText, Mail, Paperclip, Phone, Users } from "lucide-react";
-import type { ElementType } from "react";
-import { Link } from "react-router";
+import { type ElementType, useState } from "react";
 
 import { ReferenceField } from "@/components/admin/reference-field";
 import { TextField } from "@/components/admin/text-field";
 import { RelativeDate } from "../misc/RelativeDate";
 import { UserName } from "../users/UserName";
-import type { ActivityAccountActivityCreated } from "../types";
+import { ActivityView } from "../accounts/ActivityView";
+import { AccountActivityEditSheet } from "../accounts/AccountActivityEditSheet";
+import type { AccountActivity, ActivityAccountActivityCreated } from "../types";
 
 const activityTypeIcon: Record<string, ElementType> = {
   call: Phone,
@@ -23,8 +24,11 @@ type Props = {
 
 export function ActivityLogAccountActivityCreated({ activity }: Props) {
   const { accountActivity } = activity;
-  const link = `/accounts/${accountActivity.account_id}/show`;
   const Icon = activityTypeIcon[accountActivity.type] ?? FileText;
+
+  const [openView, setOpenView] = useState(false);
+  const [openEdit, setOpenEdit] = useState(false);
+
   return (
     <div className="p-0">
       <div className="flex flex-col space-y-2 w-full">
@@ -49,23 +53,42 @@ export function ActivityLogAccountActivityCreated({ activity }: Props) {
                 <TextField source="name" />
               </ReferenceField>
               {": "}
-              <Link to={link} className="text-foreground hover:underline">
+              <span
+                className="text-foreground hover:underline cursor-pointer"
+                onClick={() => setOpenView(true)}
+              >
                 {accountActivity.subject}
-              </Link>{" "}
+              </span>{" "}
               <RelativeDate date={activity.date} />
             </span>
           </div>
         </div>
         {accountActivity.body && (
-          <div className="md:max-w-150">
-            <Link to={link} className="hover:bg-muted rounded transition-colors">
-              <p className="text-sm line-clamp-3 overflow-hidden">
-                {accountActivity.body}
-              </p>
-            </Link>
+          <div
+            className="md:max-w-150 cursor-pointer hover:bg-muted rounded transition-colors"
+            onClick={() => setOpenView(true)}
+          >
+            <p className="text-sm line-clamp-3 overflow-hidden">
+              {accountActivity.body}
+            </p>
           </div>
         )}
       </div>
+
+      <ActivityView
+        activity={accountActivity as AccountActivity}
+        open={openView}
+        close={() => setOpenView(false)}
+        onEdit={() => setOpenEdit(true)}
+      />
+
+      {openEdit && (
+        <AccountActivityEditSheet
+          open={openEdit}
+          onOpenChange={(open) => { if (!open) setOpenEdit(false); }}
+          activityId={accountActivity.id as number}
+        />
+      )}
     </div>
   );
 }

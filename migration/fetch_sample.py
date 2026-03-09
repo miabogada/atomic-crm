@@ -880,6 +880,13 @@ def transform_tasks(acct_num: str, exchange_items: list, uid: str) -> list:
     ]
     for item in task_items:
         text     = (item.get("subject") or "Task").strip() or "Task"
+        # Task body contains the running journal/progression notes
+        raw_body = (item.get("body") or "").strip()
+        # Strip the account header line (e.g. "VICTORINO, JAVIER & DEANNA 18091401")
+        # which is always the first line and not useful as notes
+        body_lines = raw_body.split("\n")
+        cleaned_body = "\n".join(body_lines[1:]).strip() if len(body_lines) > 1 else ""
+        notes = cleaned_body or None
 
         # Exchange rarely stores duedate on these items; use message creation date instead.
         # That is the "Created" date shown in Outlook's Account Tracking column view.
@@ -903,10 +910,10 @@ def transform_tasks(acct_num: str, exchange_items: list, uid: str) -> list:
 
         lines.append(
             "INSERT INTO tasks "
-            "(account_id, type, text, due_date, done_date, status, user_id) "
+            "(account_id, type, text, notes, due_date, done_date, status, user_id) "
             "VALUES ("
             f"(SELECT id FROM accounts WHERE account_number = {sql_str(acct_num)}), "
-            f"'None', {sql_str(text)}, "
+            f"'None', {sql_str(text)}, {sql_str(notes)}, "
             f"{due_date}, {done_date}, {sql_str(status)}, {uid}"
             ");"
         )
@@ -944,6 +951,84 @@ def transform_activities(acct_num: str, exchange_items: list, uid: str) -> list:
             f"(SELECT id FROM accounts WHERE account_number = {sql_str(acct_num)}), "
             f"{sql_str(journal_type)}, {sql_str(subject)}, {sql_str(body)}, "
             f"{activity_date_sql}, {uid}"
+            ");"
+        )
+    return lines
+
+
+def transform_post_items(acct_num: str, exchange_items: list, uid: str) -> list:
+    """Import IPM.Post items as account_activities linked to their parent task.
+
+    Post items are auto-created by Outlook when a task is modified. Their subject
+    starts with the task subject (e.g. "Task 5: Start following up..."). We match
+    them to tasks by subject prefix and link via parent_type='tasks' + parent_id.
+    """
+    lines = []
+    post_items = [
+        it for it in exchange_items
+        if (it.get("message_class") or "") == "IPM.Post"
+    ]
+    if not post_items:
+        return lines
+
+    # Build task subject list for matching posts to tasks
+    task_items = [
+        it for it in exchange_items
+        if "IPM.Task.Account task" in (it.get("message_class") or "")
+    ]
+    # Map task subject prefix (before " modified by") to task subject for lookup
+    task_subjects = []
+    for t in task_items:
+        subj = (t.get("subject") or "").strip()
+        if subj:
+            task_subjects.append(subj)
+
+    for item in post_items:
+        subject = (item.get("subject") or item.get("conv_topic") or "Post").strip()
+        body    = (item.get("body") or "").strip() or None
+
+        raw_date = (item.get("date") or "").strip()
+        if raw_date:
+            try:
+                dt_str = raw_date.rstrip("Z").replace("T", " ")
+                dt = datetime.fromisoformat(dt_str)
+                date_sql = f"'{dt.isoformat()}'"
+            except ValueError:
+                date_sql = "NULL"
+        else:
+            date_sql = "NULL"
+
+        # Try to match this post to a task by subject prefix
+        # Post subjects look like "Task 5: Start following up... modified by Linnette Clark"
+        # Task subjects look like "Task 5: Start following up on docs for waiver..."
+        matched_task_subj = None
+        for task_subj in task_subjects:
+            # Check if the post subject starts with the task subject (possibly truncated)
+            # or the task subject starts with the post subject (before " modified by")
+            post_prefix = subject.split(" modified by")[0].strip()
+            if (post_prefix.startswith(task_subj[:40])
+                    or task_subj.startswith(post_prefix[:40])):
+                matched_task_subj = task_subj
+                break
+
+        if matched_task_subj:
+            parent_type = "'tasks'"
+            parent_id = (
+                f"(SELECT id FROM tasks WHERE text = {sql_str(matched_task_subj)} "
+                f"AND account_id = (SELECT id FROM accounts WHERE account_number = {sql_str(acct_num)}) "
+                f"LIMIT 1)"
+            )
+        else:
+            parent_type = "NULL"
+            parent_id = "NULL"
+
+        lines.append(
+            "INSERT INTO account_activities "
+            "(account_id, type, subject, body, date, user_id, parent_type, parent_id) "
+            "VALUES ("
+            f"(SELECT id FROM accounts WHERE account_number = {sql_str(acct_num)}), "
+            f"'Note', {sql_str(subject)}, {sql_str(body)}, "
+            f"{date_sql}, {uid}, {parent_type}, {parent_id}"
             ");"
         )
     return lines
@@ -1015,6 +1100,11 @@ def generate_sql(
     section("6. Account Activities (from Exchange)")
     for acct_num in account_numbers:
         lines.extend(transform_activities(acct_num, exchange_by_acct.get(acct_num, []), uid))
+
+    # 7. post items (task modification trail) — must come after tasks
+    section("7. Post Items → Activities (task modification trail)")
+    for acct_num in account_numbers:
+        lines.extend(transform_post_items(acct_num, exchange_by_acct.get(acct_num, []), uid))
 
     # Row-count summary
     section("Row Count Summary")

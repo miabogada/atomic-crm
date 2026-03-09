@@ -10,6 +10,7 @@ import type { Account, AccountActivity, Sale } from "../types";
 import { activityTypeColors } from "../misc/statusColors";
 import { AddActivity } from "./AddActivity";
 import { AccountActivityEditSheet } from "./AccountActivityEditSheet";
+import { ActivityView } from "./ActivityView";
 
 const formatParentType = (t: string) =>
   t.replace("account_", "").replace(/^\w/, (c) => c.toUpperCase());
@@ -17,6 +18,7 @@ const formatParentType = (t: string) =>
 export const AccountActivitiesList = () => {
   const { data, isPending } = useListContext<AccountActivity>();
   const account = useRecordContext<Account>();
+  const [viewingActivity, setViewingActivity] = useState<AccountActivity | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
 
   const { identity } = useGetIdentity();
@@ -50,7 +52,10 @@ export const AccountActivitiesList = () => {
               key={activity.id}
               className="flex items-center gap-4 py-3 px-2"
             >
-              <div className="flex-1">
+              <div
+                className="flex-1 cursor-pointer"
+                onClick={() => setViewingActivity(activity)}
+              >
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <span className="font-medium">{activity.subject}</span>
                   {activity.type && (
@@ -98,6 +103,18 @@ export const AccountActivitiesList = () => {
             </div>
           ))}
         </div>
+      )}
+
+      {viewingActivity != null && (
+        <ActivityView
+          activity={viewingActivity}
+          open={viewingActivity != null}
+          close={() => setViewingActivity(null)}
+          onEdit={() => {
+            setEditingId(viewingActivity.id as number);
+            setViewingActivity(null);
+          }}
+        />
       )}
 
       {editingId != null && (

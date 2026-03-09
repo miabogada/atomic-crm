@@ -19,6 +19,7 @@ import type { Account, Sale, Task as TData } from "../types";
 import { taskStatusColors } from "./taskStatusColors";
 import { TaskEdit } from "./TaskEdit";
 import { TaskEditSheet } from "./TaskEditSheet";
+import { TaskView } from "./TaskView";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { AddActivity } from "../accounts/AddActivity";
 
@@ -31,6 +32,7 @@ export const Task = ({
   const notify = useNotify();
   const queryClient = useQueryClient();
 
+  const [openView, setOpenView] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
   const [openAddActivity, setOpenAddActivity] = useState(false);
 
@@ -84,10 +86,7 @@ export const Task = ({
   return (
     <>
       <div className="flex items-start justify-between">
-        <div
-          className="flex items-start gap-2 flex-1"
-          onClick={isMobile ? handleCheck() : undefined}
-        >
+        <div className="flex items-start gap-2 flex-1">
           <Checkbox
             id={labelId}
             checked={!!task.done_date}
@@ -95,7 +94,10 @@ export const Task = ({
             disabled={isUpdatePending}
             className="mt-1"
           />
-          <div className={`flex-grow ${task.done_date ? "line-through" : ""}`}>
+          <div
+            className={`flex-grow cursor-pointer ${task.done_date ? "line-through" : ""}`}
+            onClick={() => setOpenView(true)}
+          >
             <div className="text-sm flex items-center gap-1.5 flex-wrap">
               <span>
                 {task.type && task.type !== "None" && (
@@ -229,6 +231,13 @@ export const Task = ({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      <TaskView
+        task={task}
+        open={openView}
+        close={() => setOpenView(false)}
+        onEdit={() => setOpenEdit(true)}
+      />
 
       {isMobile ? (
         <TaskEditSheet
