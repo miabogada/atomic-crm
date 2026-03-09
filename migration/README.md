@@ -34,6 +34,9 @@ python3 migration/fetch_sample.py --account 14011101
 
 # Auto-select up to 5 accounts meeting the sample criteria
 python3 migration/fetch_sample.py
+
+# Re-generate SQL from cached Exchange/Access data (no network fetches)
+python3 migration/fetch_sample.py --account 14011101 --use-cache
 ```
 
 **Before running**, apply all Supabase migrations so the ID lookups work:
@@ -63,6 +66,10 @@ All written to `migration/output/` (gitignored):
 | `debug_accounts.json` | Raw Access DB records for selected accounts |
 | `debug_exchange.json` | Raw Exchange WebDAV item properties |
 | `sample_import.sql` | Ready-to-run SQL wrapped in a transaction |
+| `cache_accounts.json` | Cached Access data for `--use-cache` reruns |
+| `cache_exchange.json` | Cached Exchange items for `--use-cache` reruns |
+| `cache_billing_contacts.json` | Cached billing contacts for `--use-cache` reruns |
+| `cache_contract_user_props.json` | Cached contract UserProperties for `--use-cache` reruns |
 
 ---
 
@@ -158,9 +165,11 @@ which Access writes to the `Contract` column. Do not prepend the account number.
 | Exchange WebDAV property | Atomic CRM column |
 |---|---|
 | `urn:schemas:httpmail:subject` | `text` |
+| `urn:schemas:httpmail:textdescription` (body, minus header line) | `notes` |
 | `urn:schemas:httpmail:date` (message creation date) | `due_date` (see Notes) |
 | `http://schemas.microsoft.com/exchange/tasks/datecompleted` | `done_date` |
 | `http://schemas.microsoft.com/exchange/tasks/status` | `status` (`"Done"` if status=2 or pct=1, else `"To do"`) |
+| `http://schemas.microsoft.com/exchange/tasks/owner` | `user_id` (resolved via CRM users name lookup; falls back to admin) |
 | ConversationTopic → account number | `account_id` (FK lookup) |
 
 **Notes:**
@@ -171,8 +180,12 @@ which Access writes to the `Contract` column. Do not prepend the account number.
   namespace. The `urn:schemas:tasks:` namespace is ignored for items in public
   folders (returns empty for all properties). Status value `2` = Completed;
   percent complete `1.` = 100% done.
+- The `tasks:owner` property maps to the "Owner" field visible in the Outlook
+  Account Task form (e.g. "Maria Ruiz"). The script resolves this to a CRM
+  `user_id` by matching against the users table (full name, first name, last name).
 - Each task modification generates an `IPM.Post` audit entry ("modified by User")
-  in the same folder. These contain no actionable data and are not imported.
+  in the same folder. These are imported as activities linked to the parent task,
+  with the modifier name resolved to a CRM `user_id`.
 
 ---
 

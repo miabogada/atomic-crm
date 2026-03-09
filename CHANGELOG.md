@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-03-09 — Migration: task owner mapping + Exchange data cache
+
+### Migration script (`fetch_sample.py`)
+- **Task owner → assignee**: Fetches the `tasks:owner` property from Exchange and resolves it to a CRM `user_id` by matching against the CRM users table (full name, first name, last name). Tasks are now assigned to their original Outlook owner instead of defaulting to the admin user.
+- **Post item creator → activity user**: Extracts the modifier name from the `" modified by {Name}"` suffix in post item subjects and resolves it to a CRM `user_id`.
+- **`--use-cache` flag**: First run saves all fetched Exchange and Access data to `migration/output/cache_*.json`. Subsequent runs with `--use-cache` skip Exchange/Access fetches and load from cache. Supabase lookups (user IDs, contact types) are always fetched fresh.
+
+### One-time fix (`fix_task_owners.py`)
+- Standalone script to UPDATE existing local data: 1,338 tasks reassigned from admin default to correct Outlook owner (Maria Ruiz: 1,113, Victor Garcia: 225), 39 post-item activities reassigned from "modified by" name extraction.
+- Supports `--use-cache` (reuse fetched Exchange data) and `--apply` (run SQL directly via docker psql).
+- Synced to production via `db-sync-local-to-prod.sh` — all row counts verified, no user ID mismatches.
+
+### User Guide
+- Added `USER-GUIDE.md` with end-user instructions covering accounts, contacts, contracts, tasks, activities, payments, and common workflows.
+
 ## 2026-03-08 — Soft delete, admin-only delete with confirmation
 
 Replaced hard deletes with soft deletes across the CRM. Records are never permanently removed from the UI — the `deleted_at` timestamp is set instead. Only a DBA can permanently purge records via SQL.

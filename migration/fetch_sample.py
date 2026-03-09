@@ -11,9 +11,12 @@ Output:
   migration/output/debug_accounts.json   Raw Access DB records for selected accounts
   migration/output/debug_exchange.json   Raw Exchange WebDAV item properties
   migration/output/sample_import.sql     Ready-to-run SQL INSERT file
+  migration/output/cache_*.json          Cached data for --use-cache reruns
 
 Usage:
-  python3 migration/fetch_sample.py
+  python3 migration/fetch_sample.py                      # fresh fetch
+  python3 migration/fetch_sample.py --use-cache          # reuse cached Exchange/Access data
+  python3 migration/fetch_sample.py --account 18091401   # specific account(s)
 
 Prerequisites:
   sudo apt-get install mdbtools
@@ -119,6 +122,7 @@ PROP_TASK_DUE         = f"{_NS_TASKS}duedate"
 PROP_TASK_COMPLETED   = f"{_NS_TASKS}datecompleted"
 PROP_TASK_STATUS      = f"{_NS_TASKS}status"
 PROP_TASK_PCT         = f"{_NS_TASKS}percentcomplete"
+PROP_TASK_OWNER       = f"{_NS_TASKS}owner"
 PROP_GIVEN_NAME       = f"{_NS_CONTACTS}givenname"
 PROP_MIDDLE_NAME      = f"{_NS_CONTACTS}middlename"
 PROP_SURNAME          = f"{_NS_CONTACTS}sn"
@@ -158,7 +162,7 @@ PROP_CONTRACT_WORK_DESC   = f"{_NS_CONTRACT}txtContractWorkDescription"
 ALL_PROPS = [
     PROP_MESSAGE_CLASS, PROP_CONV_TOPIC, PROP_SUBJECT, PROP_BODY, PROP_DATE,
     PROP_DTSTART, PROP_TASK_DUE, PROP_TASK_COMPLETED, PROP_TASK_STATUS,
-    PROP_TASK_PCT,
+    PROP_TASK_PCT, PROP_TASK_OWNER,
     PROP_GIVEN_NAME, PROP_MIDDLE_NAME, PROP_SURNAME, PROP_FULL_NAME, PROP_EMAIL1,
     PROP_HOME_PHONE, PROP_MOBILE, PROP_BIZ_PHONE,
     PROP_HOME_STREET, PROP_HOME_CITY, PROP_HOME_STATE, PROP_HOME_ZIP, PROP_HOME_COUNTRY,
@@ -374,6 +378,7 @@ def parse_search_response(xml_text: str, account_number: str) -> list:
             "task_completed": get(PROP_TASK_COMPLETED),
             "task_status":    get(PROP_TASK_STATUS),
             "task_pct":       get(PROP_TASK_PCT),
+            "task_owner":     get(PROP_TASK_OWNER),
             "given_name":     get(PROP_GIVEN_NAME),
             "middle_name":    get(PROP_MIDDLE_NAME),
             "surname":        get(PROP_SURNAME),
@@ -588,6 +593,49 @@ def fetch_contact_type_id(name: str = "petitioner") -> Optional[int]:
 # ---------------------------------------------------------------------------
 # SQL value helpers
 # ---------------------------------------------------------------------------
+
+def fetch_users_map() -> dict:
+    """Fetch all CRM users and build a name → id lookup dict.
+
+    Keys are lowercased full names ("linnette clark"), first names ("linnette"),
+    and last names ("clark") to handle various name formats in Exchange.
+    """
+    rows = _supabase_get("users", {"select": "id,first_name,last_name", "limit": "100"})
+    name_map: dict = {}
+    for u in rows:
+        uid = u["id"]
+        first = (u.get("first_name") or "").strip()
+        last  = (u.get("last_name") or "").strip()
+        full  = f"{first} {last}".strip()
+        if full:
+            name_map[full.lower()] = uid
+        if first:
+            name_map[first.lower()] = uid
+        if last:
+            name_map[last.lower()] = uid
+        print(f"  User: {full} (id={uid})")
+    return name_map
+
+
+def resolve_user_id(name: str, users_map: dict, fallback_uid: str) -> str:
+    """Resolve an owner/modifier name to a SQL user_id literal.
+
+    Tries full name first, then first name only. Returns fallback_uid if no match.
+    """
+    if not name:
+        return fallback_uid
+    key = name.strip().lower()
+    uid = users_map.get(key)
+    if uid is not None:
+        return str(uid)
+    # Try first name only (e.g. "Linnette" from "Linnette Clark")
+    first = key.split()[0] if " " in key else ""
+    if first:
+        uid = users_map.get(first)
+        if uid is not None:
+            return str(uid)
+    return fallback_uid
+
 
 def sql_str(val) -> str:
     """Render a Python value as a SQL string literal or NULL."""
@@ -872,7 +920,8 @@ def transform_payments(acct_num: str, payments: list, uid: str) -> list:
     return lines
 
 
-def transform_tasks(acct_num: str, exchange_items: list, uid: str) -> list:
+def transform_tasks(acct_num: str, exchange_items: list, uid: str,
+                    users_map: Optional[dict] = None) -> list:
     lines = []
     task_items = [
         it for it in exchange_items
@@ -908,13 +957,17 @@ def transform_tasks(acct_num: str, exchange_items: list, uid: str) -> list:
         )
         status = "Done" if is_complete else "To do"
 
+        # Resolve task owner to CRM user_id
+        owner_name = (item.get("task_owner") or "").strip()
+        task_uid = resolve_user_id(owner_name, users_map or {}, uid)
+
         lines.append(
             "INSERT INTO tasks "
             "(account_id, type, text, notes, due_date, done_date, status, user_id) "
             "VALUES ("
             f"(SELECT id FROM accounts WHERE account_number = {sql_str(acct_num)}), "
             f"'None', {sql_str(text)}, {sql_str(notes)}, "
-            f"{due_date}, {done_date}, {sql_str(status)}, {uid}"
+            f"{due_date}, {done_date}, {sql_str(status)}, {task_uid}"
             ");"
         )
     return lines
@@ -956,12 +1009,14 @@ def transform_activities(acct_num: str, exchange_items: list, uid: str) -> list:
     return lines
 
 
-def transform_post_items(acct_num: str, exchange_items: list, uid: str) -> list:
+def transform_post_items(acct_num: str, exchange_items: list, uid: str,
+                         users_map: Optional[dict] = None) -> list:
     """Import IPM.Post items as account_activities linked to their parent task.
 
     Post items are auto-created by Outlook when a task is modified. Their subject
     starts with the task subject (e.g. "Task 5: Start following up..."). We match
     them to tasks by subject prefix and link via parent_type='tasks' + parent_id.
+    The modifier name is extracted from " modified by {Name}" in the subject.
     """
     lines = []
     post_items = [
@@ -998,6 +1053,12 @@ def transform_post_items(acct_num: str, exchange_items: list, uid: str) -> list:
         else:
             date_sql = "NULL"
 
+        # Extract modifier name from subject ("... modified by Linnette Clark")
+        modifier_name = ""
+        if " modified by " in subject:
+            modifier_name = subject.split(" modified by ")[-1].strip()
+        post_uid = resolve_user_id(modifier_name, users_map or {}, uid)
+
         # Try to match this post to a task by subject prefix
         # Post subjects look like "Task 5: Start following up... modified by Linnette Clark"
         # Task subjects look like "Task 5: Start following up on docs for waiver..."
@@ -1028,7 +1089,7 @@ def transform_post_items(acct_num: str, exchange_items: list, uid: str) -> list:
             "VALUES ("
             f"(SELECT id FROM accounts WHERE account_number = {sql_str(acct_num)}), "
             f"'Note', {sql_str(subject)}, {sql_str(body)}, "
-            f"{date_sql}, {uid}, {parent_type}, {parent_id}"
+            f"{date_sql}, {post_uid}, {parent_type}, {parent_id}"
             ");"
         )
     return lines
@@ -1047,6 +1108,7 @@ def generate_sql(
     contract_user_props_by_acct: dict,
     admin_user_id: Optional[int],
     petitioner_type_id: Optional[int],
+    users_map: Optional[dict] = None,
 ) -> str:
     uid      = sql_uid(admin_user_id)
     type_id  = str(petitioner_type_id) if petitioner_type_id is not None else "NULL"
@@ -1094,7 +1156,7 @@ def generate_sql(
     # 5. tasks
     section("5. Tasks (from Exchange)")
     for acct_num in account_numbers:
-        lines.extend(transform_tasks(acct_num, exchange_by_acct.get(acct_num, []), uid))
+        lines.extend(transform_tasks(acct_num, exchange_by_acct.get(acct_num, []), uid, users_map))
 
     # 6. account_activities
     section("6. Account Activities (from Exchange)")
@@ -1104,7 +1166,7 @@ def generate_sql(
     # 7. post items (task modification trail) — must come after tasks
     section("7. Post Items → Activities (task modification trail)")
     for acct_num in account_numbers:
-        lines.extend(transform_post_items(acct_num, exchange_by_acct.get(acct_num, []), uid))
+        lines.extend(transform_post_items(acct_num, exchange_by_acct.get(acct_num, []), uid, users_map))
 
     # Row-count summary
     section("Row Count Summary")
@@ -1132,6 +1194,10 @@ def main():
         "--account", metavar="ACCT", nargs="+",
         help="One or more account numbers to extract (skips auto-selection)",
     )
+    parser.add_argument(
+        "--use-cache", action="store_true",
+        help="Load Exchange/Access data from cached JSON files instead of re-fetching",
+    )
     args = parser.parse_args()
 
     print("=" * 60)
@@ -1139,97 +1205,152 @@ def main():
     print("=" * 60)
     print()
 
-    # Step 1: Export Access DB
-    clients, contracts, payments = load_access_tables()
-    print()
+    # Cache file paths
+    cache_acct_path     = OUTPUT_DIR / "cache_accounts.json"
+    cache_exchange_path = OUTPUT_DIR / "cache_exchange.json"
+    cache_billing_path  = OUTPUT_DIR / "cache_billing_contacts.json"
+    cache_contract_props_path = OUTPUT_DIR / "cache_contract_user_props.json"
 
-    # Step 2: Select accounts
-    if args.account:
-        # Manual selection — look up each account in tblClients
-        forced = [a.strip() for a in args.account]
-        clients_by_acct = {(c.get("Account") or "").strip(): c for c in clients}
-        selected_clients = []
-        account_numbers = []
-        for a in forced:
-            if a in clients_by_acct:
-                account_numbers.append(a)
-                selected_clients.append(clients_by_acct[a])
-            else:
-                print(f"  Warning: account {a} not found in tblClients — will use placeholder")
-                account_numbers.append(a)
-                selected_clients.append({"Account": a})
-        print(f"Manual account selection: {account_numbers}")
+    if args.use_cache:
+        # -----------------------------------------------------------
+        # Load from cache (skip Access DB + Exchange fetches)
+        # -----------------------------------------------------------
+        missing = [p for p in [cache_acct_path, cache_exchange_path,
+                                cache_billing_path, cache_contract_props_path]
+                   if not p.exists()]
+        if missing:
+            print("ERROR: --use-cache specified but cache files are missing:")
+            for p in missing:
+                print(f"  {p}")
+            print("Run once without --use-cache to populate the cache.")
+            sys.exit(1)
+
+        print("Loading from cache...")
+        with open(cache_acct_path) as f:
+            cached_accts = json.load(f)
+        # Reconstruct clients_map, contracts_by_acct, payments_by_acct
+        clients_map = {acct: data["client"] for acct, data in cached_accts.items()}
+        contracts_by_acct = {acct: data.get("contracts", []) for acct, data in cached_accts.items()}
+        payments_by_acct = {acct: data.get("payments", []) for acct, data in cached_accts.items()}
+        account_numbers = list(clients_map.keys())
+
+        with open(cache_exchange_path) as f:
+            exchange_by_acct = json.load(f)
+        with open(cache_billing_path) as f:
+            billing_contacts_by_acct = json.load(f)
+        with open(cache_contract_props_path) as f:
+            contract_user_props_by_acct = json.load(f)
+
+        total_items = sum(len(v) for v in exchange_by_acct.values())
+        print(f"  Loaded {len(account_numbers)} accounts, {total_items} Exchange items from cache")
+        print()
     else:
-        print("Selecting sample accounts...")
-        account_numbers, selected_clients = select_sample_accounts(
-            clients, contracts, payments
-        )
-    print()
+        # -----------------------------------------------------------
+        # Fresh fetch from Access DB + Exchange
+        # -----------------------------------------------------------
+        # Step 1: Export Access DB
+        clients, contracts, payments = load_access_tables()
+        print()
 
-    if not account_numbers:
-        print("ERROR: No accounts could be selected.")
-        print("  Check MDB_PATH in config.py and verify mdbtools output.")
-        sys.exit(1)
-    print()
+        # Step 2: Select accounts
+        if args.account:
+            # Manual selection — look up each account in tblClients
+            forced = [a.strip() for a in args.account]
+            clients_by_acct = {(c.get("Account") or "").strip(): c for c in clients}
+            selected_clients = []
+            account_numbers = []
+            for a in forced:
+                if a in clients_by_acct:
+                    account_numbers.append(a)
+                    selected_clients.append(clients_by_acct[a])
+                else:
+                    print(f"  Warning: account {a} not found in tblClients — will use placeholder")
+                    account_numbers.append(a)
+                    selected_clients.append({"Account": a})
+            print(f"Manual account selection: {account_numbers}")
+        else:
+            print("Selecting sample accounts...")
+            account_numbers, selected_clients = select_sample_accounts(
+                clients, contracts, payments
+            )
+        print()
 
-    # Build lookup maps restricted to selected accounts
-    clients_map = {
-        (c.get("Account") or "").strip(): c
-        for c in selected_clients
-        if (c.get("Account") or "").strip()
-    }
+        if not account_numbers:
+            print("ERROR: No accounts could be selected.")
+            print("  Check MDB_PATH in config.py and verify mdbtools output.")
+            sys.exit(1)
+        print()
 
-    contracts_by_acct: dict = {}
-    for c in contracts:
-        acct = (c.get("Account") or "").strip()
-        if acct in clients_map:
-            contracts_by_acct.setdefault(acct, []).append(c)
-
-    payments_by_acct: dict = {}
-    for p in payments:
-        acct = (p.get("Account") or "").strip()
-        if acct in clients_map:
-            payments_by_acct.setdefault(acct, []).append(p)
-
-    # Save Access DB debug data
-    debug_accounts = {
-        acct: {
-            "client":    clients_map[acct],
-            "contracts": contracts_by_acct.get(acct, []),
-            "payments":  payments_by_acct.get(acct, []),
+        # Build lookup maps restricted to selected accounts
+        clients_map = {
+            (c.get("Account") or "").strip(): c
+            for c in selected_clients
+            if (c.get("Account") or "").strip()
         }
-        for acct in account_numbers
-    }
-    debug_acct_path = OUTPUT_DIR / "debug_accounts.json"
-    with open(debug_acct_path, "w") as f:
-        json.dump(debug_accounts, f, indent=2, default=str)
-    print(f"Wrote {debug_acct_path}")
-    print()
 
-    # Step 3: Fetch Exchange items
-    print("Fetching Exchange items (WebDAV SEARCH)...")
-    exchange_by_acct = fetch_exchange_items(account_numbers)
-    total_items = sum(len(v) for v in exchange_by_acct.values())
+        contracts_by_acct: dict = {}
+        for c in contracts:
+            acct = (c.get("Account") or "").strip()
+            if acct in clients_map:
+                contracts_by_acct.setdefault(acct, []).append(c)
 
-    print("Fetching Billing Contacts (WebDAV SEARCH)...")
-    billing_contacts_by_acct = fetch_billing_contacts(account_numbers)
+        payments_by_acct: dict = {}
+        for p in payments:
+            acct = (p.get("Account") or "").strip()
+            if acct in clients_map:
+                payments_by_acct.setdefault(acct, []).append(p)
 
-    print("Fetching contract UserProperties (PROPFIND per contract item)...")
-    contract_user_props_by_acct = fetch_contract_user_props(exchange_by_acct)
+        # Save Access DB debug + cache data
+        debug_accounts = {
+            acct: {
+                "client":    clients_map[acct],
+                "contracts": contracts_by_acct.get(acct, []),
+                "payments":  payments_by_acct.get(acct, []),
+            }
+            for acct in account_numbers
+        }
+        debug_acct_path = OUTPUT_DIR / "debug_accounts.json"
+        with open(debug_acct_path, "w") as f:
+            json.dump(debug_accounts, f, indent=2, default=str)
+        print(f"Wrote {debug_acct_path}")
+        # Also write cache copy
+        with open(cache_acct_path, "w") as f:
+            json.dump(debug_accounts, f, indent=2, default=str)
+        print()
 
-    # Strip _raw from debug output to keep it readable
-    debug_exchange = {
-        acct: [
-            {k: v for k, v in it.items() if k != "_raw"}
-            for it in items
-        ]
-        for acct, items in exchange_by_acct.items()
-    }
-    debug_ex_path = OUTPUT_DIR / "debug_exchange.json"
-    with open(debug_ex_path, "w") as f:
-        json.dump(debug_exchange, f, indent=2, default=str)
-    print(f"Wrote {debug_ex_path}  ({total_items} Exchange items total)")
-    print()
+        # Step 3: Fetch Exchange items
+        print("Fetching Exchange items (WebDAV SEARCH)...")
+        exchange_by_acct = fetch_exchange_items(account_numbers)
+        total_items = sum(len(v) for v in exchange_by_acct.values())
+
+        print("Fetching Billing Contacts (WebDAV SEARCH)...")
+        billing_contacts_by_acct = fetch_billing_contacts(account_numbers)
+
+        print("Fetching contract UserProperties (PROPFIND per contract item)...")
+        contract_user_props_by_acct = fetch_contract_user_props(exchange_by_acct)
+
+        # Strip _raw from debug/cache output to keep it readable
+        debug_exchange = {
+            acct: [
+                {k: v for k, v in it.items() if k != "_raw"}
+                for it in items
+            ]
+            for acct, items in exchange_by_acct.items()
+        }
+        debug_ex_path = OUTPUT_DIR / "debug_exchange.json"
+        with open(debug_ex_path, "w") as f:
+            json.dump(debug_exchange, f, indent=2, default=str)
+        print(f"Wrote {debug_ex_path}  ({total_items} Exchange items total)")
+
+        # Write cache files (Exchange items, billing contacts, contract user props)
+        with open(cache_exchange_path, "w") as f:
+            json.dump(debug_exchange, f, indent=2, default=str)
+        with open(cache_billing_path, "w") as f:
+            json.dump(billing_contacts_by_acct, f, indent=2, default=str)
+        with open(cache_contract_props_path, "w") as f:
+            json.dump(contract_user_props_by_acct, f, indent=2, default=str)
+        print(f"Wrote cache files to {OUTPUT_DIR}/cache_*.json")
+        print()
 
     # Step 4: Look up Supabase IDs
     print("Looking up Supabase IDs...")
@@ -1237,6 +1358,8 @@ def main():
     petitioner_type_id = fetch_contact_type_id("petitioner")
     if admin_user_id is None:
         print("  Warning: user_id will be NULL — update manually after import if needed")
+    print("  Building user name → id map...")
+    users_map = fetch_users_map()
     print()
 
     # Step 5: Generate SQL
@@ -1250,6 +1373,7 @@ def main():
         contract_user_props_by_acct,
         admin_user_id,
         petitioner_type_id,
+        users_map,
     )
     sql_path = OUTPUT_DIR / "sample_import.sql"
     with open(sql_path, "w") as f:
