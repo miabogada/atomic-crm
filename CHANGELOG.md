@@ -1,5 +1,28 @@
 # Changelog
 
+## 2026-03-10 — Tasks/Activities consolidation, contract-first workflow, truncation fixes
+
+### AccountShow: Tasks + Activities merged into a single feed
+- The separate Activities tab on the account show page has been removed.
+- The Tasks tab now shows a combined chronological feed of tasks and account-level activities.
+- Activities linked to a task (`parent_type='tasks'`) nest indented beneath their parent task in the feed.
+- Standalone activities not linked to any task interleave with tasks in date order.
+
+### Contract-first workflow enforcement (Add Task / Add Activity from account)
+- **Add Task** from the account Tasks tab now opens a two-step picker: first select a contract (or "Account level"), then the task form. If a contract filter is already active in the aside, the picker is skipped and the form pre-fills the selected contract.
+- **Add Activity** from the account Tasks tab opens a three-step picker: first choose what to attach to (a task, a contract, or account level); then pick the specific task or contract; then the activity form. Same shortcut applies when a contract filter is active.
+
+### Filter by Contract in account aside
+- The account detail aside (right panel on desktop) now shows a **Filter by Contract** section when the Tasks or Payments tab is active and the account has contracts.
+- Clicking a contract button filters the Tasks feed and Payments list to items linked to that contract. Click again to clear.
+- Placed at the bottom of the aside to minimise layout shift when switching tabs.
+
+### Truncation and tooltip fixes
+- Long task titles and activity subjects now truncate with `…` instead of causing horizontal scroll.
+- Hovering over a truncated title shows the full text in a wrapping tooltip (Outlook-style).
+
+---
+
 ## 2026-03-09 — Migration: task owner mapping + Exchange data cache
 
 ### Migration script (`fetch_sample.py`)
