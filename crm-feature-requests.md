@@ -3,6 +3,11 @@ date: 2026-02-18T01:06:00
 ---
 # List of things that need fix
 
+### Post migration feedback
+- [ ] task due dates incorrect, seem like created dates from outlook
+- [ ] imported payments are mostly not connected to contracts, need logic to infer and correct
+- [ ] activities in an account view or contract view should be consolidated with tasks, because users complain of "disappearing" activity items upon creation when parent item is a task.
+- [ ] imported accounts all show Linnette as all 3 roles, she should be the attorney, should use the roles defined in Users to apply to the accounts when imported, need to apply a correction.
 ### LMC feedback
 /accounts/create
 - [x] remove or hide Date first consult
@@ -30,9 +35,13 @@ date: 2026-02-18T01:06:00
 /tasks
 - [x] left column filters: Assigned To should be first, should include filters for any user not just Me
 - [x] need status filter "Not done" = To do OR In Process OR Blocked
+- [ ] add task type Appearance
+- [x] task items should be clickable, open to a view dialog
+/activities
+- [x] activity items should be clickable, open to a view dialog
 /users/create
 - [x] bug: expected the user role (attorney, law clerk, etc.) field is exposed in the form, observed no role field visible, other than Administrator toggle.
-- [ ] Delete should not be available to non-admin users. Delete for admin users should have a confirmation step. Deleted items should not really be deleted in db.
+- [x] Delete should not be available to non-admin users. Delete for admin users should have a confirmation step. Deleted items should not really be deleted in db.
  - Delete account → cascade to contacts, contracts, payments, tasks, activities (already works)
  - Delete contract → cascade to payments linked to that contract, Tasks/activities with parent_type=account_contract, parent_id=contract.id, and Payment schedule rows
  - Delete contact → standalone, no cascade needed, warn if Billing contact
@@ -40,6 +49,7 @@ date: 2026-02-18T01:06:00
  - Delete task → cascade to child activities
  - Delete activity → standalone  
  - Any Delete warning dialog should list the child items to also be deleted.
+ 
 
 All views
 - [x] make a reusable filter panel based on the one in /contacts, apply it to /accounts, /contracts, /tasks 
@@ -51,7 +61,6 @@ Dashboard
 - [x] Task items should display Assignee
 - [x] Hot Contacts left side is not needed, 
 - [x] Late Payments (contract list and amounts) 
-- [ ] Deadlines panel (not sure if linked to tasks or contracts directly)
 - [x] Add Completed Tasks
 - [ ] Left panel "Performance" show new Contracts count, bookings, fees collected / mo graph or table
 	- [ ] A way to set monthly sales goal

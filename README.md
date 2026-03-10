@@ -181,6 +181,10 @@ This fork is customized for a law firm practice management workflow. Key differe
 
 **Account Contracts** represent individual legal matters or engagements under an account, replacing the upstream `deals`/pipeline concept.
 
+### Task Assignment
+
+All imported tasks are assigned to Linnette Clark (user_id 2). In the legacy Outlook CRM, all staff shared a single login, so Exchange does not distinguish task ownership. Some task titles mention a staff member's name as assignee, but this is inconsistent and not reliably parseable. Tasks can be re-assigned to the correct staff member from within the CRM on an as-needed basis.
+
 ### Hidden Upstream Resources
 
 The following upstream resources remain in the database but are not exposed in the UI:

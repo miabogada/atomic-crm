@@ -13,6 +13,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 import type { Account, Sale, Task as TData } from "../types";
 
@@ -86,38 +92,49 @@ export const Task = ({
   return (
     <>
       <div className="flex items-start justify-between">
-        <div className="flex items-start gap-2 flex-1">
+        <div className="flex items-start gap-2 flex-1 min-w-0">
           <Checkbox
             id={labelId}
             checked={!!task.done_date}
             onCheckedChange={handleCheck()}
             disabled={isUpdatePending}
-            className="mt-1"
+            className="mt-1 shrink-0"
           />
           <div
-            className={`flex-grow cursor-pointer ${task.done_date ? "line-through" : ""}`}
+            className={`flex-grow min-w-0 cursor-pointer ${task.done_date ? "line-through" : ""}`}
             onClick={() => setOpenView(true)}
           >
-            <div className="text-sm flex items-center gap-1.5 flex-wrap">
-              <span>
-                {task.type && task.type !== "None" && (
-                  <>
-                    <span className="font-semibold text-sm">{task.type}</span>
-                    &nbsp;
-                  </>
-                )}
-                {task.text}
-              </span>
+            <div className="text-sm flex items-center gap-1.5 min-w-0">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="truncate flex-1 min-w-0">
+                      {task.type && task.type !== "None" && (
+                        <>
+                          <span className="font-semibold text-sm">{task.type}</span>
+                          &nbsp;
+                        </>
+                      )}
+                      {task.text}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-sm whitespace-normal break-words">
+                    {task.type && task.type !== "None"
+                      ? `${task.type}: ${task.text}`
+                      : task.text}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               {task.status && task.status !== "Done" && (
                 <Badge
                   variant="outline"
-                  className={`text-xs py-0 px-1.5 ${taskStatusColors[task.status] ?? ""}`}
+                  className={`text-xs py-0 px-1.5 shrink-0 ${taskStatusColors[task.status] ?? ""}`}
                 >
                   {task.status}
                 </Badge>
               )}
             </div>
-            <div className="text-sm text-muted-foreground">
+            <div className="text-sm text-muted-foreground truncate">
               {task.done_date ? "done" : "due"}&nbsp;
               <DateField
                 source={task.done_date ? "done_date" : "due_date"}

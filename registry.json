@@ -80,6 +80,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/tasks/TaskView.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/tasks/TaskListFilter.tsx",
           "type": "registry:component"
         },
@@ -540,6 +544,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/misc/DeleteWarnings.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/misc/CreateSheet.tsx",
           "type": "registry:component"
         },
@@ -989,6 +997,10 @@
         },
         {
           "path": "src/components/atomic-crm/accounts/AddActivity.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/accounts/ActivityView.tsx",
           "type": "registry:component"
         },
         {
