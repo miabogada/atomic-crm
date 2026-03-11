@@ -506,7 +506,11 @@ const AddTaskFromAccount = ({
             account_id,
             parent_type: parent.parent_type,
             parent_id: parent.parent_id,
-            due_date: new Date().toISOString().slice(0, 10),
+            due_date: (() => {
+              const d = new Date();
+              const pad = (n: number) => String(n).padStart(2, "0");
+              return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+            })(),
             user_id: identity.id,
           }}
           mutationOptions={{ onSuccess: handleSuccess }}

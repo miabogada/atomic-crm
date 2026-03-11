@@ -112,7 +112,11 @@ export const AddTask = ({
           account_id: account_id ?? null,
           parent_type: parent_type ?? null,
           parent_id: parent_id ?? null,
-          due_date: new Date().toISOString().slice(0, 10),
+          due_date: (() => {
+            const d = new Date();
+            const pad = (n: number) => String(n).padStart(2, "0");
+            return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+          })(),
           user_id: identity.id,
         }}
         mutationOptions={{ onSuccess: handleSuccess }}

@@ -91,24 +91,32 @@ Replaces UTC-based arithmetic so "postpone to tomorrow" always means the user's 
 
 1. **`git push origin dev`** — push code changes to remote.
 2. ~~**Review** `migration/output/tasks_due_date_review.csv` with staff~~ — skipped. The list goes stale as staff continue creating and editing tasks. Instead, after deployment staff should spot-check their own recent tasks and correct any dates that look off via the CRM Edit function.
-3. **Dry-run test on task 5104** (Victor's reported task — SANCHEZ, "Task 36: payment due on the 15th") — run the migration inside a transaction, inspect the result, then roll back:
+3. **Dry-run test on task 4106** (Victor's reported task — RAMOS, PETRONA, "Task 0: DID CLIENT MAKE PAYMENT / Autopay below: $350") — apply the same conversion expression the migration uses in a plain SELECT, no schema change or table lock:
    ```sql
-   BEGIN;
-
-   ALTER TABLE tasks
-     ALTER COLUMN due_date TYPE date
-     USING (due_date AT TIME ZONE 'America/Los_Angeles')::date;
-
    SELECT id,
-          due_date AS due_date_after_migration,
+          (due_date AT TIME ZONE 'America/Los_Angeles')::date AS due_date_after_migration,
+          due_date AS due_date_current,
           text,
           status
    FROM tasks
-   WHERE id = 5104;
-
-   ROLLBACK;
+   WHERE id = 4106;
    ```
    Confirm with Victor that `due_date_after_migration` matches what he expects before proceeding.
+
+   **Summary query** — run before applying to get a full picture of what will change:
+   ```sql
+   SELECT
+     count(*)                                                                 AS total_tasks,
+     count(*) FILTER (WHERE due_date IS NOT NULL)                            AS with_due_date,
+     count(*) FILTER (WHERE
+       due_date IS NOT NULL AND
+       (due_date AT TIME ZONE 'America/Los_Angeles')::date != due_date::date) AS dates_that_will_change,
+     count(*) FILTER (WHERE
+       due_date IS NOT NULL AND
+       (due_date AT TIME ZONE 'America/Los_Angeles')::date = due_date::date)  AS dates_unchanged
+   FROM tasks
+   WHERE deleted_at IS NULL;
+   ```
 4. **Apply migration to prod** (after dry-run confirmed):
    ```bash
    docker exec supabase_db_atomic-crm-demo psql \

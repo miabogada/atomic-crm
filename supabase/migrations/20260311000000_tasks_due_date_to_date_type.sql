@@ -8,7 +8,7 @@
 --
 -- Switching to the date type eliminates timezone handling entirely. The
 -- USING clause recovers the local date from existing stored UTC timestamps
--- using the America/Chicago timezone.
+-- using the America/Los_Angeles timezone.
 
 ALTER TABLE tasks
   ALTER COLUMN due_date TYPE date
