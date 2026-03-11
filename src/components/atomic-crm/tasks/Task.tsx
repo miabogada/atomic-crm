@@ -29,6 +29,13 @@ import { TaskView } from "./TaskView";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { AddActivity } from "../accounts/AddActivity";
 
+const localDatePlusDays = (days: number) => {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+};
+
 export const Task = ({
   task,
 }: {
@@ -199,9 +206,7 @@ export const Task = ({
                 update("tasks", {
                   id: task.id,
                   data: {
-                    due_date: new Date(Date.now() + 24 * 60 * 60 * 1000)
-                      .toISOString()
-                      .slice(0, 10),
+                    due_date: localDatePlusDays(1),
                   },
                   previousData: task,
                 });
@@ -215,9 +220,7 @@ export const Task = ({
                 update("tasks", {
                   id: task.id,
                   data: {
-                    due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-                      .toISOString()
-                      .slice(0, 10),
+                    due_date: localDatePlusDays(7),
                   },
                   previousData: task,
                 });

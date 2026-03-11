@@ -509,11 +509,6 @@ const AddTaskFromAccount = ({
             due_date: new Date().toISOString().slice(0, 10),
             user_id: identity.id,
           }}
-          transform={(data) => {
-            const dueDate = new Date(data.due_date);
-            dueDate.setHours(0, 0, 0, 0);
-            return { ...data, due_date: dueDate.toISOString() };
-          }}
           mutationOptions={{ onSuccess: handleSuccess }}
         >
           <Dialog open={true} onOpenChange={(o) => { if (!o) handleClose(); }}>
