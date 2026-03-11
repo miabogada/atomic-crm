@@ -6,8 +6,11 @@ date: 2026-02-18T01:06:00
 ### Post migration feedback
 - [ ] task due dates incorrect, seem like created dates from outlook
 - [ ] imported payments are mostly not connected to contracts, need logic to infer and correct
-- [ ] activities in an account view or contract view should be consolidated with tasks, because users complain of "disappearing" activity items upon creation when parent item is a task.
+- [x] activities in an account view or contract view should be consolidated with tasks, because users complain of "disappearing" activity items upon creation when parent item is a task.
 - [ ] imported accounts all show Linnette as all 3 roles, she should be the attorney, should use the roles defined in Users to apply to the accounts when imported, need to apply a correction.
+- [ ] overall central width changes as you move through top menu, should be consistent
+- [ ] overall central width changes again in accounts/show when you navigate inner tabs. it would make sense that the central content stays same width as when you navigate top menu, leaving room for left or right asides as they appear.
+- [ ] task item reschedule ends up on 1 day prior to the intended reschedule date
 ### LMC feedback
 /accounts/create
 - [x] remove or hide Date first consult
@@ -50,6 +53,9 @@ date: 2026-02-18T01:06:00
  - Delete activity → standalone  
  - Any Delete warning dialog should list the child items to also be deleted.
  
+
+### Future features (weekend)
+- [ ] Audit trail: add `created_by` and `updated_by` columns (referencing `auth.users.id`) to tasks, account_activities, account_payments, account_contracts, account_contacts, accounts. Populate via INSERT/UPDATE triggers using `auth.uid()`. Note: service-key operations (scripts, imports) will record null — historical data is unrecoverable.
 
 All views
 - [x] make a reusable filter panel based on the one in /contacts, apply it to /accounts, /contracts, /tasks 
