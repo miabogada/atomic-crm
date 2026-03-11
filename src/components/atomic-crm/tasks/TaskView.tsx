@@ -148,6 +148,7 @@ const formatDate = (dateStr: string) => {
       year: "numeric",
       month: "short",
       day: "numeric",
+      timeZone: "UTC",
     });
   } catch {
     return dateStr;
