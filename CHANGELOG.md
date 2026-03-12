@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-03-12 — Fix: imported task due dates from Exchange
+
+### Data fix (no code deployment needed)
+- **Problem:** All 2,516 tasks imported from Exchange had wrong due dates. The import script used the `exchange/tasks/duedate` WebDAV property, which returns empty for public folder `IPM.Task` items. The script fell back to the message creation date, which is typically earlier than the actual due date.
+- **Root cause:** Exchange 2003 stores task due dates as a MAPI named property (`PidLidTaskDueDate`, LID 0x8105) in the `PSETID_Task` property set — not in the `exchange/tasks/` namespace.
+- **Fix:** Fresh Exchange export using the corrected MAPI property, matched to CRM task IDs by `(account_number, task_text)`. Applied a targeted SQL UPDATE script (2,508 tasks) to both local dev and production.
+- **Exclusions:** 30 tasks (id ≥ 5088) excluded — these were created or edited by users directly in Atomic CRM and already have correct due dates. 2 tasks skipped (no due date set in Exchange). 6 tasks already had the correct date.
+- **Validation:** Cross-checked all updated due dates against Exchange source data — zero mismatches. Verified no other columns or tables were modified.
+- **Staff action:** Users should spot-check the 30 excluded tasks listed in `migration/output/due_date_fix_all_tasks.csv`, plus any older imported tasks whose due dates they may have manually edited.
+- **Backup:** Pre-fix production backup at `migration/backups/prod_data_2026-03-12.sql`.
+- **Details:** See `migration/task-due-date-exchange-fix.md` for full procedure and validation results.
+
+---
+
 ## 2026-03-11 — Fix: task due date off-by-one timezone bug
 
 ### Bug fix
