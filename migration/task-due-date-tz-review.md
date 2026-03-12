@@ -78,6 +78,21 @@ The plan uses `docker exec supabase_db_atomic-crm-demo psql "postgresql://...@10
 
 ---
 
+### 4. Imported task due dates — wrong Exchange property URI (separate issue, fixed)
+
+The original migration script used `http://schemas.microsoft.com/exchange/tasks/duedate`
+which returns empty for public folder `IPM.Task` items. The correct URI is the
+MAPI named property `PidLidTaskDueDate` (0x8105 in `PSETID_Task`):
+
+```
+http://schemas.microsoft.com/mapi/id/{00062003-0000-0000-C000-000000000046}/0x00008105
+```
+
+Confirmed working via WebDAV SEARCH with SQL alias on 2026-03-12.
+`fetch_sample.py` updated. See `exchange-gotchas.md` and `post-migration-plan.md` Issue 1.
+
+---
+
 ## Conclusion
 
-The RCA and migration are correct. Issues #1 and #2 should be fixed before deploying to prod.
+The RCA and migration are correct. Issues #1 and #2 were fixed before deploying to prod. Issue #4 (imported due dates) is a separate data correction requiring re-import.

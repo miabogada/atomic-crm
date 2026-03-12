@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-03-11 — Fix: task due date off-by-one timezone bug
+
+### Bug fix
+- **Reported symptom:** Rescheduling a task to a specific date saved it one day earlier than selected (e.g. picking April 17 displayed April 16 after save).
+- **Root cause:** `tasks.due_date` was stored as `timestamptz`. Two code paths (create transform and edit display) both shifted dates back by one day for Pacific Time users.
+- **Database migration:** Changed `due_date` column from `timestamptz` to `date`, converting existing values using `AT TIME ZONE 'America/Los_Angeles'` to preserve currently-displayed dates.
+- **Code fixes:** Removed buggy `setHours(0,0,0,0)` transforms from task create paths. Replaced UTC-based postpone button arithmetic with local date arithmetic (`localDatePlusDays`). Fixed default due date on new tasks to use local date instead of `toISOString().slice(0,10)` (which gave tomorrow's date after 5 PM PDT).
+- **Staff action:** Users should spot-check tasks created or rescheduled since March 10 and correct any that are 1 day off via Edit.
+
+---
+
 ## 2026-03-10 — Tasks/Activities consolidation, contract-first workflow, truncation fixes
 
 ### AccountShow: Tasks + Activities merged into a single feed

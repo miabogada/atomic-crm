@@ -48,18 +48,44 @@ SELECT (`ALL_PROPS`). Instead:
 
 ---
 
-## Task properties: wrong namespace for public folders
+## Task properties: namespace matters for public folders
 
 Exchange public folder task items (`IPM.Task.Account task`) do NOT respond to
 `urn:schemas:tasks:` — all properties return empty.
 
-Use: `http://schemas.microsoft.com/exchange/tasks/`
+Use: `http://schemas.microsoft.com/exchange/tasks/` for status/completion:
 - `status` → value `2` = Completed
 - `percentcomplete` → value `1.` (note trailing dot) = 100% done
 - `datecompleted` → done date
-- `duedate` → always empty in public folders; fall back to `urn:schemas:httpmail:date`
 
 Confirmed by inspecting OWA hidden inputs: `name="http://schemas.microsoft.com/exchange/tasks/percentcomplete"`
+
+### DueDate requires the MAPI named property URI
+
+The `duedate` property under `exchange/tasks/` always returns empty for
+public folder items. The correct URI uses the PSETID_Task MAPI named property
+set:
+
+```
+http://schemas.microsoft.com/mapi/id/{00062003-0000-0000-C000-000000000046}/0x00008105
+```
+
+This is `PidLidTaskDueDate` (Long ID 0x8105, data type PT_SYSTIME).
+Ref: [Microsoft Learn — PidLidTaskDueDate](https://learn.microsoft.com/en-us/office/client-developer/outlook/mapi/pidlidtaskduedate-canonical-property)
+
+**Important:** The `{GUID}` in the namespace URI breaks Python's expat XML
+parser (same issue as contract UserProperties). Use a SQL alias in the WebDAV
+SEARCH to get a clean XML tag:
+
+```sql
+SELECT "http://schemas.microsoft.com/mapi/id/{00062003-0000-0000-C000-000000000046}/0x00008105" AS "TaskDueDate"
+```
+
+The VBScript form (`Account Task.vbs`) uses `Item.DueDate` — the standard
+Outlook MAPI property — confirming the data IS stored; it just requires the
+correct WebDAV property URI to access it.
+
+Similarly, `PidLidTaskStartDate` is at `0x00008104` in the same property set.
 
 ---
 

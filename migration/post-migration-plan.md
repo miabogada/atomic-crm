@@ -10,25 +10,30 @@ OutlookForms CRM and the new Atomic CRM simultaneously.
 **Symptom:** Imported task due dates match the task *creation* date in Exchange,
 not the actual due date visible in Outlook.
 
-**Root cause:** Per `exchange-gotchas.md`, the standard Exchange WebDAV property
-`http://schemas.microsoft.com/exchange/tasks/duedate` always returns empty for
-public folder items. The migration script (`fetch_sample.py` lines 940–944)
-falls back to `urn:schemas:httpmail:date` (message creation date).
+**Root cause:** The migration script used
+`http://schemas.microsoft.com/exchange/tasks/duedate` which returns empty for
+public folder items. The VBScript form uses `Item.DueDate` — the standard
+Outlook MAPI property — which is stored as `PidLidTaskDueDate` (0x8105) in
+the `PSETID_Task` property set.
 
-**Hypothesis:** The `account_tasks.oft` form may store the due date as a custom
-UserProperty (similar to how `account_contract.oft` stores payment terms). A
-PROPFIND allprop against a task item would reveal whether a property like
-`txtDueDate` exists.
+**Solution (2026-03-12):** The correct WebDAV property URI is:
+```
+http://schemas.microsoft.com/mapi/id/{00062003-0000-0000-C000-000000000046}/0x00008105
+```
+Confirmed working via WebDAV SEARCH with SQL alias (the `{GUID}` namespace
+breaks expat; use `AS "TaskDueDate"` alias). See `exchange-gotchas.md`.
 
-**Plan:**
-1. PROPFIND probe: use the OWA technique from `exchange-gotchas.md` to inspect
-   a task item — GET the OWA HTML and look for hidden inputs, or run PROPFIND
-   allprop and check for UserProperties.
-2. If a custom UserProperty exists, update `fetch_sample.py` to extract it
-   (same approach as `fetch_contract_user_props()`).
-3. Re-run migration import for tasks OR run a targeted UPDATE against prod DB.
+`fetch_sample.py` has been updated to use this property. The `{GUID}` namespace
+is handled by adding the property to the SEARCH SELECT with a SQL alias,
+bypassing the expat parser issue.
 
-**Blocker:** Requires Exchange access for the PROPFIND probe.
+**Remaining steps:**
+1. Re-run `fetch_sample.py --use-cache` to re-import tasks with correct due dates.
+2. Apply a targeted UPDATE to prod DB to correct imported task due dates, OR
+   re-run the full import and diff against existing data.
+3. Verify a sample of tasks against Outlook to confirm due dates match.
+
+**Status:** Script updated. Awaiting re-import execution.
 
 ---
 

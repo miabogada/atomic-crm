@@ -10,7 +10,7 @@ date: 2026-02-18T01:06:00
 - [ ] imported accounts all show Linnette as all 3 roles, she should be the attorney, should use the roles defined in Users to apply to the accounts when imported, need to apply a correction.
 - [ ] overall central width changes as you move through top menu, should be consistent
 - [ ] overall central width changes again in accounts/show when you navigate inner tabs. it would make sense that the central content stays same width as when you navigate top menu, leaving room for left or right asides as they appear.
-- [ ] task item reschedule ends up on 1 day prior to the intended reschedule date
+- [x] task item reschedule ends up on 1 day prior to the intended reschedule date
 ### LMC feedback
 /accounts/create
 - [x] remove or hide Date first consult
@@ -38,7 +38,7 @@ date: 2026-02-18T01:06:00
 /tasks
 - [x] left column filters: Assigned To should be first, should include filters for any user not just Me
 - [x] need status filter "Not done" = To do OR In Process OR Blocked
-- [ ] add task type Appearance
+- [ ] add task type Appearance or change existing type Court Date to Appearance (confirm w/ Linnette first)
 - [x] task items should be clickable, open to a view dialog
 /activities
 - [x] activity items should be clickable, open to a view dialog
@@ -54,9 +54,6 @@ date: 2026-02-18T01:06:00
  - Any Delete warning dialog should list the child items to also be deleted.
  
 
-### Future features (weekend)
-- [ ] Audit trail: add `created_by` and `updated_by` columns (referencing `auth.users.id`) to tasks, account_activities, account_payments, account_contracts, account_contacts, accounts. Populate via INSERT/UPDATE triggers using `auth.uid()`. Note: service-key operations (scripts, imports) will record null — historical data is unrecoverable.
-
 All views
 - [x] make a reusable filter panel based on the one in /contacts, apply it to /accounts, /contracts, /tasks 
 	- [x] bug: /x/contacts?filter Contact Type filters error: "column contact_summary.contact_type_id does not exist"
@@ -68,15 +65,15 @@ Dashboard
 - [x] Hot Contacts left side is not needed, 
 - [x] Late Payments (contract list and amounts) 
 - [x] Add Completed Tasks
-- [ ] Left panel "Performance" show new Contracts count, bookings, fees collected / mo graph or table
-	- [ ] A way to set monthly sales goal
+- [ ] Left panel "Performance" show new Contracts count, bookings, fees collected / mo graph or table - low priority
+	- [ ] A way to set monthly sales goal - low priority
 - [x] bug: Latest Activities not displaying any
 - [x] Latest Activity should include activities, tasks completed, and payments received.
 - [x] non-admin users should not see the Dashboard. they can go to accounts after login
 - [x] admin user attorney doesn't like business of Latest Activity panel. Just hide it. 
 
 Phone menu
-- [ ] bottom phone nav needs a back arrow, left side, only shown in detail views
+- [ ] bottom phone nav needs a back arrow, left side, only shown in detail views - low priority
 
 Tasks
 - [x] add a /tasks page with top menu item
@@ -86,7 +83,7 @@ Tasks
 - [x] If logged in as admin, then Dashboard should show tasks from all users
 - [ ] Task Status changes should be logged with a Date Status Change field.
 - [x] Tasks with status Done should show date of completion
-- [ ] kanban view in desktop
+- [ ] kanban view in desktop - low priority
 - [x] entire task item should be clickable, same for account_contacts
 - [x] editing task to Done status does not update the dashboard, maybe there's a separate task complete binary field
 
@@ -119,7 +116,7 @@ Add Task dialog in any view
 	- does phone -> home?
 	- phone types should be home / cell / work / other (for all contacts context)
 	- address: integrate w/ google places to autofill
-- [ ] account status = New is needed, should apply before the first contract is created, should be yellow like To do is
+- [ ] account status = New is needed, should apply before the first contract is created, should be yellow like To do is -- won't do
 
 /accounts/x/show
 - [x] Task items should display Assignee
@@ -127,7 +124,7 @@ Add Task dialog in any view
 - [ ] show tags as badges on account contact
 - [x] click on a contract item should open it in /x/account_contracts/x/show
 - [x] click on a contact item should open it in /x/account_contacts/x/show
-	- [ ] expand clickable area of account_contact beyond description text
+	- [x] expand clickable area of account_contact beyond description text
 - [x] account and each contract should show contracted amount, received amount, balance.  Each contract item should show this as well as payment x of n.
 
 Every item type
@@ -144,9 +141,9 @@ Payments
 - [x] Add Payment button from /accounts/x/show page if Payments tab selected
 - [ ] payment should have a pointer to the actual payment item (maybe reference stripe somehow)
 	- [ ] stripe integration
-- [ ] ability to apply a discount to the contract amount later after the fact that should come out of the balance
-- [ ] ability to reverse a payment later or apply a partial reversal to a payment that should come out of the balance
-- [ ] ability to mark unpaid balances as a write-off
+- [x] ability to apply a discount to the contract amount later after the fact that should come out of the balance
+- [x] ability to reverse a payment later or apply a partial reversal to a payment that should come out of the balance
+- [x] ability to mark unpaid balances as a write-off
 
 Users
 - [x] for some reason the path and headline are Sales instead of Users?

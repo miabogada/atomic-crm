@@ -107,6 +107,11 @@ _NS_MAPI      = "http://schemas.microsoft.com/mapi/proptag/"
 _NS_HTTPMAIL  = "urn:schemas:httpmail:"
 _NS_CALENDAR  = "urn:schemas:calendar:"
 _NS_TASKS     = "http://schemas.microsoft.com/exchange/tasks/"
+# MAPI named properties in the PSETID_Task property set ({00062003-...}).
+# These are the correct URIs for reading task DueDate/StartDate from public
+# folder items via WebDAV SEARCH.  The _NS_TASKS namespace (exchange/tasks/)
+# returns empty for these properties on public folder IPM.Task items.
+_NS_PSETID_TASK = "http://schemas.microsoft.com/mapi/id/{00062003-0000-0000-C000-000000000046}/"
 _NS_CONTACTS  = "urn:schemas:contacts:"
 # Outlook UserProperties (custom form fields) stored in the MAPI PS_PUBLIC_STRINGS set
 _NS_CONTRACT  = "http://schemas.microsoft.com/mapi/string/{00020329-0000-0000-C000-000000000046}/"
@@ -118,7 +123,13 @@ PROP_SUBJECT          = f"{_NS_HTTPMAIL}subject"
 PROP_BODY             = f"{_NS_HTTPMAIL}textdescription"
 PROP_DATE             = f"{_NS_HTTPMAIL}date"
 PROP_DTSTART          = f"{_NS_CALENDAR}dtstart"
-PROP_TASK_DUE         = f"{_NS_TASKS}duedate"
+# PidLidTaskDueDate — the correct MAPI named property for task due dates in
+# public folders.  The exchange/tasks/duedate URI returns empty for public
+# folder IPM.Task items.  This property CANNOT go in ALL_PROPS because the
+# {GUID} in the namespace breaks Python's expat parser.  Instead it is added
+# to the SEARCH SELECT with a SQL alias and extracted by alias tag name.
+PROP_TASK_DUE         = f"{_NS_PSETID_TASK}0x00008105"
+PROP_TASK_DUE_ALIAS   = "TaskDueDate"
 PROP_TASK_COMPLETED   = f"{_NS_TASKS}datecompleted"
 PROP_TASK_STATUS      = f"{_NS_TASKS}status"
 PROP_TASK_PCT         = f"{_NS_TASKS}percentcomplete"
@@ -161,7 +172,7 @@ PROP_CONTRACT_WORK_DESC   = f"{_NS_CONTRACT}txtContractWorkDescription"
 # using regex extraction — see fetch_contract_user_props().
 ALL_PROPS = [
     PROP_MESSAGE_CLASS, PROP_CONV_TOPIC, PROP_SUBJECT, PROP_BODY, PROP_DATE,
-    PROP_DTSTART, PROP_TASK_DUE, PROP_TASK_COMPLETED, PROP_TASK_STATUS,
+    PROP_DTSTART, PROP_TASK_COMPLETED, PROP_TASK_STATUS,
     PROP_TASK_PCT, PROP_TASK_OWNER,
     PROP_GIVEN_NAME, PROP_MIDDLE_NAME, PROP_SURNAME, PROP_FULL_NAME, PROP_EMAIL1,
     PROP_HOME_PHONE, PROP_MOBILE, PROP_BIZ_PHONE,
@@ -315,6 +326,9 @@ def select_sample_accounts(clients, contracts, payments):
 def build_search_xml(account_number: str) -> str:
     """Build a WebDAV SEARCH request body scoped to one account number."""
     select_cols = ",\n      ".join(f'"{p}"' for p in ALL_PROPS)
+    # PROP_TASK_DUE uses the PSETID_Task GUID namespace which breaks expat,
+    # so it is added separately with a SQL alias to get a clean XML tag name.
+    select_cols += f',\n      "{PROP_TASK_DUE}" AS "{PROP_TASK_DUE_ALIAS}"'
     return f"""<?xml version="1.0"?>
 <searchrequest xmlns="DAV:">
   <sql>
@@ -374,7 +388,7 @@ def parse_search_response(xml_text: str, account_number: str) -> list:
             "body":           get(PROP_BODY),
             "date":           get(PROP_DATE),
             "dtstart":        get(PROP_DTSTART),
-            "task_due":       get(PROP_TASK_DUE),
+            "task_due":       get(PROP_TASK_DUE) or prop_values.get(PROP_TASK_DUE_ALIAS, ""),
             "task_completed": get(PROP_TASK_COMPLETED),
             "task_status":    get(PROP_TASK_STATUS),
             "task_pct":       get(PROP_TASK_PCT),
@@ -937,8 +951,8 @@ def transform_tasks(acct_num: str, exchange_items: list, uid: str,
         cleaned_body = "\n".join(body_lines[1:]).strip() if len(body_lines) > 1 else ""
         notes = cleaned_body or None
 
-        # Exchange rarely stores duedate on these items; use message creation date instead.
-        # That is the "Created" date shown in Outlook's Account Tracking column view.
+        # PidLidTaskDueDate (PSETID_Task 0x8105) is the actual Outlook DueDate.
+        # Falls back to message creation date only if the task has no due date set.
         due_date = sql_date(item.get("task_due") or "")
         if due_date == "NULL":
             due_date = sql_date(item.get("date") or "")
