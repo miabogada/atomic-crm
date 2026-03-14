@@ -13,7 +13,7 @@ date: 2026-02-18T01:06:00
 - [x] task item reschedule ends up on 1 day prior to the intended reschedule date
 - [ ] imported credit card payments were impored as type CHECK but Check Number is non-integer, need to change to type Credit Card
 - [ ] imported accounts seem to have null Opened date as shown in right aside on accounts/x/show
-- [ ] additional 26 accounts as of 3/14 need to be migrated, list on google drive https://docs.google.com/document/d/1fkyR1PusREl6xg6Zx6UZZx8yf868eGgvH3BOh8XrXDg/edit?tab=t.0
+- [x] additional 26 accounts as of 3/14 need to be migrated, list on google drive https://docs.google.com/document/d/1fkyR1PusREl6xg6Zx6UZZx8yf868eGgvH3BOh8XrXDg/edit?tab=t.0
 ### LMC feedback
 /accounts/create
 - [x] remove or hide Date first consult

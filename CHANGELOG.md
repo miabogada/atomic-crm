@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-03-14 — Fix: 31 unlinked prod payments resolved
+
+- **Root cause:** Phase 2 SQL was generated from local dev (with local payment IDs). When applied to prod, 31 UPDATEs matched 0 rows because prod had different auto-increment IDs from user activity between sync and deploy.
+- **Fix:** Synced prod → local, re-ran `associate_payments.py` (picked up the 31 with correct prod IDs), applied to both local and prod.
+- 1 payment (id 2755, $400, account 26021701) also needed schedule linking → linked to schedule row 4418.
+- **Result:** 1,587/1,587 payments linked, 0 unlinked on prod.
+
+---
+
 ## 2026-03-14 — Migration: 25 remaining accounts imported
 
 ### Bulk import (Phase 1)

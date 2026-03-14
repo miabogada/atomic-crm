@@ -103,7 +103,14 @@ python3 migration/link_payment_schedule.py --apply
    - Small deltas in payments/tasks/activities are expected (user activity on prod between syncs)
    - Spot-check accounts in prod CRM UI
 
-**Prod password:** Stored in user's Bitwarden under "supabase crm". Ask the user — do NOT guess or hardcode.
+**Prod password:** Stored in user's Bitwarden under "supabase crm". Ask the user to paste it in chat — do NOT try interactive scripts or suggest running in a separate terminal.
+
+### Syncing Prod → Local
+
+Run `db-sync-prod-to-local.sh` non-interactively by piping the password and confirmation:
+```bash
+echo -e "<PASSWORD>\ny" | bash scripts/db-sync-prod-to-local.sh
+```
 
 ### Phase 5: Documentation
 
@@ -114,7 +121,7 @@ python3 migration/link_payment_schedule.py --apply
 
 - **Stale Access DB:** The `billing_be.mdb` on this workstation is a copy. Check its modification date before importing — newer accounts won't exist in a stale copy. Ask the user to copy a fresh version if needed.
 - **Exchange timeouts:** WebDAV fetches can time out for individual accounts. Re-run with `--account <failed_account>` to retry, then re-run all accounts together for the final SQL.
-- **Prod drift:** If users enter data on prod between local validation and prod deployment, the prod apply will show slightly different counts. This is normal. Payments entered by users on prod with `contract_id = NULL` won't be linked by the SQL scripts (which were generated from local data). Re-run Phase 2 and 3 against prod to catch these.
+- **Prod drift:** If users enter data on prod between local validation and prod deployment, the prod apply will show slightly different counts. This is normal. Payments entered by users on prod with `contract_id = NULL` won't be linked by the SQL scripts (which were generated from local data). To fix: sync prod → local, re-run Phase 2 (`associate_payments.py`), then for Phase 3 do NOT re-run `link_payment_schedule.py` against all data — query just the affected payment IDs to see which ones need schedule linking, and apply targeted UPDATEs only.
 - **Account number formats:** Most are 8 digits (YYMMDDRR), but some are 9 digits (e.g., `220122801`). Don't assume a length.
 - **Exchange MAPI properties:** Task due dates use `PidLidTaskDueDate` in the `PSETID_Task` property set, NOT `exchange/tasks/duedate`. The `{GUID}` namespace breaks Python's expat parser — the script uses a SQL alias workaround. See `migration/exchange-gotchas.md`.
 
