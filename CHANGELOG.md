@@ -1,5 +1,31 @@
 # Changelog
 
+## 2026-03-14 — Migration Phase 2: auto-associate payments to contracts + link payment schedule
+
+### Payment → contract association (`migration/associate_payments.py`)
+- **Problem:** 1,091 of 1,236 payments (88%) had `contract_id = NULL` after the Phase 1 bulk import because the legacy Access system doesn't associate payments with contracts. Only 145 retainer payments were linked (matched during import by `date_received = contract.date_opened`).
+- **Algorithm:** Capacity-aware filling — processes payments per-account chronologically, tracking a running total per contract. Prevents overpaying a contract by spilling to adjacent contracts when one is full.
+- **Rules applied:** single-contract (634), date-range (442), amount-match (8), boundary-payoff (1), capacity-spill-back (2), capacity-spill-fwd (1), concurrent-capacity (3). Zero unresolved.
+- **Validation:** 56 contracts fully paid, 81 underpaid (active accounts still making payments), 2 slightly overpaid (genuine payment irregularities — a $200 lump-sum overshoot and a $25 partial payment overshoot). No exact-offset pairs confirming no mis-links.
+- **Applied to:** local dev and production.
+
+### Payment schedule linking (`migration/link_payment_schedule.py`)
+- **Problem:** All 2,045 `contract_payment_schedule` rows had `payment_id = NULL`, causing every row in the UI to show "link payment" even for past-due installments that had been paid.
+- **Algorithm:** For each contract, walks payments and schedule rows chronologically. Each payment consumes schedule rows in order until fully allocated, handling exact matches, lump sums (one payment covers multiple rows), and partial payments.
+- **Result:** 1,320 schedule rows linked. 725 remain unlinked (future installments not yet paid). 5 negative payments (refunds) skipped. 36 payments beyond the schedule (extra lump-sum coverage).
+- **Applied to:** local dev and production.
+
+### Output files
+- `migration/output/associate_payments_report.csv` — per-payment with proposed link, rule, reason, contract balance
+- `migration/output/associate_payments_contract_summary.csv` — per-contract balance summary
+- `migration/output/associate_payments.sql` — 1,091 UPDATE statements
+- `migration/output/link_payment_schedule.sql` — 1,405 UPDATE statements
+
+### Documentation
+- `migration/associate-payments-algorithm.md` — algorithm description, rule definitions, capacity-aware design rationale, validation results
+
+---
+
 ## 2026-03-12 — Fix: imported task due dates from Exchange
 
 ### Data fix (no code deployment needed)

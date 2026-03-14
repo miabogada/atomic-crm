@@ -4,13 +4,16 @@ date: 2026-02-18T01:06:00
 # List of things that need fix
 
 ### Post migration feedback
-- [ ] task due dates incorrect, seem like created dates from outlook
-- [ ] imported payments are mostly not connected to contracts, need logic to infer and correct
+- [x] task due dates incorrect, seem like created dates from outlook
+- [x] imported payments are mostly not connected to contracts, need logic to infer and correct
 - [x] activities in an account view or contract view should be consolidated with tasks, because users complain of "disappearing" activity items upon creation when parent item is a task.
 - [ ] imported accounts all show Linnette as all 3 roles, she should be the attorney, should use the roles defined in Users to apply to the accounts when imported, need to apply a correction.
 - [ ] overall central width changes as you move through top menu, should be consistent
 - [ ] overall central width changes again in accounts/show when you navigate inner tabs. it would make sense that the central content stays same width as when you navigate top menu, leaving room for left or right asides as they appear.
 - [x] task item reschedule ends up on 1 day prior to the intended reschedule date
+- [ ] imported credit card payments were impored as type CHECK but Check Number is non-integer, need to change to type Credit Card
+- [ ] imported accounts seem to have null Opened date as shown in right aside on accounts/x/show
+- [ ] additional 26 accounts as of 3/14 need to be migrated, list on google drive https://docs.google.com/document/d/1fkyR1PusREl6xg6Zx6UZZx8yf868eGgvH3BOh8XrXDg/edit?tab=t.0
 ### LMC feedback
 /accounts/create
 - [x] remove or hide Date first consult
