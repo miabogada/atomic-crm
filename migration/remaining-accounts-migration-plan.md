@@ -119,3 +119,23 @@
 
 1. Update `CHANGELOG.md` with summary of what was imported and results
 2. Save completion status to muninndb
+
+---
+
+## Follow-up: 31 Unlinked Payments on Prod
+
+**Status:** Open — to be resolved in a subsequent session.
+
+**Root cause:** Phase 2 (`associate_payments.py`) was run on local, then the generated SQL was applied to prod. The SQL contains UPDATE statements keyed by payment ID. On prod, some payment IDs differ from local (different auto-increment sequences due to user activity), so those UPDATEs matched 0 rows. Result: 31 payments on prod have `contract_id = NULL`.
+
+**Resolution steps:**
+1. Sync prod → local (`scripts/db-sync-prod-to-local.sh`) to get current prod data
+2. Re-run `python3 migration/associate_payments.py` (dry run) — will pick up the 31
+3. Validate CSVs as per Phase 2 procedure
+4. Apply to local, then apply SQL to prod
+5. Re-run `python3 migration/link_payment_schedule.py` same way
+
+**Notable entries in the 31:**
+- Payment 2752 (22021401, $-350, method `LMC ERROR`, note "Put in wrong account") — correction entry, not a regular payment
+- Payment 2552 (19062701, $700, method `LMC CLOSE`, note "nonpayment by client") — account closure
+- Payment 2770 (21072301, $350, method `LMC CLOSE`, note "complete") — account closure

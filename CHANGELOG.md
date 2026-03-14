@@ -1,5 +1,32 @@
 # Changelog
 
+## 2026-03-14 — Migration: 25 remaining accounts imported
+
+### Bulk import (Phase 1)
+- **25 accounts** imported from Exchange/Access into Atomic CRM (total now 107).
+- Accounts: 25062601, 26022701, 220122801, 20090802, 19062701, 22030701, 25121901, 21082401, 26022601, 22100401, 06090901, 16082701, 09040101, 06122701, 07042104, 23022801, 21030801, 21031701, 22021401, 26021701, 21072301, 20062301, 20072201, 22012601, 20072401.
+- Data imported: 25 accounts, 25 contacts, 39 contracts, 350 payments, 1,203 tasks, 4,923 activities.
+- **Note:** Original list had `22012801` (typo) — corrected to `220122801` (Heather Godfrey & Bruno Viana). Required fresh copy of `billing_be.mdb` from Access server (previous copy was from Feb 16, missing 4 newer accounts).
+
+### Payment → contract association (Phase 2)
+- **311 new payments** linked to contracts using the capacity-aware algorithm.
+- Rules applied: single-contract (131), date-range (173), date-range-overflow (7). Zero unresolved.
+- **2 new overpaid contracts**: 16082701A2 ($5,000 over — likely missing contract, needs manual review), 21082401AB1 ($300 over — minor irregularity).
+
+### Payment schedule linking (Phase 3)
+- **470 new schedule rows** linked (total 1,790 across all accounts; 1,695 on prod after deducting previously-linked rows that were UPDATE 0).
+- 649 schedule rows remain unlinked (future installments).
+
+### Production deployment
+- **Backup:** `migration/backups/prod_data_2026-03-14.sql` (19,963 lines)
+- All three SQL files applied to prod (`10.0.10.228:5433`).
+- Prod vs local row counts match within expected user-activity delta (+1 payment, +3 tasks, +1 activity on prod).
+
+### Documentation
+- `migration/remaining-accounts-migration-plan.md` — migration plan with validation steps
+
+---
+
 ## 2026-03-14 — Migration Phase 2: auto-associate payments to contracts + link payment schedule
 
 ### Payment → contract association (`migration/associate_payments.py`)
