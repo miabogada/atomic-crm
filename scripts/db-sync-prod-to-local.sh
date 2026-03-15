@@ -124,5 +124,9 @@ else
   echo "All user_id references are valid."
 fi
 
+SYNC_LOG="$BACKUP_DIR/sync.log"
+echo "$(date -u '+%Y-%m-%dT%H:%M:%SZ') prod→local sync completed (backup: $BACKUP_FILE)" >> "$SYNC_LOG"
+
 echo ""
 echo "Done. Local database is now a copy of production."
+echo "Logged to $SYNC_LOG"
