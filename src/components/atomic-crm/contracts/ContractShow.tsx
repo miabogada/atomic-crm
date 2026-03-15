@@ -10,6 +10,8 @@ import {
   useGetList,
   useGetIdentity,
   useUpdate,
+  useCreate,
+  useDelete,
   useNotify,
   useRefresh,
 } from "ra-core";
@@ -58,6 +60,7 @@ import type {
   AccountContract,
   AccountPayment,
   ContractPaymentSchedule,
+  PaymentAllocation,
   Sale,
   Task as TaskType,
 } from "../types";
@@ -65,16 +68,9 @@ import type {
 const fmt = (n: number) =>
   n.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
-const scheduleStatus = (row: ContractPaymentSchedule): 'paid' | 'late' | 'due' | 'upcoming' => {
-  if (row.payment_id != null) return 'paid';
-  const today = new Date().toISOString().split('T')[0];
-  if (row.due_date < today) return 'late';
-  if (row.due_date === today) return 'due';
-  return 'upcoming';
-};
-
 const scheduleStatusStyle: Record<string, string> = {
   paid:     'text-green-700 bg-green-50 border-green-200',
+  partial:  'text-amber-700 bg-amber-50 border-amber-200',
   late:     'text-red-700 bg-red-50 border-red-200',
   due:      'text-amber-700 bg-amber-50 border-amber-200',
   upcoming: 'text-muted-foreground bg-muted/40 border-border',
@@ -97,7 +93,7 @@ const ContractShowContent = () => {
     {
       filter: { contract_id: record?.id },
       pagination: { page: 1, perPage: 1000 },
-      sort: { field: "id", order: "ASC" },
+      sort: { field: "date_received", order: "ASC" },
     },
     { enabled: !!record?.id },
   );
@@ -105,9 +101,10 @@ const ContractShowContent = () => {
   if (isPending || !record) return null;
 
   const fee = Number(record.fee ?? 0);
-  const totalReceived = payments?.reduce((sum, p) => sum + Number(p.amount), 0) ?? 0;
-  const balance = fee - totalReceived;
-  const paymentCount = payments?.length ?? 0;
+  const totalReceived = payments?.reduce((sum, p) => sum + (p.type === 'payment' ? Number(p.amount) : 0), 0) ?? 0;
+  const totalAdjustments = payments?.reduce((sum, p) => sum + (p.type === 'write_off' || p.type === 'discount' ? Number(p.amount) : 0), 0) ?? 0;
+  const balance = fee - totalReceived - totalAdjustments;
+  const paymentCount = payments?.filter(p => p.type === 'payment')?.length ?? 0;
 
   return (
     <div className="mt-2 mb-2 flex gap-8 pb-20 md:pb-0">
@@ -203,48 +200,74 @@ const ScheduleTable = ({
   accountId: any;
   contractId: any;
 }) => {
-  const [update] = useUpdate();
+  const [create] = useCreate();
+  const [deleteOne] = useDelete();
   const refresh = useRefresh();
   const notify = useNotify();
   const { identity } = useGetIdentity();
   const [pendingLinkRow, setPendingLinkRow] = useState<ContractPaymentSchedule | null>(null);
 
-  const paymentById = new Map((payments ?? []).map((p) => [Number(p.id), p]));
-  const linkedPaymentIds = new Set(
-    schedule.filter((r) => r.payment_id != null).map((r) => Number(r.payment_id)),
+  // Fetch allocations for all schedule rows in this contract
+  const scheduleIds = schedule.map((r) => Number(r.id));
+  const { data: allocations } = useGetList<PaymentAllocation>(
+    "payment_allocations",
+    {
+      filter: { "schedule_id@in": `(${scheduleIds.join(",")})` },
+      pagination: { page: 1, perPage: 500 },
+      sort: { field: "created_at", order: "ASC" },
+    },
+    { enabled: scheduleIds.length > 0 },
   );
-  const availablePayments = (payments ?? []).filter(
-    (p) => !linkedPaymentIds.has(Number(p.id)) && p.type === "payment",
-  );
-  const hasPaid = schedule.some((r) => r.payment_id != null);
 
-  const handleLink = (scheduleRowId: number, paymentId: string) => {
-    const scheduleRow = schedule.find((r) => Number(r.id) === scheduleRowId)!;
-    update(
-      "contract_payment_schedule",
+  const paymentById = new Map((payments ?? []).map((p) => [Number(p.id), p]));
+
+  // Build map: scheduleId → allocations[]
+  const allocsBySchedule = new Map<number, PaymentAllocation[]>();
+  for (const a of allocations ?? []) {
+    const sid = Number(a.schedule_id);
+    const list = allocsBySchedule.get(sid) ?? [];
+    list.push(a);
+    allocsBySchedule.set(sid, list);
+  }
+
+  // Track total allocated per payment to compute available amount
+  const allocatedByPayment = new Map<number, number>();
+  for (const a of allocations ?? []) {
+    const pid = Number(a.payment_id);
+    allocatedByPayment.set(pid, (allocatedByPayment.get(pid) ?? 0) + Number(a.amount_applied));
+  }
+
+  const availablePayments = (payments ?? []).filter((p) => {
+    if (p.type !== "payment" || Number(p.amount) <= 0) return false;
+    const used = allocatedByPayment.get(Number(p.id)) ?? 0;
+    return Number(p.amount) - used > 0.01;
+  });
+
+  const hasPaid = schedule.some((r) => (Number(r.amount_paid) || 0) > 0);
+
+  const handleAllocate = (scheduleRow: ContractPaymentSchedule, paymentId: string) => {
+    const pmt = paymentById.get(Number(paymentId));
+    if (!pmt) return;
+    const pmtAvailable = Number(pmt.amount) - (allocatedByPayment.get(Number(pmt.id)) ?? 0);
+    const schedRemaining = Number(scheduleRow.balance_remaining) || Number(scheduleRow.amount);
+    const amount = Math.min(pmtAvailable, schedRemaining);
+    create(
+      "payment_allocations",
+      { data: { payment_id: Number(paymentId), schedule_id: Number(scheduleRow.id), amount_applied: amount } },
       {
-        id: scheduleRowId,
-        data: { payment_id: Number(paymentId) },
-        previousData: scheduleRow,
-      },
-      {
-        onSuccess: () => { notify("Payment linked", { type: "success" }); refresh(); },
-        onError: () => notify("Failed to link payment", { type: "error" }),
+        onSuccess: () => { notify("Payment allocated", { type: "success" }); refresh(); },
+        onError: () => notify("Failed to allocate payment", { type: "error" }),
       },
     );
   };
 
-  const handleUnlink = (scheduleRow: ContractPaymentSchedule) => {
-    update(
-      "contract_payment_schedule",
+  const handleDeallocate = (allocationId: number) => {
+    deleteOne(
+      "payment_allocations",
+      { id: allocationId },
       {
-        id: Number(scheduleRow.id),
-        data: { payment_id: null },
-        previousData: scheduleRow,
-      },
-      {
-        onSuccess: () => { notify("Payment unlinked", { type: "success" }); refresh(); },
-        onError: () => notify("Failed to unlink payment", { type: "error" }),
+        onSuccess: () => { notify("Payment deallocated", { type: "success" }); refresh(); },
+        onError: () => notify("Failed to deallocate", { type: "error" }),
       },
     );
   };
@@ -252,26 +275,29 @@ const ScheduleTable = ({
   const handleCreateSuccess = (newPayment: AccountPayment) => {
     if (!pendingLinkRow) return;
     const row = pendingLinkRow;
-    update(
-      "contract_payment_schedule",
-      {
-        id: Number(row.id),
-        data: { payment_id: Number(newPayment.id) },
-        previousData: row,
-      },
-      {
-        onSuccess: () => {
-          notify("Payment created and linked", { type: "success" });
-          setPendingLinkRow(null);
-          refresh();
+    const schedRemaining = Number(row.balance_remaining) || Number(row.amount);
+    const amount = Math.min(Math.abs(Number(newPayment.amount)), schedRemaining);
+    if (amount > 0) {
+      create(
+        "payment_allocations",
+        { data: { payment_id: Number(newPayment.id), schedule_id: Number(row.id), amount_applied: amount } },
+        {
+          onSuccess: () => {
+            notify("Payment created and allocated", { type: "success" });
+            setPendingLinkRow(null);
+            refresh();
+          },
+          onError: () => {
+            notify("Payment created but could not auto-allocate", { type: "warning" });
+            setPendingLinkRow(null);
+            refresh();
+          },
         },
-        onError: () => {
-          notify("Payment created but could not auto-link", { type: "warning" });
-          setPendingLinkRow(null);
-          refresh();
-        },
-      },
-    );
+      );
+    } else {
+      setPendingLinkRow(null);
+      refresh();
+    }
   };
 
   return (
@@ -284,81 +310,141 @@ const ScheduleTable = ({
               <th className="text-left py-1 pr-3 font-medium">Due Date</th>
               <th className="text-right py-1 pr-3 font-medium">Amount</th>
               <th className="text-left py-1 pr-3 font-medium">Status</th>
-              {hasPaid && <th className="text-left py-1 pr-3 font-medium">Paid Date</th>}
+              {hasPaid && <th className="text-right py-1 pr-3 font-medium">Paid</th>}
+              {hasPaid && <th className="text-left py-1 pr-3 font-medium">Date</th>}
               {hasPaid && <th className="text-left py-1 pr-3 font-medium">Method</th>}
               {hasPaid && <th className="text-left py-1 font-medium">Ref #</th>}
             </tr>
           </thead>
           <tbody className="divide-y">
             {schedule.map((row) => {
-              const st = scheduleStatus(row);
-              const pmt = row.payment_id != null
-                ? paymentById.get(Number(row.payment_id))
-                : undefined;
+              const st = row.status ?? 'upcoming';
+              const rowAllocs = allocsBySchedule.get(Number(row.id)) ?? [];
+              const amountPaid = Number(row.amount_paid) || 0;
+              const isFullyPaid = st === 'paid';
+              const isPartial = st === 'partial';
+              const showAllocateDropdown = !isFullyPaid;
+
               return (
-                <tr key={row.id} className="hover:bg-muted/30">
-                  <td className="py-1.5 pr-3 text-muted-foreground">
-                    {row.payment_number === 0 ? 'R' : row.payment_number}
-                  </td>
-                  <td className="py-1.5 pr-3">{row.due_date}</td>
-                  <td className="py-1.5 pr-3 text-right font-mono">
-                    ${fmt(Number(row.amount))}
-                  </td>
-                  <td className="py-1.5 pr-3">
-                    {row.payment_id == null ? (
-                      <Select onValueChange={(val) => {
-                        if (val === "__new__") {
-                          setPendingLinkRow(row);
-                        } else {
-                          handleLink(Number(row.id), val);
-                        }
-                      }}>
-                        <SelectTrigger className="h-6 text-xs w-36 border-dashed">
-                          <SelectValue placeholder="Link payment…" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availablePayments.map((p) => (
-                            <SelectItem key={p.id} value={String(p.id)}>
-                              {p.date_received} · ${fmt(Number(p.amount))} · {p.payment_method}
-                              {p.reference_number ? ` · #${p.reference_number}` : ''}
-                            </SelectItem>
-                          ))}
-                          <SelectItem value="__new__" className="text-primary font-medium">
-                            + Create new payment…
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    ) : (
+                <>
+                  <tr key={row.id} className="hover:bg-muted/30">
+                    <td className="py-1.5 pr-3 text-muted-foreground">
+                      {row.payment_number === 0 ? 'R' : row.payment_number}
+                    </td>
+                    <td className="py-1.5 pr-3">{row.due_date}</td>
+                    <td className="py-1.5 pr-3 text-right font-mono">
+                      ${fmt(Number(row.amount))}
+                    </td>
+                    <td className="py-1.5 pr-3">
                       <span className="inline-flex items-center gap-1.5">
                         <span className={`inline-block text-xs px-1.5 py-0.5 rounded border ${scheduleStatusStyle[st]}`}>
-                          Paid
+                          {st === 'paid' ? 'Paid'
+                            : st === 'partial' ? `$${fmt(amountPaid)} / $${fmt(Number(row.amount))}`
+                            : st === 'late' ? 'Late'
+                            : st === 'due' ? 'Due'
+                            : 'Upcoming'}
                         </span>
-                        <button
-                          onClick={() => handleUnlink(row)}
-                          className="text-xs text-muted-foreground hover:text-destructive"
-                          title="Unlink payment"
-                        >
-                          ×
-                        </button>
+                        {showAllocateDropdown && (
+                          <Select onValueChange={(val) => {
+                            if (val === "__new__") {
+                              setPendingLinkRow(row);
+                            } else {
+                              handleAllocate(row, val);
+                            }
+                          }}>
+                            <SelectTrigger className="h-6 text-xs w-32 border-dashed">
+                              <SelectValue placeholder="Allocate…" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {availablePayments.map((p) => {
+                                const avail = Number(p.amount) - (allocatedByPayment.get(Number(p.id)) ?? 0);
+                                return (
+                                  <SelectItem key={p.id} value={String(p.id)}>
+                                    {p.date_received} · ${fmt(avail)} avail · {p.payment_method}
+                                    {p.reference_number ? ` · #${p.reference_number}` : ''}
+                                  </SelectItem>
+                                );
+                              })}
+                              <SelectItem value="__new__" className="text-primary font-medium">
+                                + Create new payment…
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
                       </span>
+                    </td>
+                    {hasPaid && rowAllocs.length <= 1 && (
+                      <>
+                        <td className="py-1.5 pr-3 text-right font-mono text-muted-foreground">
+                          {rowAllocs.length === 1 ? `$${fmt(Number(rowAllocs[0].amount_applied))}` : '—'}
+                        </td>
+                        <td className="py-1.5 pr-3 text-muted-foreground">
+                          {rowAllocs.length === 1 ? paymentById.get(Number(rowAllocs[0].payment_id))?.date_received ?? '—' : '—'}
+                        </td>
+                        <td className="py-1.5 pr-3 text-muted-foreground">
+                          {rowAllocs.length === 1 ? paymentById.get(Number(rowAllocs[0].payment_id))?.payment_method ?? '—' : '—'}
+                        </td>
+                        <td className="py-1.5 text-muted-foreground">
+                          <span className="inline-flex items-center gap-1.5">
+                            {rowAllocs.length === 1 ? paymentById.get(Number(rowAllocs[0].payment_id))?.reference_number ?? '—' : '—'}
+                            {rowAllocs.length === 1 && (
+                              <button
+                                onClick={() => handleDeallocate(Number(rowAllocs[0].id))}
+                                className="text-xs text-muted-foreground hover:text-destructive"
+                                title="Deallocate payment"
+                              >
+                                ×
+                              </button>
+                            )}
+                          </span>
+                        </td>
+                      </>
                     )}
-                  </td>
-                  {hasPaid && (
-                    <td className="py-1.5 pr-3 text-muted-foreground">
-                      {pmt?.date_received ?? '—'}
-                    </td>
-                  )}
-                  {hasPaid && (
-                    <td className="py-1.5 pr-3 text-muted-foreground">
-                      {pmt?.payment_method ?? '—'}
-                    </td>
-                  )}
-                  {hasPaid && (
-                    <td className="py-1.5 text-muted-foreground">
-                      {pmt?.reference_number ?? '—'}
-                    </td>
-                  )}
-                </tr>
+                    {hasPaid && rowAllocs.length > 1 && (
+                      <>
+                        <td className="py-1.5 pr-3 text-right font-mono text-muted-foreground">
+                          ${fmt(amountPaid)}
+                        </td>
+                        <td colSpan={3} className="py-1.5 text-xs text-muted-foreground">
+                          {rowAllocs.length} payments
+                        </td>
+                      </>
+                    )}
+                  </tr>
+                  {/* Allocation sub-rows for multi-allocation schedule rows */}
+                  {hasPaid && rowAllocs.length > 1 && rowAllocs.map((alloc) => {
+                    const pmt = paymentById.get(Number(alloc.payment_id));
+                    return (
+                      <tr key={`alloc-${alloc.id}`} className="bg-muted/10">
+                        <td className="py-1 pr-3" />
+                        <td className="py-1 pr-3" />
+                        <td className="py-1 pr-3" />
+                        <td className="py-1 pr-3" />
+                        <td className="py-1 pr-3 text-right font-mono text-xs text-muted-foreground">
+                          ${fmt(Number(alloc.amount_applied))}
+                        </td>
+                        <td className="py-1 pr-3 text-xs text-muted-foreground">
+                          {pmt?.date_received ?? '—'}
+                        </td>
+                        <td className="py-1 pr-3 text-xs text-muted-foreground">
+                          {pmt?.payment_method ?? '—'}
+                        </td>
+                        <td className="py-1 text-xs text-muted-foreground">
+                          <span className="inline-flex items-center gap-1.5">
+                            {pmt?.reference_number ?? '—'}
+                            <button
+                              onClick={() => handleDeallocate(Number(alloc.id))}
+                              className="text-xs text-muted-foreground hover:text-destructive"
+                              title="Deallocate payment"
+                            >
+                              ×
+                            </button>
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </>
               );
             })}
           </tbody>
@@ -372,7 +458,7 @@ const ScheduleTable = ({
             account_id: accountId,
             contract_id: contractId ?? null,
             user_id: identity.id,
-            amount: pendingLinkRow.amount,
+            amount: Number(pendingLinkRow.balance_remaining) || Number(pendingLinkRow.amount),
             date_received: pendingLinkRow.due_date,
           }}
           transform={(data: any) => {
@@ -403,7 +489,7 @@ const ScheduleTable = ({
                     {pendingLinkRow.payment_number === 0
                       ? "Retainer"
                       : `Payment ${pendingLinkRow.payment_number}`}
-                    {" "}(${fmt(Number(pendingLinkRow.amount))} due {pendingLinkRow.due_date})
+                    {" "}(${fmt(Number(pendingLinkRow.balance_remaining) || Number(pendingLinkRow.amount))} due {pendingLinkRow.due_date})
                   </DialogTitle>
                 </DialogHeader>
                 <AccountPaymentInputs />
@@ -445,6 +531,23 @@ const ContractLinkedItems = ({
     },
     { enabled: !!record.id },
   );
+
+  // Fetch allocations for this contract's schedule to show per-payment allocation status
+  const scheduleIds = (schedule ?? []).map((r) => Number(r.id));
+  const { data: contractAllocations } = useGetList<PaymentAllocation>(
+    "payment_allocations",
+    {
+      filter: { "schedule_id@in": `(${scheduleIds.join(",")})` },
+      pagination: { page: 1, perPage: 500 },
+      sort: { field: "id", order: "ASC" },
+    },
+    { enabled: scheduleIds.length > 0 },
+  );
+  const allocatedByPayment = new Map<number, number>();
+  for (const a of contractAllocations ?? []) {
+    const pid = Number(a.payment_id);
+    allocatedByPayment.set(pid, (allocatedByPayment.get(pid) ?? 0) + Number(a.amount_applied));
+  }
 
   const { data: tasks } = useGetList<TaskType>("tasks", {
     filter: {
@@ -517,6 +620,7 @@ const ContractLinkedItems = ({
                         payment={payment}
                         isAdmin={isAdmin}
                         onEdit={setEditingPaymentId}
+                        totalAllocated={allocatedByPayment.get(Number(payment.id))}
                       />
                     ))}
                   </div>

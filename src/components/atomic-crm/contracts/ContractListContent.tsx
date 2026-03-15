@@ -64,9 +64,10 @@ const ContractPaymentSummary = ({
 
   if (!payments) return null;
 
-  const totalReceived = payments.reduce((sum, p) => sum + Number(p.amount), 0);
-  const balance = fee - totalReceived;
-  const paymentCount = payments.length;
+  const totalReceived = payments.reduce((sum, p) => sum + (p.type === 'payment' ? Number(p.amount) : 0), 0);
+  const totalAdjustments = payments.reduce((sum, p) => sum + (p.type === 'write_off' || p.type === 'discount' ? Number(p.amount) : 0), 0);
+  const balance = fee - totalReceived - totalAdjustments;
+  const paymentCount = payments.filter(p => p.type === 'payment').length;
 
   return (
     <div className="flex flex-wrap gap-x-4 mt-1 text-xs">
