@@ -282,7 +282,7 @@ def select_sample_accounts(clients, contracts, payments):
             continue
         if acct not in payments_by_acct:
             continue
-        date_opened = parse_date(client.get("DateOpen") or "")
+        date_opened = parse_date(client.get("DateOpened") or "")
         if date_opened is None:
             continue
         if not (cutoff_start <= date_opened <= cutoff_end):
@@ -608,27 +608,34 @@ def fetch_contact_type_id(name: str = "petitioner") -> Optional[int]:
 # SQL value helpers
 # ---------------------------------------------------------------------------
 
-def fetch_users_map() -> dict:
-    """Fetch all CRM users and build a name → id lookup dict.
+def fetch_users_map() -> tuple:
+    """Fetch all CRM users and build a name → id lookup dict and role → id dict.
 
-    Keys are lowercased full names ("linnette clark"), first names ("linnette"),
-    and last names ("clark") to handle various name formats in Exchange.
+    Returns (name_map, role_map) where:
+    - name_map keys are lowercased full names ("linnette clark"), first names
+      ("linnette"), and last names ("clark") to handle various name formats.
+    - role_map keys are role strings ("attorney", "law_clerk", "legal_assistant")
+      mapped to the first user id with that role.
     """
-    rows = _supabase_get("users", {"select": "id,first_name,last_name", "limit": "100"})
+    rows = _supabase_get("users", {"select": "id,first_name,last_name,role", "limit": "100"})
     name_map: dict = {}
+    role_map: dict = {}
     for u in rows:
         uid = u["id"]
         first = (u.get("first_name") or "").strip()
         last  = (u.get("last_name") or "").strip()
         full  = f"{first} {last}".strip()
+        role  = (u.get("role") or "").strip()
         if full:
             name_map[full.lower()] = uid
         if first:
             name_map[first.lower()] = uid
         if last:
             name_map[last.lower()] = uid
-        print(f"  User: {full} (id={uid})")
-    return name_map
+        if role and role not in role_map:
+            role_map[role] = uid
+        print(f"  User: {full} (id={uid}, role={role})")
+    return name_map, role_map
 
 
 def resolve_user_id(name: str, users_map: dict, fallback_uid: str) -> str:
@@ -712,7 +719,12 @@ def account_name_from_exchange(acct_num: str, exchange_items: list) -> Optional[
     return None
 
 
-def transform_accounts(clients_map: dict, exchange_by_acct: dict, uid: str) -> list:
+def transform_accounts(clients_map: dict, exchange_by_acct: dict, uid: str, role_map: dict = {}) -> list:
+    # Use role-based user IDs when available; fall back to admin uid
+    attorney_uid  = str(role_map["attorney"])  if "attorney"         in role_map else uid
+    clerk_uid     = str(role_map["law_clerk"]) if "law_clerk"        in role_map else uid
+    assistant_uid = str(role_map["legal_assistant"]) if "legal_assistant" in role_map else uid
+
     lines = []
     for acct_num, client in clients_map.items():
         # Prefer Exchange name (richer); fall back to tblClients fields
@@ -724,7 +736,11 @@ def transform_accounts(clients_map: dict, exchange_by_acct: dict, uid: str) -> l
 
         phone       = (client.get("Phone")          or "").strip() or None
         email       = (client.get("Email")          or "").strip() or None
-        date_opened = sql_date(client.get("DateOpen") or "")
+        date_opened = sql_date(client.get("DateOpened") or "")
+        # Derive date_opened from account number prefix (YYMMDD) when Access field is empty
+        if date_opened == "NULL" and len(acct_num) >= 6 and acct_num[:6].isdigit():
+            yy, mm, dd = int(acct_num[0:2]), int(acct_num[2:4]), int(acct_num[4:6])
+            date_opened = f"'{2000 + yy:04d}-{mm:02d}-{dd:02d}'"
         date_consult = sql_date(client.get("DateFirstConsult") or "")
         categories  = (client.get("Categories") or "In Process").strip() or "In Process"
         referred_by = (client.get("ReferredBy") or "").strip() or None
@@ -736,7 +752,7 @@ def transform_accounts(clients_map: dict, exchange_by_acct: dict, uid: str) -> l
             "date_opened, date_first_consult, categories, referred_by, archived, user_id) "
             "VALUES ("
             f"{sql_str(acct_num)}, {sql_str(name)}, {sql_str(phone)}, {sql_str(email)}, "
-            f"{uid}, {uid}, {uid}, "
+            f"{attorney_uid}, {clerk_uid}, {assistant_uid}, "
             f"{date_opened}, {date_consult}, "
             f"{sql_str(categories)}, {sql_str(referred_by)}, FALSE, {uid}"
             ") ON CONFLICT (account_number) DO NOTHING;"
@@ -915,6 +931,9 @@ def transform_payments(acct_num: str, payments: list, uid: str) -> list:
 
         method      = ((p.get("PaymentMethod") or "").strip().upper()) or "CHECK"
         check_num   = (p.get("CheckNumber") or "").strip() or None
+        # Non-numeric reference numbers are credit card transaction IDs, not check numbers
+        if method == "CHECK" and check_num and not check_num.isdigit():
+            method = "CREDIT CARD"
         # Contract column already contains the full number (e.g. "14011101A1")
         contract_number = str(p.get("Contract") or "").strip()
         if contract_number:
@@ -1123,6 +1142,7 @@ def generate_sql(
     admin_user_id: Optional[int],
     petitioner_type_id: Optional[int],
     users_map: Optional[dict] = None,
+    role_map: Optional[dict] = None,
 ) -> str:
     uid      = sql_uid(admin_user_id)
     type_id  = str(petitioner_type_id) if petitioner_type_id is not None else "NULL"
@@ -1146,7 +1166,7 @@ def generate_sql(
 
     # 1. accounts
     section("1. Accounts")
-    lines.extend(transform_accounts(clients_map, exchange_by_acct, uid))
+    lines.extend(transform_accounts(clients_map, exchange_by_acct, uid, role_map or {}))
 
     # 2. account_contacts
     section("2. Account Contacts")
@@ -1373,7 +1393,7 @@ def main():
     if admin_user_id is None:
         print("  Warning: user_id will be NULL — update manually after import if needed")
     print("  Building user name → id map...")
-    users_map = fetch_users_map()
+    users_map, role_map = fetch_users_map()
     print()
 
     # Step 5: Generate SQL
@@ -1388,6 +1408,7 @@ def main():
         admin_user_id,
         petitioner_type_id,
         users_map,
+        role_map,
     )
     sql_path = OUTPUT_DIR / "sample_import.sql"
     with open(sql_path, "w") as f:

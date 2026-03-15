@@ -7,7 +7,7 @@
 ## User workflow preferences
 
 - **Wait for full input before acting.** When the user says "let's rethink" or raises a design question, STOP and ask — do not implement anything until they've finished giving their input. Silence or a partial message is not a green light.
-- **Prod password workflow:** [feedback_prod_password.md](feedback_prod_password.md) — user pastes password in chat; don't try interactive scripts or suggest separate terminals.
+- **Prod password workflow — NEVER tell the user to run scripts themselves.** Ask user to paste the prod DB password in chat, then run the command yourself via Bash tool with the password piped in non-interactively. NEVER say "you'll need to run this yourself" or suggest a separate terminal. See [feedback_prod_password.md](feedback_prod_password.md).
 
 ## Operational discipline
 
@@ -52,7 +52,10 @@
 - See `migration/migration-workflow.md` for 3-phase import plan
 - See `migration/active-accounts-analysis.md` for balance calculation details
 
-## Current status (as of 2026-03-09)
+## Current status (as of 2026-03-15)
+
+### Recently completed
+- **Post-migration data corrections (Issues 4-6)**: account roles, credit card payments, date_opened — all applied to prod 2026-03-15 as ad-hoc SQL (not migrations). Before/after CSVs in `migration/output/fix{4,5,6}_*.csv`. `fetch_sample.py` also fixed to prevent recurrence.
 
 ### Recently completed
 - **Full 82-account import** from Exchange/Access — tasks (2,516), activities (12,051 incl. post items), contracts (139), payments (1,230), contacts (82)
@@ -71,9 +74,10 @@
 - **`--use-cache` flag** on `fetch_sample.py` — reuses cached Exchange/Access JSON, only re-fetches Supabase IDs
 - **USER-GUIDE.md** — end-user instructions for the CRM
 
+### Pending commits
+- See [project_pending_commits.md](project_pending_commits.md) — 5-commit plan for payment allocations + Bug 7 fixes, ready to commit and deploy to prod
+
 ### Next up
-- **Migration Phase 2**: create `migration/associate_payments.py` — auto-link payments to contracts (rules in `migration/migration-workflow.md`)
-- **Migration Phase 3**: create `migration/reconcile_exchange.py` — cross-check Exchange payment items vs Access
 - Full feature backlog is in `crm-feature-requests.md` (unchecked items)
 
 ## Migration gotchas — see migration/README.md for full details

@@ -6,13 +6,14 @@ date: 2026-02-18T01:06:00
 ### Post migration feedback
 - [x] task due dates incorrect, seem like created dates from outlook
 - [x] imported payments are mostly not connected to contracts, need logic to infer and correct
+	- [ ] bug: inccomplete association. e.g. http://localhost:5173/#/account_contracts/262/show
 - [x] activities in an account view or contract view should be consolidated with tasks, because users complain of "disappearing" activity items upon creation when parent item is a task.
-- [ ] imported accounts all show Linnette as all 3 roles, she should be the attorney, should use the roles defined in Users to apply to the accounts when imported, need to apply a correction.
+- [x] imported accounts all show Linnette as all 3 roles, she should be the attorney, should use the roles defined in Users to apply to the accounts when imported, need to apply a correction.
 - [ ] overall central width changes as you move through top menu, should be consistent
 - [ ] overall central width changes again in accounts/show when you navigate inner tabs. it would make sense that the central content stays same width as when you navigate top menu, leaving room for left or right asides as they appear.
 - [x] task item reschedule ends up on 1 day prior to the intended reschedule date
-- [ ] imported credit card payments were impored as type CHECK but Check Number is non-integer, need to change to type Credit Card
-- [ ] imported accounts seem to have null Opened date as shown in right aside on accounts/x/show
+- [x] imported credit card payments were impored as type CHECK but Check Number is non-integer, need to change to type Credit Card
+- [x] imported accounts seem to have null Opened date as shown in right aside on accounts/x/show
 - [x] additional 26 accounts as of 3/14 need to be migrated, list on google drive https://docs.google.com/document/d/1fkyR1PusREl6xg6Zx6UZZx8yf868eGgvH3BOh8XrXDg/edit?tab=t.0
 ### LMC feedback
 /accounts/create
@@ -105,6 +106,7 @@ account_contracts/1/show
 - [x] filter view by Contract Status = To do / In process / In progress - Past due / Stopped - Past due / In process - Paid / Done - Paid / Canceled
 	- [x] add status badge to contract items
 	- [x] add method to change contract status
+- [ ] the entire Account block in the right aside area should be clickable, not just the account number
 
 
 Add Task dialog in any view
@@ -147,6 +149,7 @@ Payments
 - [x] ability to apply a discount to the contract amount later after the fact that should come out of the balance
 - [x] ability to reverse a payment later or apply a partial reversal to a payment that should come out of the balance
 - [x] ability to mark unpaid balances as a write-off
+- [ ] ability to manually allocate a write-off/discount/payment to specific schedule rows (e.g. "Link to schedule" action on unallocated payment items in contract view)
 
 Users
 - [x] for some reason the path and headline are Sales instead of Users?

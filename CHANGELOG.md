@@ -1,5 +1,119 @@
 # Changelog
 
+## 2026-03-15 — Schema: Payment allocations (many-to-many)
+
+Replaced the 1:1 `payment_id` FK on `contract_payment_schedule` with a
+many-to-many `payment_allocations` junction table. This supports:
+- **Partial payments** — $300 on a $400 schedule row shows "partial" status
+- **Lump sums** — one payment allocated across multiple schedule rows
+- **Split payments** — multiple payments on one schedule row, shown as sub-rows
+
+**Migration:** `20260315175141_payment_allocations.sql`
+- Creates `payment_allocations` table (payment_id, schedule_id, amount_applied)
+- Migrates 1,694 existing `payment_id` links to allocation rows
+- View adds `amount_paid`, `balance_remaining`, `partial` status
+- Drops `payment_id` column from `contract_payment_schedule`
+
+**Frontend:**
+- `ScheduleTable` refactored: allocate/deallocate via junction table
+- Multi-allocation rows render indented sub-rows (date, method, ref#, amount)
+- Status badges: paid (green), partial (amber), late (red), due (amber), upcoming (gray)
+- Dashboard Receivables uses `balance_remaining` filter instead of `payment_id`
+
+**Linking script:** `migration/link_payment_schedule.py` rewritten to output
+`INSERT INTO payment_allocations` with exact `amount_applied`. Initial migration
+preserved old buggy 1:1 links; cleared and re-ran from scratch for correct
+chronological allocation (1,796 allocations, 9 partial rows).
+
+**UI polish (same day):**
+- Status badges (Late/red, Due/amber, Partial/amber) now visible alongside
+  Allocate dropdown — previously the dropdown replaced the badge
+- Payments section sorted chronologically by `date_received` (was `id`)
+- Fully-allocated payments show green checkmark in Payments list
+
+**Plan:** `migration/payment-allocation-many-to-many-plan.md`
+**Foundation for:** Apr 1 invoice generation milestone.
+
+### Bug 7 fixes (same day)
+
+**7a — Schedule total ≠ fee:** `generate_payment_schedule()` treated `final_payment`
+as a replacement for the last installment. It's actually an additional row after
+`num_payments` regular installments. Formula: `fee = retainer + num_payments ×
+monthly_payment + final_payment`. Fix is in the migration file. All schedule
+totals now match contract fees (0 gaps).
+
+**7b — Misassigned payments:** 11 payments reassigned to correct contracts:
+- 3 payments predating their assigned contract's start date
+- 8 cross-account misassignments (payment.account_id ≠ contract.account_id)
+
+**LMC CLOSE/REOPEN reclassification:** 8 accounting entries reclassified from
+`type='payment'` to `write_off` (7) or `discount` (1). These are balance
+adjustments, not real money received. 4 write-offs allocated to their
+corresponding schedule rows to zero out closed matters.
+
+**31 post-migration payments imported:** Payments entered in legacy Access CRM
+since March 1 but missing from Atomic CRM. Detected by comparing Access
+`tblPaymentsReceived` against `account_payments`. 2 skipped (accounts not in CRM:
+18100501, 24100102).
+
+### Balance formula fix (same day)
+
+Contract balance now accounts for write-offs and discounts:
+`balance = fee - payments - write_offs - discounts`
+
+Previously only subtracted payments, so contracts with write-offs showed a
+false outstanding balance (e.g. contract 169: $100 write-off not subtracted).
+
+Both `ContractShow.tsx` and `ContractListContent.tsx` updated. Payment count
+also filters to `type === 'payment'` only.
+
+**Rollback note:** The type filter (`type === 'payment'` for Received) and the
+write-off/discount subtraction are in the same lines of code in both files.
+Rolling back the balance formula commit also removes the type filter. If rolling
+back, the balance display will revert to summing all payment types (including
+write-offs) as "Received" — which inflates the number but at least won't show
+a false outstanding balance since the inflated amount also reduces the balance.
+
+### Sync script logging
+
+`scripts/db-sync-prod-to-local.sh` now appends a timestamped line to
+`migration/backups/sync.log` on each successful sync.
+
+### Link script full rebuild
+
+`migration/link_payment_schedule.py` changed to always do a full clear + rebuild
+of `payment_allocations` instead of incremental updates. The old approach left
+stale allocations when payments were reassigned to different contracts.
+
+**Status:** All fixes applied on dev. Prod deploy pending.
+
+---
+
+## 2026-03-15 — Fix: Post-migration data corrections (Issues 4–6)
+
+Three data quality fixes applied to all 107 accounts on prod:
+
+1. **Account roles** — All accounts had Linnette (id=2) as attorney, law clerk,
+   AND legal assistant. Updated to role-based defaults: attorney=2, law_clerk=4,
+   legal_assistant=3. (107 rows)
+2. **Credit card payments** — 990 payments reclassified from CHECK to CREDIT CARD
+   where `reference_number` is non-numeric (credit card transaction IDs, not check
+   numbers). Numeric-only refs (including leading zeros) correctly remain as CHECK.
+3. **Account opened date** — All accounts had NULL `date_opened`. Derived from
+   account number prefix (format `YYMMDDNN`). (107 rows)
+
+Also fixed `migration/fetch_sample.py` to prevent recurrence on future imports:
+- `transform_accounts()` uses role-based user lookup instead of single admin ID
+- Payment transform detects non-numeric refs → sets CREDIT CARD instead of CHECK
+- `date_opened` derived from account number prefix when Access field is empty
+- `DateOpen` → `DateOpened` typo fix for client records
+
+**Validation:** Before/after CSVs in `migration/output/fix{4,5,6}_*.csv`.
+**Backup:** `migration/backups/prod_data_2026-03-15.sql` (taken during prod→dev sync).
+**Plan:** `migration/post-migration-plan.md` Issues 4–6.
+
+---
+
 ## 2026-03-14 — Fix: 31 unlinked prod payments resolved
 
 - **Root cause:** Phase 2 SQL was generated from local dev (with local payment IDs). When applied to prod, 31 UPDATEs matched 0 rows because prod had different auto-increment IDs from user activity between sync and deploy.
