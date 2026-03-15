@@ -27,14 +27,14 @@ export const Receivables = () => {
 
   const { data: overdueRows, isPending: pendingOverdue } =
     useGetList<ContractPaymentSchedule>("contract_payment_schedule", {
-      filter: { "payment_id@is": null, "due_date@lt": today },
+      filter: { "balance_remaining@gt": 0, "due_date@lt": today },
       pagination: { page: 1, perPage: 100 },
       sort: { field: "due_date", order: "ASC" },
     });
 
   const { data: upcomingRows, isPending: pendingUpcoming } =
     useGetList<ContractPaymentSchedule>("contract_payment_schedule", {
-      filter: { "payment_id@is": null, "due_date@gte": today, "due_date@lte": in90 },
+      filter: { "balance_remaining@gt": 0, "due_date@gte": today, "due_date@lte": in90 },
       pagination: { page: 1, perPage: 100 },
       sort: { field: "due_date", order: "ASC" },
     });
@@ -44,9 +44,9 @@ export const Receivables = () => {
   const overdue = overdueRows ?? [];
   const upcoming = upcomingRows ?? [];
   const upcoming30 = upcoming.filter((r) => r.due_date <= in30);
-  const overdueTotal = overdue.reduce((s, r) => s + Number(r.amount), 0);
-  const upcoming30Total = upcoming30.reduce((s, r) => s + Number(r.amount), 0);
-  const upcoming90Total = upcoming.reduce((s, r) => s + Number(r.amount), 0);
+  const overdueTotal = overdue.reduce((s, r) => s + Number(r.balance_remaining ?? r.amount), 0);
+  const upcoming30Total = upcoming30.reduce((s, r) => s + Number(r.balance_remaining ?? r.amount), 0);
+  const upcoming90Total = upcoming.reduce((s, r) => s + Number(r.balance_remaining ?? r.amount), 0);
 
   return (
     <div className="flex flex-col gap-2">
@@ -91,7 +91,7 @@ export const Receivables = () => {
                         </span>
                       </div>
                       <span className="ml-3 text-sm font-medium text-red-500 shrink-0">
-                        ${fmt(Number(row.amount))}
+                        ${fmt(Number(row.balance_remaining ?? row.amount))}
                       </span>
                     </div>
                   ))}
@@ -135,7 +135,7 @@ export const Receivables = () => {
                         </span>
                       </div>
                       <span className="ml-3 text-sm font-medium shrink-0">
-                        ${fmt(Number(row.amount))}
+                        ${fmt(Number(row.balance_remaining ?? row.amount))}
                       </span>
                     </div>
                   ))}

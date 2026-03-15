@@ -1,4 +1,4 @@
-import { Pencil } from "lucide-react";
+import { Check, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { AccountPayment, PaymentType } from "../types";
@@ -8,6 +8,8 @@ type Props = {
   isAdmin?: boolean;
   onEdit?: (id: number) => void;
   contractLabel?: string;
+  /** Total amount allocated to schedule rows (undefined = don't show indicator) */
+  totalAllocated?: number;
 };
 
 const typeConfig: Record<PaymentType, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
@@ -17,15 +19,22 @@ const typeConfig: Record<PaymentType, { label: string; variant: "default" | "sec
   write_off: { label: "Write-off", variant: "outline" },
 };
 
-export const PaymentRow = ({ payment, isAdmin, onEdit, contractLabel }: Props) => {
+export const PaymentRow = ({ payment, isAdmin, onEdit, contractLabel, totalAllocated }: Props) => {
   const type = payment.type ?? "payment";
   const config = typeConfig[type];
   const isAdjustment = type !== "payment";
+  const pmtAmount = Math.abs(Number(payment.amount));
+  const isFullyAllocated = totalAllocated != null && totalAllocated >= pmtAmount - 0.01;
 
   return (
     <div className="flex items-center gap-4 py-2 px-2">
       <div className="flex-1 min-w-0">
         <div className="text-sm flex items-center gap-2">
+          {totalAllocated != null && !isAdjustment && (
+            isFullyAllocated
+              ? <Check className="w-4 h-4 text-green-600 shrink-0" />
+              : <span className="w-4 h-4 shrink-0" />
+          )}
           {isAdjustment && (
             <Badge variant={config.variant} className="text-xs px-1.5 py-0">
               {config.label}

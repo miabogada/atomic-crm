@@ -11,9 +11,11 @@ function addMonths(dateStr: string, months: number): string {
 /** Compute status at generation time for demo data. */
 function computeStatus(
   dueDate: string,
-  paymentId: number | null,
+  amountPaid: number,
+  amountDue: number,
 ): ContractPaymentSchedule["status"] {
-  if (paymentId != null) return "paid";
+  if (amountPaid >= amountDue) return "paid";
+  if (amountPaid > 0) return "partial";
   const today = new Date().toISOString().split("T")[0];
   if (dueDate < today) return "late";
   if (dueDate === today) return "due";
@@ -55,13 +57,14 @@ export const generateContractPaymentSchedule = (
         payment_number: 0,
         due_date: dateRetainer,
         amount: retainer,
-        payment_id: null,
+        amount_paid: 0,
+        balance_remaining: retainer,
         created_at: contract.created_at,
         contract_number: contract.contract_number,
         case_type: contract.case_type,
         account_name: account.name,
         account_number: account.account_number,
-        status: computeStatus(dateRetainer, null),
+        status: computeStatus(dateRetainer, 0, retainer),
       });
     }
 
@@ -77,13 +80,14 @@ export const generateContractPaymentSchedule = (
           payment_number: i,
           due_date: dueDate,
           amount,
-          payment_id: null,
+          amount_paid: 0,
+          balance_remaining: amount,
           created_at: contract.created_at,
           contract_number: contract.contract_number,
           case_type: contract.case_type,
           account_name: account.name,
           account_number: account.account_number,
-          status: computeStatus(dueDate, null),
+          status: computeStatus(dueDate, 0, amount),
         });
       }
     }

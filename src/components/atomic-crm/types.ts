@@ -359,14 +359,23 @@ export type ContractPaymentSchedule = {
   payment_number: number;   // 0 = retainer, 1..N = installments
   due_date: string;         // YYYY-MM-DD
   amount: number;
-  payment_id?: Identifier | null;
   created_at: string;
+  // Computed by view from payment_allocations
+  amount_paid?: number;
+  balance_remaining?: number;
   // Denormalized from view / FakeRest generator
   contract_number?: string;
   case_type?: string;
   account_name?: string;
   account_number?: string;
-  status?: 'upcoming' | 'due' | 'late' | 'paid';
+  status?: 'upcoming' | 'due' | 'late' | 'partial' | 'paid';
+} & Pick<RaRecord, "id">;
+
+export type PaymentAllocation = {
+  payment_id: Identifier;
+  schedule_id: Identifier;
+  amount_applied: number;
+  created_at: string;
 } & Pick<RaRecord, "id">;
 
 export type PaymentType = 'payment' | 'refund' | 'discount' | 'write_off';

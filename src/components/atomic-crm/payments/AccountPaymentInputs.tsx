@@ -112,7 +112,7 @@ const ScheduledPaymentPicker = ({
   const { data: rows } = useGetList<ContractPaymentSchedule>(
     "contract_payment_schedule",
     {
-      filter: { "contract_id@eq": contractId, "payment_id@is": null },
+      filter: { "contract_id@eq": contractId, "balance_remaining@gt": 0 },
       pagination: { page: 1, perPage: 100 },
       sort: { field: "payment_number", order: "ASC" },
     },

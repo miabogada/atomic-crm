@@ -5,6 +5,7 @@ import type {
   AccountContract,
   AccountPayment,
   ContractPaymentSchedule,
+  PaymentAllocation,
   Company,
   Contact,
   ContactNote,
@@ -32,4 +33,5 @@ export interface Db {
   account_payments: AccountPayment[];
   account_activities: AccountActivity[];
   contract_payment_schedule: ContractPaymentSchedule[];
+  payment_allocations: PaymentAllocation[];
 }

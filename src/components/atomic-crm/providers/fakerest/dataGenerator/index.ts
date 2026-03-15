@@ -33,6 +33,7 @@ export default (): Db => {
   db.account_payments = generateAccountPayments(db);
   db.account_activities = generateAccountActivities(db);
   db.contract_payment_schedule = generateContractPaymentSchedule(db);
+  db.payment_allocations = []; // populated when users allocate payments in demo
   db.tasks = generateTasks(db);
   finalize(db);
 
