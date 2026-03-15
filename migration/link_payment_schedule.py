@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-link_payment_schedule.py — Link account_payments to contract_payment_schedule rows.
+link_payment_schedule.py — Allocate account_payments to contract_payment_schedule rows.
 
-For each contract, walks payments chronologically and matches each to the
-earliest unmatched schedule row(s). A single payment can satisfy multiple
-schedule rows (lump sums), and schedule rows for future installments remain
-unlinked.
+For each contract, walks payments chronologically and allocates each to the
+earliest unmatched schedule row(s) via the payment_allocations junction table.
+A single payment can satisfy multiple schedule rows (lump sums), and a single
+schedule row can receive allocations from multiple payments (split payments).
 
 Usage:
   python3 migration/link_payment_schedule.py           # dry run: generate SQL
@@ -46,7 +46,7 @@ def _supabase_get_all(path: str, params: dict, page_size: int = 999) -> list:
 
 def fetch_schedule() -> list:
     return _supabase_get_all("contract_payment_schedule", {
-        "select": "id,contract_id,account_id,payment_number,due_date,amount,payment_id",
+        "select": "id,contract_id,account_id,payment_number,due_date,amount",
         "order": "contract_id,payment_number",
     })
 
@@ -57,6 +57,12 @@ def fetch_payments() -> list:
         "contract_id": "not.is.null",
         "type": "eq.payment",
         "order": "date_received",
+    })
+
+
+def fetch_existing_allocations() -> list:
+    return _supabase_get_all("payment_allocations", {
+        "select": "id,payment_id,schedule_id,amount_applied",
     })
 
 
@@ -74,19 +80,30 @@ def parse_date_str(d) -> Optional[date]:
         return None
 
 
-def link_schedule(schedule: list, payments: list) -> list:
-    """Match payments to schedule rows per contract.
+def allocate_payments(schedule: list, payments: list, existing: list) -> tuple:
+    """Match payments to schedule rows per contract using amount-based allocation.
 
     Strategy: for each contract, process payments chronologically.
-    Each payment consumes schedule rows in order until the payment
-    amount is fully allocated. This handles:
+    Each payment consumes schedule rows in order, tracking exact dollar amounts.
+    This handles:
     - Exact 1:1 matches (payment amount = schedule amount)
     - Lump sums (one payment covers multiple schedule rows)
-    - Partial payments (payment < schedule amount — still links, partially covers)
+    - Partial payments (payment < schedule amount — partially covers)
+    - Split payments (multiple payments on same schedule row)
     - Overpayments beyond schedule (extra payments with no schedule row)
 
-    Returns list of (schedule_id, payment_id) pairs.
+    Returns (allocations, stats) where allocations is a list of
+    (schedule_id, payment_id, amount_applied) triples.
     """
+
+    # Build set of already-allocated (payment_id, schedule_id) pairs
+    existing_pairs = set()
+    existing_by_schedule = defaultdict(float)  # schedule_id -> total already applied
+    existing_by_payment = defaultdict(float)   # payment_id -> total already applied
+    for e in existing:
+        existing_pairs.add((e["payment_id"], e["schedule_id"]))
+        existing_by_schedule[e["schedule_id"]] += float(e["amount_applied"] or 0)
+        existing_by_payment[e["payment_id"]] += float(e["amount_applied"] or 0)
 
     # Group by contract
     sched_by_contract = defaultdict(list)
@@ -97,8 +114,8 @@ def link_schedule(schedule: list, payments: list) -> list:
     for p in payments:
         payments_by_contract[p["contract_id"]].append(p)
 
-    links = []
-    stats = {"linked": 0, "no_schedule_row": 0, "negative_skipped": 0}
+    allocations = []
+    stats = {"allocated": 0, "no_schedule_row": 0, "negative_skipped": 0, "already_allocated": 0}
 
     for contract_id, contract_sched in sched_by_contract.items():
         # Sort schedule by payment_number
@@ -111,6 +128,13 @@ def link_schedule(schedule: list, payments: list) -> list:
         sched_idx = 0  # pointer into schedule rows
         sched_remaining = 0.0  # remaining amount on current schedule row
 
+        # Initialize sched_remaining accounting for existing allocations
+        if contract_sched:
+            s = contract_sched[0]
+            s_amount = float(s["amount"] or 0)
+            already = existing_by_schedule.get(s["id"], 0.0)
+            sched_remaining = max(0.0, s_amount - already)
+
         for p in contract_payments:
             p_amount = float(p["amount"] or 0)
 
@@ -119,21 +143,47 @@ def link_schedule(schedule: list, payments: list) -> list:
                 stats["negative_skipped"] += 1
                 continue
 
-            remaining = p_amount
+            # Subtract what's already allocated from this payment
+            already_used = existing_by_payment.get(p["id"], 0.0)
+            remaining = max(0.0, p_amount - already_used)
+
+            if remaining < 0.01:
+                stats["already_allocated"] += 1
+                continue
 
             while remaining > 0.01 and sched_idx < len(contract_sched):
                 s = contract_sched[sched_idx]
                 s_amount = float(s["amount"] or 0)
 
                 if sched_remaining <= 0.01:
-                    sched_remaining = s_amount
+                    already = existing_by_schedule.get(s["id"], 0.0)
+                    sched_remaining = max(0.0, s_amount - already)
 
-                # Link this payment to this schedule row
-                links.append((s["id"], p["id"]))
-                stats["linked"] += 1
+                if sched_remaining <= 0.01:
+                    sched_idx += 1
+                    continue
+
+                # Check if this pair already exists
+                if (p["id"], s["id"]) in existing_pairs:
+                    # Already allocated — advance
+                    if remaining >= sched_remaining - 0.01:
+                        remaining -= sched_remaining
+                        sched_remaining = 0.0
+                        sched_idx += 1
+                    else:
+                        sched_remaining -= remaining
+                        remaining = 0.0
+                    continue
+
+                # Calculate allocation amount
+                apply_amount = min(remaining, sched_remaining)
+                apply_amount = round(apply_amount, 2)
+
+                allocations.append((s["id"], p["id"], apply_amount))
+                stats["allocated"] += 1
 
                 if remaining >= sched_remaining - 0.01:
-                    # Payment covers this schedule row (fully or exactly)
+                    # Payment covers this schedule row
                     remaining -= sched_remaining
                     sched_remaining = 0.0
                     sched_idx += 1
@@ -145,35 +195,40 @@ def link_schedule(schedule: list, payments: list) -> list:
             if remaining > 0.01:
                 stats["no_schedule_row"] += 1
 
-    return links, stats
+    return allocations, stats
 
 
 # ---------------------------------------------------------------------------
 # Output
 # ---------------------------------------------------------------------------
 
-def generate_sql(links: list) -> str:
+def generate_sql(allocations: list) -> str:
     lines = [
-        "-- link_payment_schedule.py — link payments to schedule rows",
+        "-- link_payment_schedule.py — allocate payments to schedule rows",
         "",
         "BEGIN;",
         "",
+        "-- Clear stale allocations before re-inserting",
+        "DELETE FROM payment_allocations;",
+        "",
     ]
 
-    for sched_id, payment_id in links:
+    for sched_id, payment_id, amount in allocations:
         lines.append(
-            f"UPDATE contract_payment_schedule "
-            f"SET payment_id = {payment_id} "
-            f"WHERE id = {sched_id} AND payment_id IS NULL;"
+            f"INSERT INTO payment_allocations (payment_id, schedule_id, amount_applied) "
+            f"VALUES ({payment_id}, {sched_id}, {amount}) "
+            f"ON CONFLICT (payment_id, schedule_id) DO UPDATE SET amount_applied = EXCLUDED.amount_applied;"
         )
 
     lines.extend([
         "",
         "-- Verify",
         "SELECT",
-        "  count(*) FILTER (WHERE payment_id IS NOT NULL) AS linked,",
-        "  count(*) FILTER (WHERE payment_id IS NULL) AS unlinked",
-        "FROM contract_payment_schedule;",
+        "  count(*) AS total_allocations,",
+        "  sum(amount_applied) AS total_applied",
+        "FROM payment_allocations;",
+        "",
+        "SELECT status, count(*) FROM contract_payment_schedule_view GROUP BY status ORDER BY 1;",
         "",
         "COMMIT;",
         "",
@@ -189,14 +244,14 @@ def generate_sql(links: list) -> str:
 def main():
     import argparse
     parser = argparse.ArgumentParser(
-        description="Link payments to contract payment schedule rows"
+        description="Allocate payments to contract payment schedule rows"
     )
     parser.add_argument("--apply", action="store_true",
                         help="Apply SQL directly via docker psql")
     args = parser.parse_args()
 
     print("=" * 60)
-    print("Link Payment Schedule")
+    print("Allocate Payments to Schedule")
     print("=" * 60)
     print()
 
@@ -207,19 +262,19 @@ def main():
     print(f"  {len(payments)} payments with contract_id")
     print()
 
-    print("Matching payments to schedule rows...")
-    links, stats = link_schedule(schedule, payments)
-    print(f"  {stats['linked']} schedule rows linked")
+    print("Allocating payments to schedule rows (full rebuild)...")
+    allocations, stats = allocate_payments(schedule, payments, existing=[])
+    print(f"  {stats['allocated']} new allocations")
+    print(f"  {stats['already_allocated']} payments already fully allocated")
     print(f"  {stats['negative_skipped']} negative payments skipped")
     print(f"  {stats['no_schedule_row']} payments with no remaining schedule row")
-    print(f"  {len(schedule) - stats['linked']} schedule rows remain unlinked (future)")
     print()
 
-    sql = generate_sql(links)
+    sql = generate_sql(allocations)
     sql_path = OUTPUT_DIR / "link_payment_schedule.sql"
     with open(sql_path, "w") as f:
         f.write(sql)
-    print(f"Wrote {sql_path} ({len(links)} UPDATEs)")
+    print(f"Wrote {sql_path} ({len(allocations)} INSERTs)")
     print()
 
     if args.apply:
