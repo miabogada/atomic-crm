@@ -12,6 +12,7 @@
 ## Operational discipline
 
 - **Targeted operations only:** [feedback_targeted_operations.md](feedback_targeted_operations.md) — when fixing a known subset of records, scope to just those records; don't re-run bulk scripts against all data.
+- **Check existing scripts/skills first:** [feedback_check_scripts_first.md](feedback_check_scripts_first.md) — before any prod operation, check `scripts/` and `.claude/skills/` for existing tooling; don't improvise ad-hoc commands.
 
 ## Tool usage rules
 

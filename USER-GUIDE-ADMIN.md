@@ -58,9 +58,9 @@ The system automatically generates an account number (format: YYMMDD##).
 
 1. On the contract detail page, scroll down to the **Payment Schedule**.
 2. Find the **R** (retainer) row.
-3. Click **"Link payment..."** → **+ Create new payment...**.
+3. Click the **"Allocate..."** dropdown → **+ Create new payment...**.
 4. Fill in date, amount, payment method, and reference number.
-5. Click **Save**.
+5. Click **Save**. The payment is created and automatically allocated to the retainer row.
 
 ### Step 5 — Create Initial Tasks
 
@@ -162,20 +162,27 @@ On the account detail page, the right panel shows a **Filter by Contract** secti
 1. Open the account → **Contracts** tab → click the contract.
 2. Scroll to the **Payment Schedule** table.
 3. Find the row to record (R = retainer, then 1, 2, 3…).
-4. Click **"Link payment..."** and choose:
-   - An existing unlinked payment, or
+4. Click the **"Allocate..."** dropdown and choose:
+   - An existing payment with available (unallocated) funds, or
    - **+ Create new payment...** — fill in date, amount, method, reference number, notes.
-5. Click **Save**. The row updates to "Paid" with payment details.
+5. Click **Save**. The row updates to show the allocated amount and payment details.
 
-To unlink a payment, click the **×** next to the "Paid" badge.
+**How allocation works:**
+- A payment can be split across multiple schedule rows (e.g., a $1,500 lump sum covering three $500 installments).
+- A schedule row can receive multiple payments (e.g., two $150 payments covering a $300 installment).
+- Partially paid rows show an amber badge like **$200 / $400** instead of "Paid".
+- Fully paid rows show a green **Paid** badge.
+- If a row has multiple payments, they appear as indented sub-rows showing each payment's amount, date, method, and reference number.
+
+To remove an allocation, click the **×** next to the payment details on the schedule row (or sub-row).
 
 ### Alternative (via Account Payments Tab)
 
-Open the account → **Payments** tab → **Add Payment**. Payments added this way must be manually linked to a schedule row from the contract page.
+Open the account → **Payments** tab → **Add Payment**. Payments added this way must be manually allocated to schedule rows from the contract page.
 
 ### Payment Adjustments
 
-To record a refund, discount, or write-off, use **Add Payment** and select the appropriate **Type** (Refund, Discount, Write-off).
+To record a refund, discount, or write-off, use **Add Payment** and select the appropriate **Type** (Refund, Discount, Write-off). Write-offs and discounts reduce the account balance.
 
 ---
 

@@ -226,22 +226,30 @@ The best way to record a payment is through the contract's payment schedule:
 1. Go to the **Account** → **Contracts** tab → click on the contract.
 2. Scroll down to the **Payment Schedule** table. Click to expand if it's not visible.
 3. Find the payment row you want to record (the retainer is marked **R**, then payments are numbered 1, 2, 3, etc.).
-4. In the **Status** column, click the **"Link payment..."** dropdown for that row.
+4. In the **Status** column, click the **"Allocate..."** dropdown for that row.
 5. Choose one of:
-   - **An existing unlinked payment** — if the payment was already entered elsewhere, select it to link it to this schedule row.
+   - **An existing payment with available funds** — if the payment was already entered, select it to allocate it to this schedule row. The system automatically calculates how much to apply (the lesser of the payment's unallocated balance and the schedule row's remaining balance).
    - **+ Create new payment...** — to enter a new payment. Fill out:
      - **Date Received** — When the payment was received.
      - **Amount** — Payment amount (pre-filled from the schedule).
      - **Payment Method** — Check, Money Order, Cash, Credit Card, or Wire Transfer.
      - **Reference Number** — Check number, wire reference, etc.
      - **Notes** — Additional details (optional).
-6. Click **Save**. The payment is created and automatically linked to that schedule row. The row updates to show "Paid" with the payment date, method, and reference number.
+6. Click **Save**. The payment is created and automatically allocated to that schedule row.
 
-To unlink a payment from a schedule row, click the **×** next to the "Paid" badge.
+**Schedule row statuses:**
+- **Paid** (green) — fully covered by one or more payments
+- **$X / $Y** (amber) — partially paid (e.g., $200 of $400 received)
+- **Late** (red) — past due and not fully paid
+- **Due** / **Upcoming** — not yet due
+
+A single payment can be allocated across multiple schedule rows (e.g., a $1,500 lump sum covering three $500 installments), and a single schedule row can receive multiple payments. When a row has multiple payments, they appear as indented sub-rows.
+
+To remove an allocation, click the **×** next to the payment details on the schedule row (or sub-row).
 
 ### Recording a Payment (Alternative)
 
-You can also add payments directly from the account's **Payments** tab using the **Add Payment** button. Payments added this way will need to be manually linked to a payment schedule row from the contract detail page.
+You can also add payments directly from the account's **Payments** tab using the **Add Payment** button. Payments added this way will need to be manually allocated to schedule rows from the contract detail page.
 
 ---
 
@@ -255,14 +263,14 @@ You can also add payments directly from the account's **Payments** tab using the
 1. **Create the Account** — Accounts tab → Create → fill out billing contact info and account details → Save.
 2. **Add Additional Contacts** — Open the account → Contacts tab → + Add Contact for each additional person.
 3. **Create the Contract** — Open the account → Contracts tab → Add Contract → fill out case type, fee, payment terms → Save.
-4. **Record the Retainer** — On the contract detail page, find the **R** row in the payment schedule → Link payment → + Create new payment → fill out details → Save.
+4. **Record the Retainer** — On the contract detail page, find the **R** row in the payment schedule → Allocate → + Create new payment → fill out details → Save.
 5. **Create Initial Tasks** — From the contract detail page, click Add Task for each action item (tasks are automatically linked to the contract).
 
 ### Recording a Payment
 
 1. Go to the **Account** → **Contracts** tab → click the contract.
 2. Find the next unpaid row in the payment schedule.
-3. Click **"Link payment..."** → **+ Create new payment...** → fill out amount, date, method → Save.
+3. Click **"Allocate..."** → **+ Create new payment...** → fill out amount, date, method → Save.
 4. The financial summary updates automatically.
 
 ### Checking Account Balance

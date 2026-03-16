@@ -389,15 +389,10 @@ All schedule totals now match contract fees (0 gaps).
 - `link_payment_schedule.py` changed to full clear+rebuild (was incremental)
 - `db-sync-prod-to-local.sh` now logs sync timestamp to `migration/backups/sync.log`
 
-**Prod deployment plan:**
-1. Apply `20260315175141_payment_allocations.sql` migration (includes fixed
-   `generate_payment_schedule()`)
-2. Reclassify 8 LMC CLOSE/REOPEN entries (ad-hoc SQL)
-3. Reassign 11 misassigned payments (ad-hoc SQL)
-4. Import 31 missing post-migration payments (from `migration/output/import_missing_payments.sql`)
-5. Run `link_payment_schedule.py --apply` against prod
-6. Allocate 4 write-offs to schedule rows (ad-hoc SQL)
-7. Deploy frontend (balance formula + type filter)
+**Prod deployment:** Deployed to production 2026-03-15 via `scripts/db-sync-local-to-prod.sh`.
+All schema changes, data fixes, and frontend updates were applied locally first,
+then synced to prod using the standard sync script (which handles `npx supabase db push`,
+data sync with trigger management, and row count verification).
 
 **Rollback note:** The balance formula commit (ContractShow.tsx, ContractListContent.tsx)
 bundles two changes in the same lines: (a) filter Received to `type === 'payment'`
@@ -419,4 +414,4 @@ outstanding balances since write-offs also reduce the balance in that calculatio
 | 4 | Account roles fix | None | ✅ Done (2026-03-15) |
 | 5 | Credit card payments fix | None | ✅ Done (2026-03-15) |
 | 6 | Account opened date fix | None | ✅ Done (2026-03-15) |
-| 7 | Schedule total ≠ fee + misassigned payments | None | ✅ Fixed on dev (2026-03-15), prod deploy pending |
+| 7 | Schedule total ≠ fee + misassigned payments | None | ✅ Done (2026-03-15) |

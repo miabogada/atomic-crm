@@ -85,7 +85,7 @@ a false outstanding balance since the inflated amount also reduces the balance.
 of `payment_allocations` instead of incremental updates. The old approach left
 stale allocations when payments were reassigned to different contracts.
 
-**Status:** All fixes applied on dev. Prod deploy pending.
+**Status:** Deployed to production 2026-03-15 via `scripts/db-sync-local-to-prod.sh`.
 
 ---
 

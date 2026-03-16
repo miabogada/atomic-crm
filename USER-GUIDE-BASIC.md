@@ -145,8 +145,13 @@ At the bottom of every account page there is also an **All Activity** timeline s
 
 To see payments tied to a specific contract and how they map to the payment schedule:
 1. Open the account → **Contracts** tab → click the contract.
-2. Scroll down to the **Payment Schedule** table to see each installment and whether it has been paid.
+2. Scroll down to the **Payment Schedule** table to see each installment and its status:
+   - **Paid** (green) — fully covered
+   - **$X / $Y** (amber) — partially paid
+   - **Late** (red) — past due and unpaid
+   - **Due** / **Upcoming** — not yet due
    - You may need to click the Payment Schedule to expand it if nothing is shown.
+   - If a schedule row was covered by multiple payments, click to see the individual payment sub-rows.
 
 ---
 
