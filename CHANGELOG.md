@@ -1,5 +1,31 @@
 # Changelog
 
+## 2026-03-22 — Data fix: Import 7 missing February 2026 payments
+
+Users reported 7 payments from mid-February 2026 missing from the CRM. These
+were entered in the legacy system (Access/Exchange) after the last migration
+batch and never imported.
+
+**Payments imported:**
+
+| Account | Name | Date | Amount |
+|---------|------|------|--------|
+| 24091001 | MEDINA, EDGAR | 2026-02-16 | $350.00 |
+| 25090501 | MARTINEZ, CALIXTO | 2026-02-16 | $500.00 |
+| 25091101 | SERNA, JORGE | 2026-02-16 | $400.00 |
+| 07022201 | CRUZ, SANTOS | 2026-02-16 | $400.00 |
+| 15030101 | LOPEZ, EDGAR & ANA SORIANO | 2026-02-16 | $400.00 |
+| 14041501 | AVILA, ANA | 2026-02-18 | $150.00 |
+| 24031501 | OLIVERA, EDUARDA & FELIPE ZUNIGA | 2026-02-18 | $500.00 |
+
+All reclassified as CREDIT CARD (non-numeric reference numbers per existing
+import logic). Linked to active contracts, allocated to schedule rows.
+
+**SQL:** `migration/output/import_feb_payments.sql`
+**Plan:** `docs/plan-import-missing-feb-payments.md`
+**Comparison tool:** `migration/compare_payments.py` (cross-references Access DB,
+Exchange WebDAV, and CRM for a set of accounts)
+
 ## 2026-03-15 — Schema: Payment allocations (many-to-many)
 
 Replaced the 1:1 `payment_id` FK on `contract_payment_schedule` with a
