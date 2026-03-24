@@ -620,6 +620,22 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/invoices/types.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/invoices/fetchInvoiceData.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/invoices/InvoiceStyles.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/invoices/InvoiceDocument.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/filters/FilterCategory.tsx",
           "type": "registry:component"
         },

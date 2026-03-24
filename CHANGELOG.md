@@ -1,5 +1,55 @@
 # Changelog
 
+## 2026-03-24 — Data fix: Contract 25020401A1 schedule correction ($400→$300/mo)
+
+Contract 25020401A1 was originally created with $400/mo payments in the legacy
+Access/Exchange CRM. The correct amount is $300/mo. The $400 schedule caused
+confusing split allocations (e.g., a $300 payment split across two $400 rows).
+
+**Changes applied (dev + prod):**
+- Updated contract terms: monthly_payment $400→$300, num_payments 17→23, final_payment $200→$100
+- Deleted old 19-row schedule ($400/mo) and all split allocations
+- Regenerated 25-row schedule: retainer ($1,000) + 23×$300 + final ($100) = $8,000
+- Re-allocated 12 existing payments ($4,300 total) with clean 1:1 mappings
+
+**Result:** $4,300 paid (rows 0–11 fully paid), $3,700 remaining (rows 12–24)
+
+## 2026-03-24 — Data fix: Import 3 missing February 2026 payments
+
+Three additional payments from late February were entered in the legacy system
+after the previous sync and never imported.
+
+**Payments imported:**
+
+| Account | Name | Date | Amount | Contract |
+|---------|------|------|--------|----------|
+| 25071501 | Garcia, Jenny | 2026-02-18 | $400.00 | 25071501A1 |
+| 24100801 | Cortez Valle, Jovanna | 2026-02-24 | $300.00 | 24100801A1 |
+| 22021601 | De La Pena, Oscar Sanchez | 2026-02-23 | $400.00 | 22021601A3 |
+
+All classified as CREDIT CARD (non-numeric reference numbers). Each payment
+allocated to its corresponding schedule row.
+
+**SQL:** `migration/output/import_mar_missing_payments.sql`
+
+## 2026-03-24 — Feature: PDF invoice generation (Phase 1 — CLI batch)
+
+Batch PDF invoice generator using `@react-pdf/renderer`. Replicates the legacy
+invoice layout: tear-off payment stub, contract summary, interleaved account
+history (payments due + received), and account balance.
+
+**Usage:**
+```
+npx tsx scripts/generate-invoices.ts [--account <number>] [--output <dir>]
+```
+
+**Files:**
+- `src/components/atomic-crm/invoices/` — types, styles, InvoiceDocument component, fetchInvoiceData query
+- `scripts/generate-invoices.ts` — CLI batch script
+- `docs/plan-pdf-invoices.md` — design plan
+
+**Phase 2 (CRM UI button):** not yet implemented.
+
 ## 2026-03-22 — Data fix: Import 7 missing February 2026 payments
 
 Users reported 7 payments from mid-February 2026 missing from the CRM. These

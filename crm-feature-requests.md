@@ -15,7 +15,7 @@ date: 2026-02-18T01:06:00
 - [x] imported credit card payments were impored as type CHECK but Check Number is non-integer, need to change to type Credit Card
 - [x] imported accounts seem to have null Opened date as shown in right aside on accounts/x/show
 - [x] additional 26 accounts as of 3/14 need to be migrated, list on google drive https://docs.google.com/document/d/1fkyR1PusREl6xg6Zx6UZZx8yf868eGgvH3BOh8XrXDg/edit?tab=t.0
-- [x] some payments created on 2/26/26 missing from crm: 
+- [x] some payments created on 2/16 or 2/26/26 missing from crm: 
 1. Edgar Medina 24091001 $350
 2. Calixto Martinez 25090501 $500
 3. Jorge Serna 25091101 $400
@@ -23,6 +23,10 @@ date: 2026-02-18T01:06:00
 5. Edgar Lopez and Ana Soriano 15030101 $400
 6. Ana Avila 14041501
 7. Eduarda Olivera and Felipe Zuniga 2403501
+- [x] 3 more missing payments around 2/26
+- Jenny Garcia 25071501
+- Jovanna Cortez 24100801
+- Oscar Sanchez De La Pena 22021601A3- missing $400 payment for 02/26
 ### LMC feedback
 /accounts/create
 - [x] remove or hide Date first consult

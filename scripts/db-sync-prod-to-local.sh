@@ -101,11 +101,19 @@ ALTER TABLE auth.users ENABLE TRIGGER on_auth_user_created;
 
 echo "Step 7/7: Verifying..."
 COUNT_SQL="SELECT 'accounts' as tbl, count(*) FROM accounts UNION ALL SELECT 'account_contacts', count(*) FROM account_contacts UNION ALL SELECT 'account_contracts', count(*) FROM account_contracts UNION ALL SELECT 'account_payments', count(*) FROM account_payments UNION ALL SELECT 'account_activities', count(*) FROM account_activities UNION ALL SELECT 'tasks', count(*) FROM tasks UNION ALL SELECT 'users', count(*) FROM users ORDER BY tbl;"
+echo "--- Row counts ---"
 echo "--- Local ---"
 docker exec "$LOCAL_CONTAINER" psql -U postgres -d postgres -c "$COUNT_SQL"
 echo "--- Prod ---"
 docker run --rm -e PGPASSWORD="$PROD_PW" postgres:15 \
   psql -h "$PROD_HOST" -p "$PROD_PORT" -U "$PROD_USER" -d postgres -c "$COUNT_SQL"
+
+MAX_DATE_SQL="SELECT 'accounts' as tbl, max(created_at)::text as max_created FROM accounts UNION ALL SELECT 'account_activities', max(created_at)::text FROM account_activities UNION ALL SELECT 'account_contacts', max(created_at)::text FROM account_contacts UNION ALL SELECT 'account_contracts', max(created_at)::text FROM account_contracts UNION ALL SELECT 'account_payments', max(created_at)::text FROM account_payments UNION ALL SELECT 'payment_allocations', max(created_at)::text FROM payment_allocations ORDER BY 1;"
+echo "--- Max created_at (local) ---"
+docker exec "$LOCAL_CONTAINER" psql -U postgres -d postgres -c "$MAX_DATE_SQL"
+echo "--- Max created_at (prod) ---"
+docker run --rm -e PGPASSWORD="$PROD_PW" postgres:15 \
+  psql -h "$PROD_HOST" -p "$PROD_PORT" -U "$PROD_USER" -d postgres -c "$MAX_DATE_SQL"
 
 # Verify no orphaned user_id references
 echo "Checking for user ID mismatches..."
