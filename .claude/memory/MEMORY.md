@@ -53,6 +53,16 @@
 - See `migration/migration-workflow.md` for 3-phase import plan
 - See `migration/active-accounts-analysis.md` for balance calculation details
 
+## Infrastructure
+
+- **Dev environment**: Proxmox LXC `crm-dev` at `10.0.10.229` (cloned from container 301 `deb11docker`)
+  - Repo at `/home/f4rrest/Documents/clarklaw-domain/atomic-crm` (mirrors workstation path)
+  - GitHub access via SSH deploy key (ed25519, passphrase-protected)
+  - Migration status (2026-03-26): repo cloned, next step `make install` + env files
+  - Plan: `docs/dev-lxc-migration.md`
+- **Prod**: Proxmox LXC 703 (`crm`) at `10.0.10.228`
+- **Proxmox host**: `pve2` (AMD Ryzen 5 5600X, 47GB RAM)
+
 ## Current status (as of 2026-03-15)
 
 ### Recently completed

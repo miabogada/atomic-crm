@@ -3,7 +3,8 @@
 ## Overview
 
 - **Dev**: Workstation running Supabase CLI + Vite dev server
-- **Prod**: Proxmox LXC container 703 (`crm`) running Supabase self-hosted (Docker Compose) + Nginx serving built React app
+- **Prod backend**: Proxmox LXC container 703 (`crm`) running Supabase self-hosted (Docker Compose)
+- **Prod frontend**: Cloudflare Pages (static site, built from git)
 
 ## Infrastructure
 
@@ -44,15 +45,16 @@ PGSSLMODE=disable npx supabase db push --db-url "postgresql://postgres:[POSTGRES
 ```
 workstation (dev)
   │
-  ├─ git push ──────────────────────────────────────┐
-  ├─ npx supabase db push (schema only) ────────────┤
-  └─ migration scripts (Exchange import, upsert) ───┤
-                                                     ▼
-                                          container 703 (prod)
-                                          ← users write data here
-                                          ↓
-                                    periodic pg_dump snapshot
-                                    → workstation (for realistic dev testing)
+  ├─ git push ──────────────────────┬───────────────────────────┐
+  ├─ npx supabase db push ──────────┤                           │
+  └─ migration scripts (upsert) ────┤                           │
+                                     ▼                           ▼
+                          container 703 (prod backend)   Cloudflare Pages (prod frontend)
+                          Supabase API + DB               static React app
+                          ← users write data here         → talks to container 703 API
+                          ↓
+                    periodic pg_dump snapshot
+                    → workstation (for realistic dev testing)
 ```
 
 ## Database Connections
