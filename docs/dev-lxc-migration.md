@@ -120,8 +120,7 @@ sudo apt-get install -y sshfs
 #### 2. Stop local Supabase on the workstation (if running)
 
 ```bash
-cd ~/Documents/clarklaw-domain/atomic-crm
-npx supabase stop
+docker stop $(docker ps -q --filter "name=supabase")
 ```
 
 #### 3. Rename the local repo out of the way
