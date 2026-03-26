@@ -2,13 +2,21 @@
 
 ## Overview
 
-- **Dev**: Workstation running Supabase CLI + Vite dev server
+- **Dev (LXC)**: Proxmox LXC `crm-dev` (`10.0.10.229`) running Supabase CLI + Vite dev server
+- **Dev (workstation)**: Workstation running Supabase CLI + Vite dev server (original setup, still available)
 - **Prod backend**: Proxmox LXC container 703 (`crm`) running Supabase self-hosted (Docker Compose)
-- **Prod frontend**: Cloudflare Pages (static site, built from git)
+- **Prod frontend**: Cloudflare Pages (static site, built from git, triggered by pushes to `dev` branch)
 
 ## Infrastructure
 
 - Proxmox host `pve2` (AMD Ryzen 5 5600X, 47GB RAM)
+- LXC `crm-dev` (`10.0.10.229`): Debian 11, Docker, 4 cores, 8GB RAM, 30GB disk
+  - Cloned from container 301 (`deb11docker`) — Docker/nesting already configured
+  - Repo at `/home/f4rrest/Documents/clarklaw-domain/atomic-crm`
+  - GitHub access via SSH deploy key (ed25519)
+  - Vite dev server: `npx vite --host 0.0.0.0` to expose on LAN
+  - Access from workstation: `http://10.0.10.229:5173/` (app), `http://10.0.10.229:54323/` (Studio), `http://10.0.10.229:54324/` (Inbucket)
+  - Setup details: see `docs/dev-lxc-migration.md`
 - LXC container 703 (`crm`): Debian 11, Docker 29.x + Compose v5, 8GB RAM, 20GB disk
   - Cloned from container 301 (`deb11docker`) — Docker/nesting already configured
   - Supabase self-hosted stack at `/opt/supabase/docker`
@@ -20,6 +28,7 @@
 | Environment | Supabase credentials | Notes |
 |---|---|---|
 | Dev (workstation) | Supabase CLI defaults (well-known) | Any dev can `git clone` + `make install` + `supabase start` |
+| Dev (LXC `crm-dev`) | Supabase CLI defaults (well-known) | Same as workstation, runs on `10.0.10.229` |
 | Prod (container 703) | Real generated secrets | Stored in Bitwarden + Google Workspace |
 
 Exchange/migration credentials are stored separately in Bitwarden + Google Workspace. They are only needed when running migration scripts, not by the prod Supabase instance itself.
@@ -43,7 +52,7 @@ PGSSLMODE=disable npx supabase db push --db-url "postgresql://postgres:[POSTGRES
 ## Workflow
 
 ```
-workstation (dev)
+workstation or crm-dev LXC (dev)
   │
   ├─ git push ──────────────────────┬───────────────────────────┐
   ├─ npx supabase db push ──────────┤                           │

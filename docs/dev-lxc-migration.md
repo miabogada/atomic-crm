@@ -98,6 +98,80 @@ Update `docs/deployment.md` to reflect the new dev environment location.
 - Deployment workflow — `db push`, `git push` all work the same from the LXC
 - Exchange server access — already on `10.0.0.12`, reachable from the 10.x network
 
+## Phase 2: sshfs hybrid setup
+
+Steps 1–7 above provision the LXC. This phase switches to a hybrid model where Claude Code runs on the workstation but all files, runtime, and Docker live on the LXC.
+
+### Architecture
+
+- **LXC (`crm-dev`, 10.0.10.229)**: owns the repo (`.git`, `node_modules`, Docker/Supabase, Vite)
+- **Workstation**: mounts the LXC project dir via sshfs, runs Claude Code against the mount. No Node, Docker, or repo clone needed locally.
+- File edits on the workstation go directly to the LXC filesystem. Vite HMR picks up changes instantly.
+- Git commands run through the sshfs mount (slightly slower over LAN, but fine).
+
+### Steps
+
+#### 1. Install sshfs on the workstation
+
+```bash
+sudo apt-get install -y sshfs
+```
+
+#### 2. Stop local Supabase on the workstation (if running)
+
+```bash
+cd ~/Documents/clarklaw-domain/atomic-crm
+npx supabase stop
+```
+
+#### 3. Rename the local repo out of the way
+
+```bash
+mv ~/Documents/clarklaw-domain/atomic-crm ~/Documents/clarklaw-domain/atomic-crm.bak
+mkdir ~/Documents/clarklaw-domain/atomic-crm
+```
+
+#### 4. Mount the LXC project dir via sshfs
+
+```bash
+sshfs root@10.0.10.229:/home/f4rrest/Documents/clarklaw-domain/atomic-crm \
+  ~/Documents/clarklaw-domain/atomic-crm
+```
+
+Verify: `ls ~/Documents/clarklaw-domain/atomic-crm` should show the repo from the LXC.
+
+#### 5. Verify Claude Code and git work through the mount
+
+```bash
+cd ~/Documents/clarklaw-domain/atomic-crm
+git status
+git log --oneline -3
+```
+
+#### 6. Start Supabase + Vite on the LXC
+
+```bash
+ssh -i ~/.ssh/claude_code root@10.0.10.229
+cd /home/f4rrest/Documents/clarklaw-domain/atomic-crm
+make start
+npx vite --host 0.0.0.0
+```
+
+#### 7. Test from workstation browser
+
+- App: `http://10.0.10.229:5173/`
+- Supabase Studio: `http://10.0.10.229:54323/`
+
+#### 8. Make the sshfs mount persistent (optional, after verifying)
+
+Add to `/etc/fstab` or create a systemd mount unit so it survives reboots.
+
+#### 9. Clean up (after verifying everything works)
+
+- Delete `~/Documents/clarklaw-domain/atomic-crm.bak`
+- Remove Node.js, Docker, Python dev dependencies from workstation
+- Keep only sshfs, SSH client, and browser on workstation
+
 ## Verification
 
 1. `make start` succeeds, Supabase containers all healthy
