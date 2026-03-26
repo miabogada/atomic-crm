@@ -1,5 +1,24 @@
 # Changelog
 
+## 2026-03-26 — Infrastructure: Dev environment migrated to Proxmox LXC
+
+Dev environment moved from the workstation to a dedicated Proxmox LXC container
+(`crm-dev`, 10.0.10.229) using an sshfs hybrid setup. Claude Code and the editor
+run on the workstation; all files, runtime, Docker, and Supabase live on the LXC.
+
+**What changed:**
+- LXC provisioned (4 cores, 8GB RAM, 30GB disk) cloned from container 301
+- Repo, node_modules, and Supabase all run on the LXC
+- Workstation mounts the LXC project dir via sshfs — file edits go directly to LXC
+- Vite serves on `0.0.0.0` so the workstation browser can access the app
+- `.env.development` updated: `VITE_SUPABASE_URL` points to `10.0.10.229:54321`
+- Prod data synced to dev via `scripts/db-sync-prod-to-local.sh`
+
+**Why:** Isolates the workstation from supply chain attacks via npm/pip packages.
+All untrusted code execution happens inside the LXC.
+
+**Plan:** `docs/dev-lxc-migration.md`
+
 ## 2026-03-24 — Data fix: Contract 25020401A1 schedule correction ($400→$300/mo)
 
 Contract 25020401A1 was originally created with $400/mo payments in the legacy

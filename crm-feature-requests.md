@@ -27,6 +27,7 @@ date: 2026-02-18T01:06:00
 - Jenny Garcia 25071501
 - Jovanna Cortez 24100801
 - Oscar Sanchez De La Pena 22021601A3- missing $400 payment for 02/26
+- [x] Jose Magana Navarro- 25033101- 02/26 payment missing
 ### LMC feedback
 /accounts/create
 - [x] remove or hide Date first consult
