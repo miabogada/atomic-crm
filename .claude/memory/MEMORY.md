@@ -38,9 +38,10 @@
 
 ## Database connections
 
-- **psql is not installed on the host.** Always run queries via Docker: `docker exec supabase-db psql -U postgres -c "..."`
-- **Local dev Postgres**: `postgresql://postgres:postgres@127.0.0.1:54322/postgres`
-- **Prod Postgres (direct)**: `postgresql://postgres:[POSTGRES_PASSWORD]@10.0.10.228:5433/postgres` (PGSSLMODE=disable required)
+- **psql is not installed on the host.** Always use dockerized psql for ALL database queries (local and prod).
+- **Querying prod**: Use `prod-query` skill (`.claude/skills/prod-query/`). `docker run --rm -e PGPASSWORD=<pw> postgres:15 psql -h 10.0.10.228 -p 5433 -U supabase_admin -d postgres -c "SQL"`. See [feedback_prod_query_workflow.md](feedback_prod_query_workflow.md).
+- **Full schema reference**: `docs/database-schema.md` — all tables, columns, types, views. Key gotcha: contracts table is `account_contracts` (NOT `contracts`).
+- **Local dev Postgres**: `postgresql://postgres:postgres@127.0.0.1:54322/postgres`. Local container: `docker exec supabase_db_atomic-crm-demo psql -U postgres -c "SQL"`.
 - **Prod Supabase Studio**: `http://10.0.10.228:8000` (local network only)
 - Port 5433 requires `docker-compose.override.yml` at `/opt/supabase/docker/` exposing db:5432 → host:5433
 - Dump local data: `npx supabase db dump --local --data-only -f out.sql`
