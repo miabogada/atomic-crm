@@ -1,5 +1,34 @@
 # Changelog
 
+## 2026-03-29 — Data: Import 34 additional accounts from Exchange/Access
+
+Imported 34 accounts requested by users that were not included in the original
+82-account bulk migration. Original list had 38 entries; after deduplication
+(Arcida Menjivar, Rosa Robles listed twice) and removing 2 already in the CRM
+(Maria De La Paz Rosa 22121601, Katherine Molina Rivera 22021401), 34 unique
+accounts were imported.
+
+**Import summary:**
+- 34 accounts, 34 contacts, 59 contracts, 455 payments, 5217 activities, 1124 tasks, 523 schedule rows
+- 396 payments linked to contracts via `associate_payments.py`
+- 2374 payment-to-schedule allocations via `link_payment_schedule.py`
+
+**Manual corrections (5 overpaid contracts resolved):**
+- 18110101 (Gomez, Marco): Contract A5 monthly_payment fixed $240→$250 (typo in Exchange); $100 payment moved from A5 to A6
+- 21072401 (Benitez, Julio): $350 LMC discount moved from A3 to A2; $250 payment moved from A2 to A3
+- 21100101 (Villalba Bautista): Contract AB2 date_opened fixed to 2023-07-14; payments reassigned between AB1 and AB2 based on contract dates
+- 23042101 (Hernandez, Jessica): $2,200 LMC CLOSE payment reclassified as write_off (ref: "lack of cooperation on I131")
+- 24121901 (Parada, Daniel): $750 payment moved from A2 to A1; three $150 payments moved from A1 to A2
+
+**Other fixes:**
+- 25092801 (Cruz, Salomon): Billing contact phone added manually — `(626) 341-4894`
+
+**Flagged for review:**
+- 25101401 (Sanchez, Estela): 0 contracts, 0 payments in Access/Exchange. Flagged for attorney review.
+
+**Corrections SQL:** `migration/output/overpayment_corrections_2026-03-28.sql`
+**Plan:** `docs/plan-migrate-38-accounts.md`
+
 ## 2026-03-26 — Infrastructure: Dev environment migrated to Proxmox LXC
 
 Dev environment moved from the workstation to a dedicated Proxmox LXC container

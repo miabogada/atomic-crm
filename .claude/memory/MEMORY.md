@@ -13,6 +13,8 @@
 
 - **Targeted operations only:** [feedback_targeted_operations.md](feedback_targeted_operations.md) — when fixing a known subset of records, scope to just those records; don't re-run bulk scripts against all data.
 - **Check existing scripts/skills first:** [feedback_check_scripts_first.md](feedback_check_scripts_first.md) — before any prod operation, check `scripts/` and `.claude/skills/` for existing tooling; don't improvise ad-hoc commands.
+- **SSH commands need absolute repo path:** [feedback_ssh_script_paths.md](feedback_ssh_script_paths.md) — when running scripts over SSH to dev LXC, always `cd /home/f4rrest/Documents/clarklaw-domain/atomic-crm &&` first; root's CWD is `/root/`.
+- **Import SQL child tables lack ON CONFLICT:** [feedback_import_sql_no_conflict.md](feedback_import_sql_no_conflict.md) — re-importing already-imported accounts duplicates child rows; delete in FK order first (contract_payment_schedule → activities → tasks → payments → contracts → contacts → accounts).
 
 ## Tool usage rules
 

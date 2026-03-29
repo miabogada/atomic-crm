@@ -31,8 +31,10 @@ The legacy CRM uses Exchange 2003 public folders (WebDAV) + Access DB (`billing_
 python3 migration/fetch_sample.py --account <account_numbers...>
 ```
 
+**Where to run:** Run `fetch_sample.py` **locally on the workstation**, NOT on the dev LXC. The Access DB (`billing_be.mdb`) lives on the workstation at the path in `migration/.env` (`MDB_PATH`). The dev LXC does not have the legacy `outlookforms` repo — only the `atomic-crm` repo is mounted there. The script only generates a SQL file; it doesn't need Supabase running locally.
+
 **Before running:**
-- Verify the Access DB (`billing_be.mdb`) is current — check `stat` modification date. If stale, copy a fresh version from the Access server. Newer accounts won't appear in a stale copy.
+- Verify the Access DB (`billing_be.mdb`) is current — check `stat` modification date. If stale, refresh it (see "Updating the Access DB" below). Newer accounts won't appear in a stale copy.
 - Verify target accounts don't already exist: `SELECT account_number FROM accounts WHERE account_number IN (...)`
 
 **After running:**
@@ -119,11 +121,31 @@ echo -e "<PASSWORD>\ny" | bash scripts/db-sync-prod-to-local.sh
 
 ## Gotchas
 
-- **Stale Access DB:** The `billing_be.mdb` on this workstation is a copy. Check its modification date before importing — newer accounts won't exist in a stale copy. Ask the user to copy a fresh version if needed.
+- **Stale Access DB:** The `billing_be.mdb` on this workstation is a copy. Check its modification date before importing — newer accounts won't exist in a stale copy. To refresh it, see "Updating the Access DB" below.
 - **Exchange timeouts:** WebDAV fetches can time out for individual accounts. Re-run with `--account <failed_account>` to retry, then re-run all accounts together for the final SQL.
 - **Prod drift:** If users enter data on prod between local validation and prod deployment, the prod apply will show slightly different counts. This is normal. Payments entered by users on prod with `contract_id = NULL` won't be linked by the SQL scripts (which were generated from local data). To fix: sync prod → local, re-run Phase 2 (`associate_payments.py`), then for Phase 3 do NOT re-run `link_payment_schedule.py` against all data — query just the affected payment IDs to see which ones need schedule linking, and apply targeted UPDATEs only.
 - **Account number formats:** Most are 8 digits (YYMMDDRR), but some are 9 digits (e.g., `220122801`). Don't assume a length.
 - **Exchange MAPI properties:** Task due dates use `PidLidTaskDueDate` in the `PSETID_Task` property set, NOT `exchange/tasks/duedate`. The `{GUID}` namespace breaks Python's expat parser — the script uses a SQL alias workaround. See `migration/exchange-gotchas.md`.
+
+## Updating the Access DB
+
+The live Access backend database is on the `EXC1DC1` server (10.0.0.10) in an SMB share. To fetch a fresh copy:
+
+```bash
+# Pipe the SMB password (ask user for it — do NOT store it)
+echo '<PASSWORD>' | smbclient //EXC1DC1/File_Server -U CLARKLAW/Administrator \
+  --ip-address=10.0.0.10 \
+  -c 'get "Access Data/Online/billing_be.mdb" /tmp/billing_be.mdb'
+
+# Copy to the expected location
+cp /tmp/billing_be.mdb /home/f4rrest/Documents/clarklaw-domain/outlookforms/accessdb/billing_be.mdb
+```
+
+**Important:**
+- The SMB password is the domain admin password. Ask the user to provide it each time — do NOT store or hardcode it.
+- `fetch_sample.py` reads the MDB path from `migration/.env` (`MDB_PATH`), which points to the outlookforms copy.
+- Always refresh the Access DB before a migration batch to ensure payment data is current.
+- After refreshing, do NOT use `--use-cache` on `fetch_sample.py` — the cache contains stale Access data.
 
 ## Documentation
 

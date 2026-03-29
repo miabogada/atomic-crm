@@ -61,6 +61,31 @@ The naive date-range algorithm produced **5 overpaid contracts**, 3 of which wer
 
 Neither has an exact-offset underpaid counterpart, confirming these are real-world payment irregularities.
 
+### Known overpayment issues (as of 2026-03-28 batch import)
+
+The following contracts show overpayment after running the algorithm on the 34-account import batch. Clients never overpay — these are algorithm mis-associations, likely caused by:
+- `date-range-overflow` forcing payments onto a full contract when no other contract has capacity
+- `date-range` assigning payments near contract boundaries to the wrong contract
+- Contract fee amounts from Exchange UserProperties not matching actual agreements
+
+| Contract | Account | Account Name | Fee | Linked | Overage | Likely cause |
+|----------|---------|-------------|-----|--------|---------|-------------|
+| 18110101A5 | 18110101 | GOMEZ, MARCO | $3,500 | $3,600 | $100 | date-range-overflow: $100 payment forced onto full contract |
+| 21072401A3 | 21072401 | BENITEZ, JULIO & KIMBERLY MANRIQUEZ | $2,750 | $2,850 | $100 | One too many $250 monthly payments before spill-back triggered |
+| 21100101AB2 | 21100101 | VILLALBA BAUTISTA, FRANCISCO & ROSARIO AGUILAR | $1,750 | $1,900 | $150 | Mixed payment amounts ($350+$150+$250+$200+$200) exceed fee by date-range |
+| 23042101A2 | 23042101 | HERNANDEZ, JESSICA & JESUS ARREDONDO | $2,500 | $3,100 | $600 | $2,200 lump payment + $150 + retainer; lump may belong to A1 |
+| 24121901A2 | 24121901 | PARADA, DANIEL | $750 | $1,050 | $300 | Two $750 payments, second should have spilled to A1 |
+
+Previously existing overpaid contracts (from earlier imports):
+- 06090901AB1: -$0.50
+- 07022201A1: -$300
+- 20030701A2: -$200
+- 21082401AB1: -$300
+- 24030101A1: -$100
+- 24103001AB1: -$25
+
+**Future fix needed:** The algorithm needs better handling of lump-sum payments that exceed remaining contract capacity, and the `date-range-overflow` rule should not force payments onto already-full contracts.
+
 ## Usage
 
 ```bash

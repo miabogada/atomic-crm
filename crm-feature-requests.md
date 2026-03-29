@@ -28,6 +28,9 @@ date: 2026-02-18T01:06:00
 - Jovanna Cortez 24100801
 - Oscar Sanchez De La Pena 22021601A3- missing $400 payment for 02/26
 - [x] Jose Magana Navarro- 25033101- 02/26 payment missing
+- [x] Jeffry Varela- 120801- missing 02/26 payment
+- [x] Maria Lara- 26012501- missing 02/26 payment
+- [ ] Manuel de jsus moran- 25020401 missing 02/26 payment
 ### LMC feedback
 /accounts/create
 - [x] remove or hide Date first consult
