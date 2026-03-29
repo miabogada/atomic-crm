@@ -18,7 +18,16 @@
 #   both tables with their original IDs intact.
 set -euo pipefail
 
+# Dev LXC (primary) — set DEV_MODE=local to fall back to local Docker container
+DEV_MODE="${DEV_MODE:-lxc}"
+DEV_LXC_HOST="${DEV_LXC_HOST:-10.0.10.229}"
+DEV_LXC_PORT="${DEV_LXC_PORT:-54322}"
+DEV_LXC_USER="${DEV_LXC_USER:-supabase_admin}"
+DEV_LXC_PW="${SUPABASE_DEV_PW:-}"
+
+# Local Docker fallback
 LOCAL_CONTAINER="supabase_db_atomic-crm-demo"
+
 PROD_HOST="10.0.10.228"
 PROD_PORT="5433"
 PROD_USER="supabase_admin"
@@ -28,7 +37,17 @@ BACKUP_DIR="migration/backups"
 read -rsp "Prod DB password (supabase crm): " PROD_PW
 echo
 
-echo "This will replace all LOCAL data with production data."
+if [ "$DEV_MODE" = "lxc" ]; then
+  if [ -z "$DEV_LXC_PW" ]; then
+    echo "Error: SUPABASE_DEV_PW env var required for LXC mode." >&2
+    exit 1
+  fi
+  DEV_LABEL="Dev LXC ($DEV_LXC_HOST)"
+else
+  DEV_LABEL="Local Docker ($LOCAL_CONTAINER)"
+fi
+
+echo "This will replace all $DEV_LABEL data with production data."
 read -rp "Continue? [y/N] " confirm
 [[ "$confirm" =~ ^[Yy]$ ]] || { echo "Aborted."; exit 1; }
 
@@ -63,16 +82,32 @@ BACKUP_FILE="$BACKUP_DIR/prod_data_$(date +%Y-%m-%d).sql"
 cp "$DUMP_FILE" "$BACKUP_FILE"
 echo "  Backup saved to $BACKUP_FILE"
 
+# Helper: run psql on the dev target (LXC or local Docker)
+dev_psql() {
+  if [ "$DEV_MODE" = "lxc" ]; then
+    docker run --rm -i -e PGPASSWORD="$DEV_LXC_PW" postgres:15 \
+      psql -h "$DEV_LXC_HOST" -p "$DEV_LXC_PORT" -U "$DEV_LXC_USER" -d postgres "$@"
+  else
+    docker exec -i -e PGPASSWORD=postgres "$LOCAL_CONTAINER" \
+      psql -U supabase_admin -d postgres "$@"
+  fi
+}
+
 echo "Step 2/7: Applying any pending migrations (schema only)..."
-npx supabase migration up
+if [ "$DEV_MODE" = "lxc" ]; then
+  PGSSLMODE=disable npx supabase migration up \
+    --db-url "postgresql://${DEV_LXC_USER}:${DEV_LXC_PW}@${DEV_LXC_HOST}:${DEV_LXC_PORT}/postgres"
+else
+  npx supabase migration up
+fi
 
 echo "Step 3/7: Disabling on_auth_user_created trigger..."
-docker exec -e PGPASSWORD=postgres "$LOCAL_CONTAINER" psql -U supabase_admin -d postgres -c "
+dev_psql -c "
 ALTER TABLE auth.users DISABLE TRIGGER on_auth_user_created;
 "
 
-echo "Step 4/7: Truncating local data and resetting sequences..."
-docker exec -e PGPASSWORD=postgres "$LOCAL_CONTAINER" psql -U supabase_admin -d postgres -c "
+echo "Step 4/7: Truncating dev data and resetting sequences..."
+dev_psql -c "
 TRUNCATE public.contract_payment_schedule CASCADE;
 TRUNCATE public.account_payments CASCADE;
 TRUNCATE public.account_contracts CASCADE;
@@ -91,33 +126,32 @@ SELECT setval(c.oid, 1, false)
 "
 
 echo "Step 5/7: Loading prod data..."
-docker exec -i -e PGPASSWORD=postgres "$LOCAL_CONTAINER" \
-  psql -U supabase_admin -d postgres < "$DUMP_FILE"
+dev_psql < "$DUMP_FILE"
 
 echo "Step 6/7: Re-enabling on_auth_user_created trigger..."
-docker exec -e PGPASSWORD=postgres "$LOCAL_CONTAINER" psql -U supabase_admin -d postgres -c "
+dev_psql -c "
 ALTER TABLE auth.users ENABLE TRIGGER on_auth_user_created;
 "
 
 echo "Step 7/7: Verifying..."
 COUNT_SQL="SELECT 'accounts' as tbl, count(*) FROM accounts UNION ALL SELECT 'account_contacts', count(*) FROM account_contacts UNION ALL SELECT 'account_contracts', count(*) FROM account_contracts UNION ALL SELECT 'account_payments', count(*) FROM account_payments UNION ALL SELECT 'account_activities', count(*) FROM account_activities UNION ALL SELECT 'tasks', count(*) FROM tasks UNION ALL SELECT 'users', count(*) FROM users ORDER BY tbl;"
 echo "--- Row counts ---"
-echo "--- Local ---"
-docker exec "$LOCAL_CONTAINER" psql -U postgres -d postgres -c "$COUNT_SQL"
+echo "--- Dev ($DEV_MODE) ---"
+dev_psql -c "$COUNT_SQL"
 echo "--- Prod ---"
 docker run --rm -e PGPASSWORD="$PROD_PW" postgres:15 \
   psql -h "$PROD_HOST" -p "$PROD_PORT" -U "$PROD_USER" -d postgres -c "$COUNT_SQL"
 
 MAX_DATE_SQL="SELECT 'accounts' as tbl, max(created_at)::text as max_created FROM accounts UNION ALL SELECT 'account_activities', max(created_at)::text FROM account_activities UNION ALL SELECT 'account_contacts', max(created_at)::text FROM account_contacts UNION ALL SELECT 'account_contracts', max(created_at)::text FROM account_contracts UNION ALL SELECT 'account_payments', max(created_at)::text FROM account_payments UNION ALL SELECT 'payment_allocations', max(created_at)::text FROM payment_allocations ORDER BY 1;"
-echo "--- Max created_at (local) ---"
-docker exec "$LOCAL_CONTAINER" psql -U postgres -d postgres -c "$MAX_DATE_SQL"
+echo "--- Max created_at (dev) ---"
+dev_psql -c "$MAX_DATE_SQL"
 echo "--- Max created_at (prod) ---"
 docker run --rm -e PGPASSWORD="$PROD_PW" postgres:15 \
   psql -h "$PROD_HOST" -p "$PROD_PORT" -U "$PROD_USER" -d postgres -c "$MAX_DATE_SQL"
 
 # Verify no orphaned user_id references
 echo "Checking for user ID mismatches..."
-ORPHAN_COUNT=$(docker exec "$LOCAL_CONTAINER" psql -U postgres -d postgres -tAc "
+ORPHAN_COUNT=$(dev_psql -tAc "
 SELECT count(*) FROM (
   SELECT user_id FROM tasks WHERE user_id NOT IN (SELECT id FROM users)
   UNION ALL SELECT user_id FROM accounts WHERE user_id NOT IN (SELECT id FROM users)
@@ -136,5 +170,5 @@ SYNC_LOG="$BACKUP_DIR/sync.log"
 echo "$(date -u '+%Y-%m-%dT%H:%M:%SZ') prod→local sync completed (backup: $BACKUP_FILE)" >> "$SYNC_LOG"
 
 echo ""
-echo "Done. Local database is now a copy of production."
+echo "Done. $DEV_LABEL database is now a copy of production."
 echo "Logged to $SYNC_LOG"

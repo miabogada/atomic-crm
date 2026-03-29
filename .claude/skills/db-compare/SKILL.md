@@ -7,7 +7,8 @@ description: Compare local dev database with production (703 VM) database. Use w
 
 ## Environment Details
 
-- **Local dev DB**: Runs in Docker container `supabase_db_atomic-crm-demo`, accessible at `127.0.0.1:54322`
+- **Dev DB (primary)**: Dev LXC at `10.0.10.229:54322`. Uses Supabase default credentials.
+- **Dev DB (fallback)**: If the dev LXC is offline, set `DEV_MODE=local` to use a local Docker container `supabase_db_atomic-crm-demo` at `127.0.0.1:54322`. Also uses Supabase defaults.
 - **Prod DB (703 VM)**: Runs on `10.0.10.228:5433`, requires `PGSSLMODE=disable`
 - **Prod Postgres password**: Stored in user's Bitwarden under "supabase crm". Ask the user for it if needed — do NOT guess or hardcode it.
 
@@ -48,7 +49,12 @@ The sections below document the underlying commands for reference, or for cases 
 
 ### Querying Each Database
 
-**Local** (via docker exec — no password needed):
+**Dev LXC** (primary — requires `SUPABASE_DEV_PW` env var set to Supabase default db password):
+```bash
+docker run --rm -e PGPASSWORD="$SUPABASE_DEV_PW" postgres:15 psql -h 10.0.10.229 -p 54322 -U postgres -d postgres -c "YOUR SQL HERE"
+```
+
+**Local Docker** (fallback — no password needed):
 ```bash
 docker exec supabase_db_atomic-crm-demo psql -U postgres -d postgres -c "YOUR SQL HERE"
 ```
@@ -60,8 +66,8 @@ docker run --rm -e PGPASSWORD=<PASSWORD> postgres:15 psql -h 10.0.10.228 -p 5433
 
 ### Key Details
 
-- Use `supabase_admin` (not `postgres`) for dump/load operations — it has ownership of auth.* and storage.* tables
-- Local `supabase_admin` password is `postgres`
+- Use `supabase_admin` (not `postgres`) for prod dump/load operations — it has ownership of auth.* and storage.* tables
+- Dev databases use Supabase default credentials (set via `SUPABASE_DEV_PW` env var)
 - Prod `supabase_admin` password is in Bitwarden under "supabase crm" — ask the user if needed, do NOT guess or hardcode
 - `--disable-triggers` is required on pg_dump to avoid FK ordering issues during load
 - Expected benign errors during load:

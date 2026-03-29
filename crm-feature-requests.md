@@ -30,7 +30,13 @@ date: 2026-02-18T01:06:00
 - [x] Jose Magana Navarro- 25033101- 02/26 payment missing
 - [x] Jeffry Varela- 120801- missing 02/26 payment
 - [x] Maria Lara- 26012501- missing 02/26 payment
-- [ ] Manuel de jsus moran- 25020401 missing 02/26 payment
+- [x] Manuel de jsus moran- 25020401 missing 02/26 payment
+- [x] import 34 missing accounts and make payment adjustments
+- [ ] Alberta Abundez 24081701- missing $400 -02/26 payment
+
+  
+
+Juan Candido Nicolas 24100103- $500 payment credit card  #xlwQ- need to input because pays more than monthly payment so the allocation thing applies
 ### LMC feedback
 /accounts/create
 - [x] remove or hide Date first consult
