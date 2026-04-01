@@ -82,6 +82,136 @@ def parse_date_str(d) -> Optional[date]:
         return None
 
 
+def find_affected_contracts(
+    payments: list, existing_allocs: list, schedule: list
+) -> dict:
+    """Identify contracts where unallocated payments require reflow.
+
+    A contract needs reflow only when an unallocated payment is chronologically
+    EARLIER than an already-allocated payment on the same contract. If the
+    unallocated payment comes after all existing allocations, it can simply be
+    appended without disturbing existing allocations.
+
+    Returns dict: contract_id -> cutoff_date (earliest unallocated payment date
+    that precedes an existing allocation). Only contracts needing reflow are
+    included.
+    """
+    existing_by_payment = defaultdict(float)
+    for e in existing_allocs:
+        existing_by_payment[e["payment_id"]] += float(e["amount_applied"] or 0)
+
+    # Find the latest allocated payment date per contract
+    payment_lookup = {p["id"]: p for p in payments}
+    latest_allocated_date = {}  # contract_id -> latest date_received among allocated payments
+    for p in payments:
+        p_amount = float(p["amount"] or 0)
+        if p_amount < 0:
+            continue
+        already_used = existing_by_payment.get(p["id"], 0.0)
+        if already_used < 0.01:
+            continue
+        # This payment has allocations
+        contract_id = p["contract_id"]
+        p_date = parse_date_str(p["date_received"])
+        if p_date is None:
+            continue
+        if contract_id not in latest_allocated_date or p_date > latest_allocated_date[contract_id]:
+            latest_allocated_date[contract_id] = p_date
+
+    # Find unallocated payments that precede existing allocations
+    affected = {}  # contract_id -> earliest unallocated payment date needing reflow
+    for p in payments:
+        p_amount = float(p["amount"] or 0)
+        if p_amount < 0:
+            continue
+        already_used = existing_by_payment.get(p["id"], 0.0)
+        if p_amount - already_used < 0.01:
+            continue
+        # This payment is unallocated
+        contract_id = p["contract_id"]
+        p_date = parse_date_str(p["date_received"])
+        if p_date is None:
+            continue
+        # Only reflow if this unallocated payment is earlier than
+        # the latest allocated payment on the same contract
+        latest = latest_allocated_date.get(contract_id)
+        if latest is None or p_date >= latest:
+            continue
+        if contract_id not in affected or p_date < affected[contract_id]:
+            affected[contract_id] = p_date
+
+    return affected
+
+
+def filter_existing_for_reflow(
+    existing_allocs: list, schedule: list, affected_contracts: dict,
+    payments: list,
+) -> tuple:
+    """Remove existing allocations that fall in the reflow window.
+
+    For affected contracts, finds the earliest schedule row (by payment_number)
+    where an allocation's payment is dated >= the cutoff. Then clears all
+    allocations from that schedule row onward for the contract. This ensures
+    the chronological re-allocation starts at the right point regardless of
+    whether schedule due_dates align exactly with payment dates.
+
+    Returns (filtered_existing, delete_targets) where delete_targets is a dict
+    of contract_id -> (cutoff_date, set_of_schedule_ids_to_clear).
+    """
+    payment_lookup = {p["id"]: p for p in payments}
+
+    # Group allocations by schedule_id
+    allocs_by_schedule = defaultdict(list)
+    for e in existing_allocs:
+        allocs_by_schedule[e["schedule_id"]].append(e)
+
+    # Group schedule by contract
+    sched_by_contract = defaultdict(list)
+    for s in schedule:
+        sched_by_contract[s["contract_id"]].append(s)
+
+    delete_targets = {}
+    all_sched_ids_to_remove = set()
+
+    for contract_id, cutoff_date in affected_contracts.items():
+        contract_scheds = sorted(
+            sched_by_contract.get(contract_id, []),
+            key=lambda s: s["payment_number"],
+        )
+
+        # Find the earliest payment_number where an allocation's payment
+        # date >= cutoff (i.e., a later payment occupying an earlier slot)
+        reflow_from_pnum = None
+        for s in contract_scheds:
+            for alloc in allocs_by_schedule.get(s["id"], []):
+                p = payment_lookup.get(alloc["payment_id"])
+                if p:
+                    p_date = parse_date_str(p["date_received"])
+                    if p_date and p_date >= cutoff_date:
+                        if reflow_from_pnum is None or s["payment_number"] < reflow_from_pnum:
+                            reflow_from_pnum = s["payment_number"]
+
+        if reflow_from_pnum is None:
+            continue
+
+        # Clear all schedule rows from reflow_from_pnum onward
+        sched_ids = set()
+        for s in contract_scheds:
+            if s["payment_number"] >= reflow_from_pnum:
+                sched_ids.add(s["id"])
+
+        if sched_ids:
+            delete_targets[contract_id] = (cutoff_date, sched_ids)
+            all_sched_ids_to_remove.update(sched_ids)
+
+    filtered = [
+        e for e in existing_allocs
+        if e["schedule_id"] not in all_sched_ids_to_remove
+    ]
+
+    return filtered, delete_targets
+
+
 def allocate_payments(schedule: list, payments: list, existing: list) -> tuple:
     """Match payments to schedule rows per contract using amount-based allocation.
 
@@ -204,7 +334,11 @@ def allocate_payments(schedule: list, payments: list, existing: list) -> tuple:
 # Output
 # ---------------------------------------------------------------------------
 
-def generate_sql(allocations: list, full_rebuild: bool = True) -> str:
+def generate_sql(
+    allocations: list,
+    full_rebuild: bool = False,
+    delete_targets: dict = None,
+) -> str:
     lines = [
         "-- link_payment_schedule.py — allocate payments to schedule rows",
         "",
@@ -215,6 +349,17 @@ def generate_sql(allocations: list, full_rebuild: bool = True) -> str:
     if full_rebuild:
         lines.append("-- Full rebuild: clear all allocations before re-inserting")
         lines.append("DELETE FROM payment_allocations;")
+        lines.append("")
+    elif delete_targets:
+        lines.append("-- Reflow affected contracts from cutoff date onward")
+        for contract_id, (cutoff, sched_ids) in sorted(delete_targets.items()):
+            sched_id_list = ",".join(str(sid) for sid in sorted(sched_ids))
+            lines.append(
+                f"-- Contract {contract_id}: reflow from {cutoff}"
+            )
+            lines.append(
+                f"DELETE FROM payment_allocations WHERE schedule_id IN ({sched_id_list});"
+            )
         lines.append("")
 
     for sched_id, payment_id, amount in allocations:
@@ -269,11 +414,30 @@ def main():
     print("Fetching data...")
     schedule = fetch_schedule()
     payments = fetch_payments()
-    existing = [] if full_rebuild else fetch_existing_allocations()
     print(f"  {len(schedule)} schedule rows")
     print(f"  {len(payments)} payments with contract_id")
-    if not full_rebuild:
-        print(f"  {len(existing)} existing allocations")
+
+    delete_targets = None
+
+    if full_rebuild:
+        existing = []
+    else:
+        existing_allocs = fetch_existing_allocations()
+        print(f"  {len(existing_allocs)} existing allocations")
+
+        # Find contracts with unallocated payments that need reflow
+        affected = find_affected_contracts(payments, existing_allocs, schedule)
+        if affected:
+            existing, delete_targets = filter_existing_for_reflow(
+                existing_allocs, schedule, affected, payments
+            )
+            n_deleted = sum(len(sids) for _, sids in delete_targets.values())
+            print(f"  {len(affected)} contracts need reflow ({n_deleted} schedule rows):")
+            for cid, cutoff in sorted(affected.items()):
+                print(f"    contract {cid}: from {cutoff}")
+        else:
+            existing = existing_allocs
+
     print()
 
     print(f"Allocating payments to schedule rows ({mode_label})...")
@@ -288,7 +452,9 @@ def main():
         print("Nothing to do — all payments are already allocated.")
         return
 
-    sql = generate_sql(allocations, full_rebuild=full_rebuild)
+    sql = generate_sql(
+        allocations, full_rebuild=full_rebuild, delete_targets=delete_targets
+    )
     sql_path = OUTPUT_DIR / "link_payment_schedule.sql"
     with open(sql_path, "w") as f:
         f.write(sql)
