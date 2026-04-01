@@ -1,5 +1,26 @@
 # Changelog
 
+## 2026-04-01 — Data: Import 11 missing February 2026 payments
+
+Compared Access DB (`billing_be.mdb`, refreshed 2026-03-28) against production
+and found 11 February 2026 payments missing from the CRM. These were entered in
+Access after the last migration batch.
+
+**Accounts:** 07010604, 18091401, 20120901, 23022301, 24020501, 24091002,
+24100103, 25050201, 25071701, 25073001, 25091601
+
+**Total:** $3,850.00 (11 payments)
+
+**Script improvement:** `link_payment_schedule.py` default changed from
+full-rebuild to incremental mode. Incremental mode now auto-detects when
+back-dated payments would cause chronological ordering issues and reflows
+only the affected window of each contract's allocations — preserving earlier
+allocations (including any manual adjustments). Use `--full-rebuild` for the
+old delete-all behavior.
+
+**SQL:** `migration/output/import_feb_payments_round2.sql`
+**Plan:** `docs/plan-import-missing-feb-payments.md` (Round 2 section)
+
 ## 2026-03-29 — Data: Import 34 additional accounts from Exchange/Access
 
 Imported 34 accounts requested by users that were not included in the original
