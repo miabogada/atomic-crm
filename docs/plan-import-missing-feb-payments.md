@@ -94,3 +94,35 @@ Re-run the verification query on prod to confirm all 7 payments are present.
 - Query `account_payments` for these 7 accounts and confirm Feb payments exist
 - Query `contract_payment_schedule_view` for the 7 contracts and confirm the new payments are allocated
 - Check CRM UI for one account to confirm the payment shows in the Payments tab
+
+---
+
+## Round 2: 11 Additional Missing February 2026 Payments (2026-04-01)
+
+### Context
+
+After the first 7 payments were imported, a full comparison of Access DB (`billing_be.mdb`, refreshed 2026-03-28) against production found 11 more February 2026 payments missing from the CRM. These were entered in Access after the last migration batch.
+
+### Payments to import
+
+| # | Account | Name | Date | Amount | Method | Ref | Active Contract | Contract ID |
+|---|---------|------|------|--------|--------|-----|-----------------|-------------|
+| 1 | 07010604 | NORIEGA, YUBANI | 2026-02-20 | $350.00 | CHECK | htUc | 07010604A4 | 153 |
+| 2 | 18091401 | VICTORINO, JAVIER & DEANNA | 2026-02-27 | $350.00 | CHECK | pXOZ | 18091401A1 | 186 |
+| 3 | 20120901 | AGUINAGA, ROSA | 2026-02-23 | $250.00 | CHECK | dalk | 20120901A2 | 200 |
+| 4 | 23022301 | MANZANARES, MARCIA | 2026-02-24 | $400.00 | CHECK | qh5u | 23022301A3 | 219 |
+| 5 | 24020501 | CORTEZ, NELSON & GLENDA MARTINEZ CORTEZ | 2026-02-18 | $100.00 | MONEY ORDER | 109383911329 | 24020501A1 | 226 |
+| 6 | 24091002 | SALAZAR, GUADALUPE | 2026-02-18 | $350.00 | CHECK | zusi | 24091002A1 | 245 |
+| 7 | 24100103 | CANDIDO NICOLAS, JUAN | 2026-02-24 | $500.00 | CHECK | tl9h | 24100103A1 | 246 |
+| 8 | 25050201 | MATEO, GUSTAVO | 2026-02-16 | $400.00 | CHECK | AaJH | 25050201A1 | 265 |
+| 9 | 25071701 | MENESES VELAZQUEZ, ADRIAN | 2026-02-21 | $400.00 | CHECK | 240 | 25071701A1 | 270 |
+| 10 | 25073001 | NORIEGA, AZARI & RAFAELA | 2026-02-21 | $350.00 | CHECK | 8uoe | 25073001A1 | 274 |
+| 11 | 25091601 | GONZALEZ, ALMA ROSA | 2026-02-18 | $400.00 | CHECK | Fcsn | 25091601A1 | 279 |
+
+**Total: $3,850.00**
+
+Note: Access DB lists all as "CHECK". Ref "109383911329" (row 5) is numeric → MONEY ORDER. Ref "240" (row 9) is numeric but short — listed as CHECK in Access, keeping as CHECK.
+
+### Steps
+
+Same workflow as Round 1 (Steps 1–7 above), generating new INSERT SQL into `migration/output/import_feb_payments_round2.sql`.

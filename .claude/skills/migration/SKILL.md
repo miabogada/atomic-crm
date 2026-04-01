@@ -69,16 +69,18 @@ python3 migration/associate_payments.py --apply
 ### Phase 3: Link Payments to Payment Schedule
 
 ```bash
-# Dry run — generates SQL
-python3 migration/link_payment_schedule.py
+# Incremental (default) — only allocates payments not yet linked
+python3 migration/link_payment_schedule.py                    # dry run
+python3 migration/link_payment_schedule.py --apply            # apply
 
-# Apply to local DB
-python3 migration/link_payment_schedule.py --apply
+# Full rebuild — deletes ALL allocations and rebuilds from scratch
+python3 migration/link_payment_schedule.py --full-rebuild             # dry run
+python3 migration/link_payment_schedule.py --full-rebuild --apply     # apply
 ```
 
 **Validation:** Review `migration/output/link_payment_schedule.sql`
 
-**Note:** Also idempotent — only links schedule rows with `payment_id IS NULL`.
+**Note:** Default mode is incremental — fetches existing allocations and only inserts new ones. Use `--full-rebuild` only when you need a clean slate (e.g., after a full prod-to-local sync). For prod, always use incremental (the default) to avoid disrupting existing allocations.
 
 ### Phase 4: Production Deployment
 

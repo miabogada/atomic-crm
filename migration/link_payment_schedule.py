@@ -8,8 +8,10 @@ A single payment can satisfy multiple schedule rows (lump sums), and a single
 schedule row can receive allocations from multiple payments (split payments).
 
 Usage:
-  python3 migration/link_payment_schedule.py           # dry run: generate SQL
-  python3 migration/link_payment_schedule.py --apply   # generate + apply
+  python3 migration/link_payment_schedule.py                    # dry run, incremental
+  python3 migration/link_payment_schedule.py --apply            # incremental + apply
+  python3 migration/link_payment_schedule.py --full-rebuild     # delete all + rebuild
+  python3 migration/link_payment_schedule.py --full-rebuild --apply  # full rebuild + apply
 
 Output:
   migration/output/link_payment_schedule.sql
@@ -202,16 +204,18 @@ def allocate_payments(schedule: list, payments: list, existing: list) -> tuple:
 # Output
 # ---------------------------------------------------------------------------
 
-def generate_sql(allocations: list) -> str:
+def generate_sql(allocations: list, full_rebuild: bool = True) -> str:
     lines = [
         "-- link_payment_schedule.py — allocate payments to schedule rows",
         "",
         "BEGIN;",
         "",
-        "-- Clear stale allocations before re-inserting",
-        "DELETE FROM payment_allocations;",
-        "",
     ]
+
+    if full_rebuild:
+        lines.append("-- Full rebuild: clear all allocations before re-inserting")
+        lines.append("DELETE FROM payment_allocations;")
+        lines.append("")
 
     for sched_id, payment_id, amount in allocations:
         lines.append(
@@ -248,29 +252,43 @@ def main():
     )
     parser.add_argument("--apply", action="store_true",
                         help="Apply SQL directly via docker psql")
+    parser.add_argument("--full-rebuild", action="store_true",
+                        help="Delete all existing allocations and rebuild from scratch. "
+                             "Default is incremental (only add new allocations).")
     args = parser.parse_args()
+
+    full_rebuild = args.full_rebuild
+    mode_label = "full rebuild" if full_rebuild else "incremental"
 
     print("=" * 60)
     print("Allocate Payments to Schedule")
+    print(f"Mode: {mode_label}")
     print("=" * 60)
     print()
 
     print("Fetching data...")
     schedule = fetch_schedule()
     payments = fetch_payments()
+    existing = [] if full_rebuild else fetch_existing_allocations()
     print(f"  {len(schedule)} schedule rows")
     print(f"  {len(payments)} payments with contract_id")
+    if not full_rebuild:
+        print(f"  {len(existing)} existing allocations")
     print()
 
-    print("Allocating payments to schedule rows (full rebuild)...")
-    allocations, stats = allocate_payments(schedule, payments, existing=[])
+    print(f"Allocating payments to schedule rows ({mode_label})...")
+    allocations, stats = allocate_payments(schedule, payments, existing=existing)
     print(f"  {stats['allocated']} new allocations")
     print(f"  {stats['already_allocated']} payments already fully allocated")
     print(f"  {stats['negative_skipped']} negative payments skipped")
     print(f"  {stats['no_schedule_row']} payments with no remaining schedule row")
     print()
 
-    sql = generate_sql(allocations)
+    if not allocations:
+        print("Nothing to do — all payments are already allocated.")
+        return
+
+    sql = generate_sql(allocations, full_rebuild=full_rebuild)
     sql_path = OUTPUT_DIR / "link_payment_schedule.sql"
     with open(sql_path, "w") as f:
         f.write(sql)
