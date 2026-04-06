@@ -40,7 +40,7 @@
 
 - **psql is not installed on the host.** Always use dockerized psql for ALL database queries (dev and prod).
 - **Querying prod**: Use `prod-query` skill (`.claude/skills/prod-query/`). Ask user for password if not already in conversation. See [feedback_prod_query_workflow.md](feedback_prod_query_workflow.md).
-- **Querying dev**: Dev LXC at `10.0.10.229:54322`, Supabase default credentials. See `db-compare` skill.
+- **Querying dev**: Use `dev-query` skill (`.claude/skills/dev-query/`). Dev LXC at `10.0.10.229:54322`, Supabase default credentials. NEVER start local Supabase for dev queries.
 - **Full schema reference**: `docs/database-schema.md` — all tables, columns, types, views. Key gotcha: contracts table is `account_contracts` (NOT `contracts`).
 - **Local Docker (fallback)**: Set `DEV_MODE=local` if dev LXC is offline. Container: `supabase_db_atomic-crm-demo`.
 - **Prod Supabase Studio**: `http://10.0.10.228:8000` (local network only)
