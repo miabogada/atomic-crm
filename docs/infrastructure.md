@@ -77,9 +77,14 @@ cd /home/f4rrest/Documents/clarklaw-domain/atomic-crm
 npx supabase start
 
 # Start the Vite dev server (use tmux so it survives SSH disconnect)
-tmux
-npx vite --host 0.0.0.0
+# (`make start` runs supabase start first, which is redundant if containers are up)
+cd /home/f4rrest/Documents/clarklaw-domain/atomic-crm
+tmux new -s dev-stack
+docker ps # check if Supabase is running
+npx vite --host 0.0.0.0 # If Supabase is already running
+make start # If Supabase is not already running
 # Ctrl+B, D to detach
+# To reattach later: tmux attach -t dev-stack
 ```
 
 Access from workstation:
