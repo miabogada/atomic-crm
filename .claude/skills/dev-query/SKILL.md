@@ -1,4 +1,7 @@
-Base directory for this skill: /home/f4rrest/Documents/clarklaw-domain/atomic-crm/.claude/skills/dev-query
+---
+name: dev-query
+description: Query the dev database on 10.0.10.229. Use when the user wants to look up data on dev, or for any database query that doesn't explicitly say "prod" or "production".
+---
 
 # Querying Dev Database
 
