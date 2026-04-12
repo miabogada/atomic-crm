@@ -42,6 +42,9 @@ date: 2026-02-18T01:06:00
 - [x] migrate Ismael Paez Flores -  25080601
 - [x] Maria Munguia Ortiz 25111001: the 04/10/26 payment for $400 #L7A2 should be deleted.  thats a duplicate from march.  and the one for may should be moved to april.
 - [ ] deleting a payment (claude code confirmed it's a soft delete) is not reflected in the UI, even after a refresh the deleted payment persists to show.
+- [x] cannot allocate a Discount or Write off to a scheduled payment
+	- [ ] allocate discounts on 15030101
+	- [ ] allocate write off on 23053001
 ### LMC feedback
 /accounts/create
 - [x] remove or hide Date first consult

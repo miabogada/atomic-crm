@@ -238,9 +238,12 @@ const ScheduleTable = ({
   }
 
   const availablePayments = (payments ?? []).filter((p) => {
-    if (p.type !== "payment" || Number(p.amount) <= 0) return false;
+    const allocatableTypes = ["payment", "discount", "write_off"];
+    if (!allocatableTypes.includes(p.type ?? "payment")) return false;
+    const amt = Math.abs(Number(p.amount));
+    if (amt <= 0) return false;
     const used = allocatedByPayment.get(Number(p.id)) ?? 0;
-    return Number(p.amount) - used > 0.01;
+    return amt - used > 0.01;
   });
 
   const hasPaid = schedule.some((r) => (Number(r.amount_paid) || 0) > 0);
@@ -248,7 +251,7 @@ const ScheduleTable = ({
   const handleAllocate = (scheduleRow: ContractPaymentSchedule, paymentId: string) => {
     const pmt = paymentById.get(Number(paymentId));
     if (!pmt) return;
-    const pmtAvailable = Number(pmt.amount) - (allocatedByPayment.get(Number(pmt.id)) ?? 0);
+    const pmtAvailable = Math.abs(Number(pmt.amount)) - (allocatedByPayment.get(Number(pmt.id)) ?? 0);
     const schedRemaining = Number(scheduleRow.balance_remaining) || Number(scheduleRow.amount);
     const amount = Math.min(pmtAvailable, schedRemaining);
     create(
@@ -357,10 +360,11 @@ const ScheduleTable = ({
                             </SelectTrigger>
                             <SelectContent>
                               {availablePayments.map((p) => {
-                                const avail = Number(p.amount) - (allocatedByPayment.get(Number(p.id)) ?? 0);
+                                const avail = Math.abs(Number(p.amount)) - (allocatedByPayment.get(Number(p.id)) ?? 0);
+                                const typeLabel = p.type && p.type !== "payment" ? ` [${p.type}]` : '';
                                 return (
                                   <SelectItem key={p.id} value={String(p.id)}>
-                                    {p.date_received} · ${fmt(avail)} avail · {p.payment_method}
+                                    {p.date_received} · ${fmt(avail)} avail · {p.payment_method}{typeLabel}
                                     {p.reference_number ? ` · #${p.reference_number}` : ''}
                                   </SelectItem>
                                 );

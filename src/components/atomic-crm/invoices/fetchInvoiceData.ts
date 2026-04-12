@@ -166,6 +166,7 @@ export async function fetchInvoiceData(
   const today = new Date().toISOString().split("T")[0];
   let amountDue = 0;
   let dueDate = "";
+  const accountBalance: number = account.balance_due ?? 0;
 
   for (const s of schedule ?? []) {
     const balanceRemaining = (s.balance_remaining as number) ?? 0;
@@ -226,7 +227,7 @@ export async function fetchInvoiceData(
     clientCityStateZip: clientCityStateZip || "",
     contracts: contractSummary,
     history,
-    accountBalance: account.balance_due ?? 0,
+    accountBalance,
   };
 }
 

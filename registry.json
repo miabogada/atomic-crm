@@ -620,6 +620,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/invoices/useInvoiceGeneration.ts",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/invoices/types.ts",
           "type": "registry:component"
         },
@@ -628,11 +632,19 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/invoices/InvoicesPage.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/invoices/InvoiceStyles.ts",
           "type": "registry:component"
         },
         {
           "path": "src/components/atomic-crm/invoices/InvoiceDocument.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/invoices/InvoiceButton.tsx",
           "type": "registry:component"
         },
         {
