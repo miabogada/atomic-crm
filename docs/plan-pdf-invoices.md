@@ -133,38 +133,47 @@ Usage: npx tsx scripts/generate-invoices.ts [--account <number>] [--output <dir>
 - Filename format: `invoice-{account_number}-{YYYY-MM}.pdf`
 - Logs progress to stdout
 
-### Phase 2: CRM UI Integration
+### Phase 2: CRM UI Integration (completed 2026-04-11)
 
-#### Step 6: Invoice generation hook
+#### Step 6: Invoice generation hook ✓
 **File**: `src/components/atomic-crm/invoices/useInvoiceGeneration.ts`
 
 Custom hook that:
 - Takes an account_id
 - Fetches invoice data using the same `fetchInvoiceData` function
-- Returns `{ data, loading, error }` for use by UI components
+- Returns `{ data, loading, error, generate }` for use by UI components
 
-#### Step 7: Print/Download button on Account detail page
-**File**: Modify the account detail view to add an "Invoice" button
+#### Step 7: Print/Download button on Account detail page ✓
+**File**: `src/components/atomic-crm/accounts/AccountAside.tsx` + `src/components/atomic-crm/invoices/InvoiceButton.tsx`
 
-- Button opens a dialog/drawer with `<BlobProvider document={<InvoiceDocument data={data} />}>`
+- "Invoice" button in the account detail sidebar, below Edit Account
+- Button opens a dialog with `<BlobProvider document={<InvoiceDocument data={data} />}>`
 - Two actions: "Download PDF" and "Print" (opens browser print dialog via `window.open` + `window.print()`)
 - Loading state while PDF renders
 
-#### Step 8: Batch generation UI (optional, future)
-- Settings or dedicated page to trigger batch generation
-- Select accounts, generate all, download as ZIP
-- Lower priority — CLI covers this need initially
+#### Step 8: Batch generation page ✓
+**File**: `src/components/atomic-crm/invoices/InvoicesPage.tsx`
+
+- Admin-only "Invoices" menu item in User Menu (above Import Data)
+- Route: `/invoices`
+- "Generate All Invoices" fetches all accounts with balance > 0
+- Table with checkboxes (all pre-selected, master select/deselect)
+- `InvoiceBatchDocument` combines selected invoices into a single PDF with page breaks
+- Bulk Download/Print buttons render one combined PDF for all selected invoices
+- Per-row Download/Print buttons for individual invoices
+- `React.memo` on rows to prevent re-rendering all PDFs on checkbox toggle
 
 ## File Structure
 
 ```
 src/components/atomic-crm/invoices/
 ├── types.ts                  # Invoice data interfaces
-├── InvoiceDocument.tsx        # @react-pdf/renderer component
+├── InvoiceDocument.tsx        # @react-pdf/renderer component (+ InvoiceBatchDocument)
 ├── InvoiceStyles.ts           # StyleSheet for the PDF
 ├── fetchInvoiceData.ts        # Supabase query + data assembly
 ├── useInvoiceGeneration.ts    # React hook for in-app use
-└── InvoiceButton.tsx          # UI button + BlobProvider dialog
+├── InvoiceButton.tsx          # Single-account button + BlobProvider dialog
+└── InvoicesPage.tsx           # Batch generation page (admin-only)
 
 scripts/
 └── generate-invoices.ts       # CLI batch generation script

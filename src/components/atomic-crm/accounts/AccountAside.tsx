@@ -9,6 +9,7 @@ import { CircleX } from "lucide-react";
 
 import { AsideSection } from "../misc/AsideSection";
 import { AccountDeleteWarning } from "../misc/DeleteWarnings";
+import { InvoiceButton } from "../invoices/InvoiceButton";
 import type { Account, AccountContract } from "../types";
 
 export const AccountAside = ({
@@ -38,12 +39,13 @@ export const AccountAside = ({
 
   return (
     <div className="hidden md:block w-64 min-w-64 text-sm">
-      <div className="mb-4 -ml-1">
+      <div className="mb-4 -ml-1 flex flex-col gap-1 items-start">
         {link === "edit" ? (
           <EditButton label="Edit Account" />
         ) : (
           <ShowButton label="Show Account" />
         )}
+        <InvoiceButton accountId={record.id as number} />
       </div>
 
       <AsideSection title="Status">

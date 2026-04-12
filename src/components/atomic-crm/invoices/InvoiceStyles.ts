@@ -109,30 +109,28 @@ const styles = StyleSheet.create({
     marginLeft: 40,
   },
   clientName: {
-    fontSize: 10,
+    fontSize: 12,
+    textTransform: "uppercase",
     marginBottom: 2,
   },
   clientAddress: {
-    fontSize: 10,
+    fontSize: 12,
+    textTransform: "uppercase",
   },
 
   // --- Detach line ---
   detachLine: {
-    flexDirection: "row",
-    alignItems: "center",
     marginTop: 10,
     marginBottom: 10,
-  },
-  dashedBorder: {
-    borderBottomWidth: 1,
-    borderBottomStyle: "dashed",
-    borderBottomColor: "#000",
-    flex: 1,
   },
   detachText: {
     fontFamily: "Times-Italic",
     fontSize: 8,
-    paddingHorizontal: 8,
+    textAlign: "center",
+    marginBottom: 4,
+  },
+  detachHyphens: {
+    fontSize: 8,
   },
 
   // --- Contract Summary ---

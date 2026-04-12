@@ -1,5 +1,35 @@
 # Changelog
 
+## 2026-04-11 — Feature: PDF Invoice Generation (UI)
+
+Added in-browser invoice generation to the CRM, completing Steps 6-8 of the PDF invoice plan:
+
+- **Single account**: "Invoice" button on the Account detail sidebar (below Edit Account) opens a dialog to download or print one invoice PDF
+- **Batch generation**: "Invoices" page (admin-only, via User Menu) fetches all accounts with a balance > 0, renders a combined PDF for selected accounts with page breaks between each, and offers Download/Print for the full batch
+- **Layout fixes**: billing address uppercase, detach line uses text hyphens instead of dashed border (printer compatibility)
+
+Files added:
+- `src/components/atomic-crm/invoices/useInvoiceGeneration.ts`
+- `src/components/atomic-crm/invoices/InvoiceButton.tsx`
+- `src/components/atomic-crm/invoices/InvoicesPage.tsx`
+
+Files modified:
+- `src/components/atomic-crm/invoices/InvoiceDocument.tsx` — added `InvoiceBatchDocument`
+- `src/components/atomic-crm/invoices/InvoiceStyles.ts` — billing address size/case, detach line
+- `src/components/atomic-crm/accounts/AccountAside.tsx` — Invoice button
+- `src/components/atomic-crm/layout/Header.tsx` — Invoices menu item (admin)
+- `src/components/atomic-crm/root/CRM.tsx` — `/invoices` route
+
+## 2026-04-11 — Data: Delete extra payment that would not correctly delete in UI
+
+Maria Munguia Ortiz 25111001: the 03/11/26 payment for $400 #L7A2 was deleted (a duplicate from 3/10 applied to 4/10 payment schedule by accident), and the next payment was deallocated from May payment_schedul and was moved to april.
+
+## 2026-04-11 — Data: Import 3 additional accounts from Exchange/Access
+
+Franklin Alexander	Gonzalez Pineda -  25020301
+Neftali Telles - 20072001
+Ismael Paez Flores -  25080601
+
 ## 2026-04-01 — Data: Import 11 missing February 2026 payments
 
 Compared Access DB (`billing_be.mdb`, refreshed 2026-03-28) against production

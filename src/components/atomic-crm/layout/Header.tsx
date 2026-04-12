@@ -1,4 +1,4 @@
-import { Import, Settings, User } from "lucide-react";
+import { FileText, Import, Settings, User } from "lucide-react";
 import { CanAccess, useGetIdentity, useGetOne, useUserMenu } from "ra-core";
 import { Link, matchPath, useLocation } from "react-router";
 import type { Sale } from "../types";
@@ -9,6 +9,7 @@ import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
 import { useConfigurationContext } from "../root/ConfigurationContext";
 import { ImportPage } from "../misc/ImportPage";
+import { InvoicesPage } from "../invoices/InvoicesPage";
 
 const Header = () => {
   const { darkModeLogo, lightModeLogo, title } = useConfigurationContext();
@@ -97,6 +98,7 @@ const Header = () => {
                   <CanAccess resource="users" action="list">
                     <UsersMenu />
                   </CanAccess>
+                  {isAdmin && <InvoicesMenuItem />}
                   <ImportFromJsonMenuItem />
                 </UserMenu>
               </div>
@@ -153,6 +155,20 @@ const ConfigurationMenu = () => {
       <Link to="/settings" className="flex items-center gap-2">
         <Settings />
         My info
+      </Link>
+    </DropdownMenuItem>
+  );
+};
+
+const InvoicesMenuItem = () => {
+  const userMenuContext = useUserMenu();
+  if (!userMenuContext) {
+    throw new Error("<InvoicesMenuItem> must be used inside <UserMenu>");
+  }
+  return (
+    <DropdownMenuItem asChild onClick={userMenuContext.onClose}>
+      <Link to={InvoicesPage.path} className="flex items-center gap-2">
+        <FileText /> Invoices
       </Link>
     </DropdownMenuItem>
   );

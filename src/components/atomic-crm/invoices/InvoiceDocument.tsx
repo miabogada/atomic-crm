@@ -85,12 +85,13 @@ function Header({ data }: { data: InvoiceData }) {
 
       {/* Detach line */}
       <View style={styles.detachLine}>
-        <View style={styles.dashedBorder} />
         <Text style={styles.detachText}>
           (Please detach this section and send with your payment --- Por favor
           separe esta secci&oacute;n y env&iacute;ela con su pago)
         </Text>
-        <View style={styles.dashedBorder} />
+        <Text style={styles.detachHyphens}>
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        </Text>
       </View>
     </View>
   );
@@ -199,11 +200,30 @@ export function InvoiceDocument({ data }: { data: InvoiceData }) {
       title={`Invoice - ${data.accountNumber}`}
       author="Law Offices of Linnette Taño Clark"
     >
-      <Page size="LETTER" style={styles.page}>
-        <Header data={data} />
-        <ContractSummary data={data} />
-        <AccountHistory data={data} />
-      </Page>
+      <InvoicePage data={data} />
     </Document>
+  );
+}
+
+export function InvoiceBatchDocument({ invoices }: { invoices: InvoiceData[] }) {
+  return (
+    <Document
+      title="Invoices"
+      author="Law Offices of Linnette Taño Clark"
+    >
+      {invoices.map((data) => (
+        <InvoicePage key={data.accountNumber} data={data} />
+      ))}
+    </Document>
+  );
+}
+
+function InvoicePage({ data }: { data: InvoiceData }) {
+  return (
+    <Page size="LETTER" style={styles.page}>
+      <Header data={data} />
+      <ContractSummary data={data} />
+      <AccountHistory data={data} />
+    </Page>
   );
 }

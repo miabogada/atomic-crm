@@ -32,11 +32,16 @@ date: 2026-02-18T01:06:00
 - [x] Maria Lara- 26012501- missing 02/26 payment
 - [x] Manuel de jsus moran- 25020401 missing 02/26 payment
 - [x] import 34 missing accounts and make payment adjustments
-- [ ] Alberta Abundez 24081701- missing $400 -02/26 payment
-
-  
-
-Juan Candido Nicolas 24100103- $500 payment credit card  #xlwQ- need to input because pays more than monthly payment so the allocation thing applies
+- [x] Alberta Abundez 24081701- missing $400 -02/26 payment
+- [x] Juan Candido Nicolas 24100103- $500 payment credit card  #xlwQ- need to input because pays more than monthly payment so the allocation thing applies
+- [x] kornfeld 26020201 close out K Visa with writeoff, apply payment schedule to 400/mo to i-130 
+- [x] migrate account Abraham Flores - 15072102
+- [x] migrate account Jose Medina Hernandez - 22051201
+- [x] migrate Franklin Alexander Gonzalez Pineda -  25020301
+- [x] migrate Neftali Telles - 20072001
+- [x] migrate Ismael Paez Flores -  25080601
+- [x] Maria Munguia Ortiz 25111001: the 04/10/26 payment for $400 #L7A2 should be deleted.  thats a duplicate from march.  and the one for may should be moved to april.
+- [ ] deleting a payment (claude code confirmed it's a soft delete) is not reflected in the UI, even after a refresh the deleted payment persists to show.
 ### LMC feedback
 /accounts/create
 - [x] remove or hide Date first consult

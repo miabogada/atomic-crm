@@ -30,6 +30,7 @@ import { MobileLayout } from "../layout/MobileLayout";
 import { SignupPage } from "../login/SignupPage";
 import { ConfirmationRequired } from "../login/ConfirmationRequired";
 import { ImportPage } from "../misc/ImportPage";
+import { InvoicesPage } from "../invoices/InvoicesPage";
 import {
   authProvider as defaultAuthProvider,
   dataProvider as defaultDataProvider,
@@ -212,6 +213,7 @@ const DesktopAdmin = (props: CoreAdminProps) => {
 
       <CustomRoutes>
         <Route path={SettingsPage.path} element={<SettingsPage />} />
+        <Route path={InvoicesPage.path} element={<InvoicesPage />} />
         <Route path={ImportPage.path} element={<ImportPage />} />
       </CustomRoutes>
       <Resource name="accounts" {...accounts} />
