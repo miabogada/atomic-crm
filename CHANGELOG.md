@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-04-30 — Data: Import Sigfredo Chavarria (24022801)
+
+Single account migrated from Exchange (not in Access DB — payment pulled from Exchange).
+1 contract (24022801A1), 1 payment ($3,500 credit card, 2024-02-28), fully allocated.
+
 ## 2026-04-30 — Data: Import 8 accounts from Exchange/Access (2 batches)
 
 Migrated 8 legacy accounts in two batches. Pre-migration: synced prod → dev, refreshed `billing_be.mdb` from EXC1DC1.

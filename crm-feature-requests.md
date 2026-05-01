@@ -49,7 +49,7 @@ date: 2026-02-18T01:06:00
 - daniel segovia- 22101401
 - victorina quiroz- 24072601
 - Jovita Torres- 210122901
-- 1. sigfredo chavaria- 244022801
+- sigfredo chavarria- 24022801
 1. janet mendoza- 20103001
 2. brenda ramos- 23033101
 3. evodio gaona- 21030101
