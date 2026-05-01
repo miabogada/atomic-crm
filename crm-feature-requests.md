@@ -45,6 +45,16 @@ date: 2026-02-18T01:06:00
 - [x] cannot allocate a Discount or Write off to a scheduled payment
 	- [ ] allocate discounts on 15030101
 	- [ ] allocate write off on 23053001
+- [x] 8 more missing, import 4/30/26
+- daniel segovia- 22101401
+- victorina quiroz- 24072601
+- Jovita Torres- 210122901
+- 1. sigfredo chavaria- 244022801
+1. janet mendoza- 20103001
+2. brenda ramos- 23033101
+3. evodio gaona- 21030101
+4. jennifere pinon- 20042901
+5. fernando loaiza- 20050501
 ### LMC feedback
 /accounts/create
 - [x] remove or hide Date first consult

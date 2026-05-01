@@ -93,6 +93,11 @@
 ### Pending commits
 - See [project_pending_commits.md](project_pending_commits.md) — 5-commit plan for payment allocations + Bug 7 fixes, ready to commit and deploy to prod
 
+### Recently completed (2026-04-11)
+- **PDF Invoice generation** — CLI + CRM UI (single + batch). See [project_invoices.md](project_invoices.md)
+- **Allocation dropdown fix** — discounts/write-offs now appear in schedule Allocate dropdown (ContractShow.tsx)
+- [feedback_no_cap_amount_due.md](feedback_no_cap_amount_due.md) — don't cap invoice amount due at balance; mismatches expose unallocated adjustments
+
 ### Next up
 - Full feature backlog is in `crm-feature-requests.md` (unchecked items)
 

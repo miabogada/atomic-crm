@@ -1,5 +1,28 @@
 # Changelog
 
+## 2026-04-30 — Data: Import 8 accounts from Exchange/Access (2 batches)
+
+Migrated 8 legacy accounts in two batches. Pre-migration: synced prod → dev, refreshed `billing_be.mdb` from EXC1DC1.
+
+**Batch 1 (3 accounts):**
+- Daniel Ramon Segovia — 22101401 (1 contract, 18 payments, $7,500 — paid)
+- Victorina Quiroz — 24072601 (1 contract, 15 payments, $5,500 — paid)
+- Jovita Torres — 210122901 (1 contract, 12 payments, $2,750 — paid)
+
+**Batch 2 (5 accounts):**
+- Janet Mendoza — 20103001 (3 contracts, 26 payments, $13,000 — all paid)
+- Brenda Ramos — 23033101 (1 contract, 6 payments, $1,500 — paid)
+- Evodio Gaona — 21030101 (4 contracts, 9 payments — 2 contracts overpaid, pre-existing legacy discrepancy)
+- Jennifere Pinon — 20042901 (3 contracts, 11 payments — 1 contract overpaid, pre-existing legacy discrepancy)
+- Fernando Loaiza — 20050501 (1 contract, 14 payments, $3,000 — paid)
+
+**Totals imported:** 8 accounts, 12 contracts, 111 payment-to-contract links, 123 payment schedule allocations.
+**Deployed to prod:** all 3 SQL phases applied; prod/dev row counts match.
+
+## 2026-04-11 — Bugfix: Apply Discounts and Writeoffs to payment schedule items
+
+Users can now select Discount and Writeoff types during payment allocation.
+
 ## 2026-04-11 — Feature: PDF Invoice Generation (UI)
 
 Added in-browser invoice generation to the CRM, completing Steps 6-8 of the PDF invoice plan:
