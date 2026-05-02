@@ -1,7 +1,6 @@
 import { FileText, Import, Settings, User } from "lucide-react";
-import { CanAccess, useGetIdentity, useGetOne, useUserMenu } from "ra-core";
+import { CanAccess, useGetIdentity, useUserMenu } from "ra-core";
 import { Link, matchPath, useLocation } from "react-router";
-import type { Sale } from "../types";
 import { RefreshButton } from "@/components/admin/refresh-button";
 import { ThemeModeToggle } from "@/components/admin/theme-mode-toggle";
 import { UserMenu } from "@/components/admin/user-menu";
@@ -15,12 +14,7 @@ const Header = () => {
   const { darkModeLogo, lightModeLogo, title } = useConfigurationContext();
   const location = useLocation();
   const { identity } = useGetIdentity();
-  const { data: currentUser } = useGetOne<Sale>(
-    "users",
-    { id: identity?.id! },
-    { enabled: !!identity },
-  );
-  const isAdmin = !!currentUser?.administrator;
+  const isAdmin = !!identity?.administrator;
 
   let currentPath: string | boolean = "/";
   if (matchPath("/", location.pathname)) {

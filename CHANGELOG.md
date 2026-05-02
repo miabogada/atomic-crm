@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-05-02 — Bugfix: Invoices menu now visible to all admin users
+
+Fixed a bug where the Invoices menu item in the header dropdown was not visible to all admin users. The `isAdmin` check was using a separate `useGetOne` data fetch that could diverge from the auth provider's cached identity. Now reads `administrator` directly from the identity object, consistent with how `CanAccess` works for the Users menu.
+
 ## 2026-04-30 — Data: Import Sigfredo Chavarria (24022801)
 
 Single account migrated from Exchange (not in Access DB — payment pulled from Exchange).
