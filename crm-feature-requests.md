@@ -55,6 +55,14 @@ date: 2026-02-18T01:06:00
 3. evodio gaona- 21030101
 4. jennifere pinon- 20042901
 5. fernando loaiza- 20050501
+- [x] migrate accounts 5/18/26
+1. Susana Valero - 21120601    
+2. Flavia Hernandez - 18013001    
+3. Nancy Hernandez - 16020602    
+4. Jose Lima - 23021701    
+5. Fredy Xiloj - 17022101
+6. Jose Lima
+7. Kady Mariscal 23100601
 ### LMC feedback
 /accounts/create
 - [x] remove or hide Date first consult

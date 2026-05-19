@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-05-18 — Data: Import 6 accounts from Exchange/Access
+
+Migrated 6 legacy accounts. Pre-migration: synced prod → dev, verified 3 previously-imported accounts (Quiroz 24072601, Segovia 22101401, Torres 210122901) are complete and in sync with Exchange.
+
+- Susana Valero Gomez — 21120601 (1 contract, 19 payments, $7,000 — paid)
+- Flavia Hernandez — 18013001 (1 contract, 8 payments, $2,000 — paid)
+- Nancy Hernandez — 16020602 (5 contracts, 9 payments, $2,950 — all paid)
+- Jose Lima — 23021701 (4 contracts, 27 payments, $13,250 — all paid)
+- Fredy & Stephanie Xiloj — 17022101 (3 contracts, 22 payments, $5,250 — all paid)
+- Kady Mariscal — 23100601 (1 contract, 21 payments, $7,500 — paid)
+
+**Totals imported:** 6 accounts, 15 contracts, 91 payment-to-contract links, 204 payment schedule allocations.
+**Deployed to prod:** all 3 SQL phases applied; prod/dev row counts match exactly.
+
 ## 2026-05-02 — Bugfix: Invoices menu now visible to all admin users
 
 Fixed a bug where the Invoices menu item in the header dropdown was not visible to all admin users. The `isAdmin` check was using a separate `useGetOne` data fetch that could diverge from the auth provider's cached identity. Now reads `administrator` directly from the identity object, consistent with how `CanAccess` works for the Users menu.
