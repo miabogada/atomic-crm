@@ -3,6 +3,9 @@ date: 2026-02-18T01:06:00
 ---
 # List of things that need fix
 
+### Known bugs — won't fix
+- [ ] Dashboard task groups (Later, etc.) may show tasks in slightly different order between prod and dev after a db sync. Root cause: PostgreSQL returns up to 1000 tasks per group sorted by `due_date ASC` without a tiebreaker; when multiple tasks share the same due date, heap order varies between instances. A partial client-side sort by `[due_date, id]` was added (`ceeea1f`) but only stabilizes the returned subset. Fix would require a secondary `id` sort at the PostgREST level — not supported cleanly by `ra-supabase-core`. Won't fix: cosmetic, disappears naturally over time as due dates spread out.
+
 ### Post migration feedback
 - [x] task due dates incorrect, seem like created dates from outlook
 - [x] imported payments are mostly not connected to contracts, need logic to infer and correct
@@ -63,6 +66,11 @@ date: 2026-02-18T01:06:00
 5. Fredy Xiloj - 17022101
 6. Jose Lima
 7. Kady Mariscal 23100601
+- [ ] migrate accounts 6/13/26
+1. Abelardo Jimenez - 22071201    
+2. Jose Barajas - 22071301    
+3. David Franco- 23110801
+4. Jose Gutierrez - 15060101
 ### LMC feedback
 /accounts/create
 - [x] remove or hide Date first consult
