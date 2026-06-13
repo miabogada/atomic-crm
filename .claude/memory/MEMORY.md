@@ -101,6 +101,11 @@
 ### Next up
 - Full feature backlog is in `crm-feature-requests.md` (unchecked items)
 
+## Migration notes
+
+- **Access DB retired:** [project_access_db_retired.md](project_access_db_retired.md) — do NOT refresh billing_be.mdb; billing is fully in Atomic CRM as of 2026-05-18.
+- **Prod deployment — follow the skill:** [feedback_migration_prod_deploy.md](feedback_migration_prod_deploy.md) — apply SQL files directly; verify sequences with a quick MAX(id) check; skip backup if sync already ran.
+
 ## Migration gotchas — see migration/README.md for full details
 
 → Details in: `migration/exchange-gotchas.md` (in the repo)
