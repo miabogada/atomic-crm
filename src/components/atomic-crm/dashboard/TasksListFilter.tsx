@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import {
   type Identifier,
   ListContextProvider,
@@ -57,8 +58,19 @@ export const TasksListFilter = ({
     { enabled: filterByContact != null ? true : !!identity },
   );
 
+  const stableTasks = useMemo(() => {
+    if (!tasks) return tasks;
+    return [...tasks].sort((a, b) => {
+      const aVal = (a as any)[sortField] ?? "";
+      const bVal = (b as any)[sortField] ?? "";
+      const primary = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+      if (primary !== 0) return sortOrder === "ASC" ? primary : -primary;
+      return (a.id as number) - (b.id as number);
+    });
+  }, [tasks, sortField, sortOrder]);
+
   const listContext = useList({
-    data: tasks,
+    data: stableTasks,
     isPending,
     resource: "tasks",
     perPage: isMobile ? 10 : 5,
