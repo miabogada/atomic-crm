@@ -1,4 +1,5 @@
 @AGENTS.md
+@SKILLS.md
 
 ## STRICT RULES — DO NOT VIOLATE
 
