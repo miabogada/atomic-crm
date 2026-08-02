@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-08-02 — Data: Import 3 accounts from Exchange/Access
+
+Migrated 3 legacy accounts. Pre-migration: synced prod → dev (full refresh, all row counts and migrations matched). Luis Portillo's account number was given as `2013101` (7 digits, missing the leading "4"); confirmed the correct number `24013101` via an Exchange WebDAV name search across the Account Tracking and Billing Contacts folders before importing.
+
+- Luz Elizabeth Lopez — 23122701 (1 contract, 24 payments, $7,500 — paid)
+- Michelle Serrato & Francisco Gavino — 23121301 (1 contract, 18 payments, $6,500 — paid)
+- Luis Portillo — 24013101 (2 contracts, 3 payments, $6,000 — all paid)
+
+**Totals imported:** 3 accounts, 4 contracts, 41 payment-to-contract links, 90 payment schedule allocations.
+**Deployed to prod:** all 3 SQL phases applied; prod/dev row counts match exactly.
+
 ## 2026-05-18 — Data: Import 6 accounts from Exchange/Access
 
 Migrated 6 legacy accounts. Pre-migration: synced prod → dev, verified 3 previously-imported accounts (Quiroz 24072601, Segovia 22101401, Torres 210122901) are complete and in sync with Exchange.

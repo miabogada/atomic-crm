@@ -68,6 +68,10 @@ date: 2026-02-18T01:06:00
 2. Jose Barajas - 22071301    
 3. David Franco- 23110801
 4. Jose Gutierrez - 15060101
+- [x] migrate accounts 8/2/26
+1. Luz Elizabeth Lopez - 23122701
+2. Michelle Serrato - 23121301
+3. Luis Portillo- 24013101
 ### LMC feedback
 /accounts/create
 - [x] remove or hide Date first consult
