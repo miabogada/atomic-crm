@@ -96,6 +96,27 @@ disaster" on `pve8`; Tier 3 is the last resort if both Proxmox hosts are
 gone at once (e.g. a regional event, or simply being unreachable while
 traveling and unable to get either box back up).
 
+### Detecting an outage, and confirming Tier 1 worked (2026-08-23)
+
+The Cloudflare Tunnel dashboard (Tunnels → `crm` → Overview) is useful for
+both ends of this, at no extra setup cost:
+
+- **The "Replicas" table only lists currently-connected replicas** — it's
+  not a static roster with online/offline status per row. If 703 is
+  genuinely down, its row simply disappears (not "unhealthy," just gone).
+  That's a real, free signal to check when deciding whether an outage is
+  actually happening. Once `cloudflared` is started on 706 for Tier 1, it
+  shows up as a second row with its own Replica ID/Uptime — direct
+  confirmation the step actually worked, no separate check needed.
+- **Set up a Cloudflare tunnel health alert** (the "Configure alerts"
+  panel on that same page) so a replica disconnecting triggers an actual
+  notification, rather than relying on noticing by chance or a staff
+  member reporting the CRM is down. This is the detection mechanism this
+  plan was otherwise missing — everything above assumes you already know
+  an outage is happening. Not yet set up as of this writing — needs to be
+  done directly in the Cloudflare dashboard (no API/tool access available
+  to do this from here).
+
 ### Tier 1 — restore read access (do this immediately, for any outage)
 
 Host B's Postgres **stays read-only** — no promotion. Just bring its
@@ -291,8 +312,16 @@ after:
 ```bash
 # As soon as 703 is reachable again post-incident, BEFORE checking anything else:
 ssh root@10.0.10.228
-docker compose -f /opt/supabase/docker/docker-compose.yml stop cloudflared
+systemctl stop cloudflared
 ```
+
+**Correction, 2026-08-23**: earlier drafts of this doc said
+`docker compose ... stop cloudflared`, assuming it was a compose-managed
+container. Confirmed today via a live test (see "Live-tested the tunnel
+replica" above) that `cloudflared` on 703 is actually a **native systemd
+service** (`/etc/systemd/system/cloudflared.service`, enabled) — it isn't
+in `docker-compose.yml` at all. `systemctl stop cloudflared` is correct;
+the docker compose version above was wrong and would have done nothing.
 
 Only restart `cloudflared` on 703 once it has been deliberately rebuilt as
 the new standby (see below) — never as an automatic side effect of the box
@@ -496,11 +525,76 @@ don't `mkdir` or otherwise touch it manually before that.
       framework capability (from the open-source base this app started
       from) that this workflow has never actually used — not a real gap.
       No further action needed here.
+- [x] Set up a Cloudflare tunnel health alert on the `crm` tunnel — **done
+      2026-08-23** (email notification, "Tunnel Health Alert," triggers on
+      healthy/degraded/down status changes). Confirmed via test send.
+      Scope, precisely: this is **tunnel-wide**, not per-replica — it
+      correctly detects the initial 703 outage today (only one replica
+      exists, so any status change *is* 703), but once 706 is also
+      connected during an active Tier 1 response, the tunnel can stay
+      reported "healthy" even if 703 silently reconnects in the
+      background (healthy just means "at least one replica up," not which
+      ones). This alert doesn't substitute for the split-brain discipline
+      above (stop 703's `cloudflared` the instant it's reachable, before
+      checking anything else) — it solves a different, narrower problem
+      (finding out an outage started at all), not that one.
+- [x] **Live-tested the tunnel replica on 706 — 2026-08-23, Sunday, no
+      active users.** Started via `systemd-run --unit=cloudflared-manual`
+      (detached, survives SSH disconnect, not a persistent/boot-enabled
+      service). Confirmed connected in the Cloudflare dashboard.
+      **Found and fixed a real gap while testing**: the tunnel's ingress
+      config points every replica at `http://localhost:80`, not Kong's
+      port 8000 directly — 703 has Nginx on port 80 proxying specific API
+      paths to Kong (`deployment/nginx-crm.conf` in this repo), and **706
+      had no Nginx at all**. So the replica was genuinely connected to
+      Cloudflare's edge but would have failed every real request routed
+      to it (connection refused) — connected is not the same as working.
+      Installed Nginx on 706 with an identical config (confirmed byte-for-
+      byte match against 703's live `/etc/nginx/sites-enabled/crm` first).
+      Gotcha along the way: `apt-get install nginx` auto-starts it with
+      the stock default config *before* the custom site config gets
+      written; `systemctl enable --now` on an already-running service
+      doesn't reload it, and even an explicit `systemctl reload nginx`
+      didn't pick up the change here — needed a full `systemctl restart
+      nginx`. Verified end-to-end afterward: real Kong response
+      (`Via: kong/2.8.1`, real replicated data) through `localhost:80` on
+      706, the same path Cloudflare's tunnel actually uses.
+      **This means the Tier 1 activation steps in this doc were
+      incomplete until now** — bringing up the `docker compose` stack was
+      necessary but not sufficient; Nginx was the missing piece between
+      the tunnel and Kong. **Left `cloudflared-manual` running** after
+      confirming it works, at the user's request, for live observation in
+      the Cloudflare dashboard — not yet stopped as of this writing. Nginx
+      itself was left running/enabled on 706 regardless (harmless on its
+      own; it only becomes traffic-eligible once `cloudflared` is also
+      connected).
 - [ ] Confirm `VITE_SUPABASE_URL` value directly in Cloudflare Pages project
       env settings.
-- [ ] Get the tunnel token for tunnel `crm` (Cloudflare dashboard → Tunnels →
-      crm → "Add a replica" gives the install command/token) and install
-      `cloudflared` on Host B, but leave it **not started** by default.
+- [x] Install `cloudflared` on 706 — **done 2026-08-23**
+      (`cloudflared version 2026.8.2`, via Cloudflare's apt repo). Used only
+      the "Install cloudflared" step from the dashboard's 3-choice flow
+      (Tunnels → crm → Add a replica → Debian) — deliberately skipped
+      "Install as service" (auto-starts + persists across reboots, not
+      what we want). Confirmed no `cloudflared.service` unit exists and no
+      process is running — installed but fully inert, and will stay that
+      way across a reboot since nothing is registered to start it.
+      **Token storage — done 2026-08-23**: saved in Bitwarden (confirmed
+      already there alongside other prod secrets), and also written to
+      `/opt/cloudflared-tunnel-token.env` on 706 itself (`CF_TUNNEL_TOKEN=
+      ...`, root-only, `chmod 600`) — avoids the token sitting in shell
+      history or being visible in `ps aux` output if typed inline on the
+      command line.
+      **Tier 1 activation command** (not yet run, save for an actual
+      outage): source the file, then run with the env var rather than a
+      literal token on the command line:
+      ```bash
+      set -a; source /opt/cloudflared-tunnel-token.env; set +a
+      cloudflared tunnel run --token "$CF_TUNNEL_TOKEN"
+      ```
+      Still to decide before relying on this: how to run it *detached*
+      from the SSH session (bare foreground dies on disconnect) — a
+      transient `systemd-run --unit=cloudflared-manual ...` unit was
+      proposed but not yet confirmed as the approach.
 - [ ] Add continuous WAL archiving to off-host storage (separate from
       replication) so an accidental delete/corruption doesn't just replicate
       straight to the standby too.
