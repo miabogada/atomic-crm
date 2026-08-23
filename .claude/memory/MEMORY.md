@@ -59,6 +59,10 @@
 
 ## Infrastructure
 
+- **DB resilience/DR build — in progress, paused 2026-08-23 mid-build:**
+  [project_db_resilience.md](project_db_resilience.md) — pve8 warm standby
+  (CT 706) is live and replicating; resume point and known open issue
+  (hot_standby persistence) are in that memory + `docs/db-resilience-plan.md`.
 - **Dev environment**: Proxmox LXC `crm-dev` at `10.0.10.229` (cloned from container 301 `deb11docker`)
   - Repo at `/home/f4rrest/Documents/clarklaw-domain/atomic-crm` (mirrors workstation path)
   - GitHub access via SSH deploy key (ed25519, passphrase-protected)
