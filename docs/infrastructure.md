@@ -64,7 +64,9 @@ The prod frontend is served by Cloudflare Pages (static), so it's unaffected by 
 
 ### 4. Dev services
 
-The database (Supabase CLI Docker containers) should auto-start with Docker. However, **the Vite dev server does NOT auto-start** — it must be launched manually.
+The database (Supabase CLI Docker containers) auto-starts with Docker (`docker.service` is enabled, and each Supabase container has `restart: unless-stopped`).
+
+The Vite dev server auto-starts on boot via a systemd unit, `/etc/systemd/system/vite-dev.service` (added 2026-08-26), which runs `npx vite --host 0.0.0.0` from the repo directory as root, `Restart=on-failure`, `WantedBy=multi-user.target`. No manual step needed after a reboot.
 
 ```bash
 ssh root@10.0.10.229
@@ -72,19 +74,22 @@ ssh root@10.0.10.229
 # Check Supabase containers
 docker ps
 
-# If Supabase containers are not running:
-cd /home/f4rrest/Documents/clarklaw-domain/atomic-crm
-npx supabase start
+# Check the Vite dev server
+systemctl status vite-dev.service
+journalctl -u vite-dev.service -f   # follow logs
 
-# Start the Vite dev server (use tmux so it survives SSH disconnect)
-# (`make start` runs supabase start first, which is redundant if containers are up)
+# Manual restart if needed (e.g. after a dependency install)
+systemctl restart vite-dev.service
+```
+
+If you need an ad-hoc/foreground instance instead (e.g. to test a config change before it's picked up by the service):
+
+```bash
 cd /home/f4rrest/Documents/clarklaw-domain/atomic-crm
+systemctl stop vite-dev.service   # avoid a port conflict with the service
 tmux new -s dev-stack
-docker ps # check if Supabase is running
-npx vite --host 0.0.0.0 # If Supabase is already running
-make start # If Supabase is not already running
-# Ctrl+B, D to detach
-# To reattach later: tmux attach -t dev-stack
+npx vite --host 0.0.0.0
+# Ctrl+B, D to detach; systemctl start vite-dev.service when done
 ```
 
 Access from workstation:
@@ -102,4 +107,4 @@ sshfs root@10.0.10.229:/home/f4rrest/Documents/clarklaw-domain/atomic-crm \
 
 ## Future Improvement
 
-Create a systemd service on `crm-dev` to auto-start Vite on boot, eliminating the manual step in recovery.
+~~Create a systemd service on `crm-dev` to auto-start Vite on boot, eliminating the manual step in recovery.~~ Done 2026-08-26 — see "Dev services" above.

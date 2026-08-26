@@ -104,6 +104,7 @@
 
 ### Next up
 - Full feature backlog is in `crm-feature-requests.md` (unchecked items)
+- **Bug: payment Delete button no-ops while showing success** — [project_payment_delete_bug.md](project_payment_delete_bug.md). Fix scheduled this weekend on crm-dev after DB sync/backup.
 
 ## Migration notes
 
