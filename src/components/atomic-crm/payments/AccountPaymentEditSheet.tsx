@@ -53,9 +53,11 @@ export const AccountPaymentEditSheet = ({
               variant="destructive"
               className="flex-1"
               redirect={false}
-              onClick={() => {
-                notify("Payment deleted");
-                onOpenChange(false);
+              mutationOptions={{
+                onSuccess: () => {
+                  notify("Payment deleted");
+                  onOpenChange(false);
+                },
               }}
             />
           )}

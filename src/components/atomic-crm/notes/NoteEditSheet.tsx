@@ -3,6 +3,8 @@ import {
   type Identifier,
   RecordRepresentation,
   useCreatePath,
+  useNotify,
+  useRedirect,
   WithRecord,
 } from "ra-core";
 import { EditSheet } from "../misc/EditSheet";
@@ -21,6 +23,8 @@ export const NoteEditSheet = ({
   noteId,
 }: NoteEditSheetProps) => {
   const createPath = useCreatePath();
+  const notify = useNotify();
+  const redirect = useRedirect();
   const getRedirectTo = (record: any) => {
     return createPath({
       resource: "contacts",
@@ -62,9 +66,12 @@ export const NoteEditSheet = ({
             <DeleteButton
               variant="destructive"
               className="flex-1"
-              redirect={getRedirectTo(record)}
-              onClick={() => {
-                onOpenChange(false);
+              mutationOptions={{
+                onSuccess: () => {
+                  notify("Note deleted");
+                  onOpenChange(false);
+                  redirect(getRedirectTo(record), "contact_notes");
+                },
               }}
             />
           )}

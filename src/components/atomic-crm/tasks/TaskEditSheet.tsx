@@ -1,5 +1,5 @@
 import { DeleteButton } from "@/components/admin";
-import { type Identifier } from "ra-core";
+import { type Identifier, useNotify } from "ra-core";
 import { EditSheet } from "../misc/EditSheet";
 import { TaskDeleteWarning } from "../misc/DeleteWarnings";
 import { TaskFormContent } from "./TaskFormContent";
@@ -26,6 +26,7 @@ export const TaskEditSheet = ({
   onOpenChange,
   taskId,
 }: TaskEditSheetProps) => {
+  const notify = useNotify();
   return (
     <EditSheet
       resource="tasks"
@@ -40,8 +41,11 @@ export const TaskEditSheet = ({
           variant="destructive"
           className="flex-1"
           redirect={false}
-          onClick={() => {
-            onOpenChange(false);
+          mutationOptions={{
+            onSuccess: () => {
+              notify("Task deleted", { type: "info" });
+              onOpenChange(false);
+            },
           }}
           confirmContent={<TaskDeleteWarning />}
         />

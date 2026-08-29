@@ -1,5 +1,5 @@
 import { DeleteButton } from "@/components/admin";
-import { type Identifier } from "ra-core";
+import { type Identifier, useNotify, useRedirect } from "ra-core";
 
 import { EditSheet } from "../misc/EditSheet";
 import { ContactDeleteWarning } from "../misc/DeleteWarnings";
@@ -17,6 +17,8 @@ export const ContactEditSheet = ({
   onOpenChange,
   contactId,
 }: ContactEditSheetProps) => {
+  const notify = useNotify();
+  const redirect = useRedirect();
   return (
     <EditSheet
       resource="account_contacts"
@@ -29,8 +31,13 @@ export const ContactEditSheet = ({
         <DeleteButton
           variant="destructive"
           className="flex-1"
-          redirect="/account_contacts"
-          onClick={() => onOpenChange(false)}
+          mutationOptions={{
+            onSuccess: () => {
+              notify("Contact deleted");
+              onOpenChange(false);
+              redirect("/account_contacts", "account_contacts");
+            },
+          }}
           confirmContent={<ContactDeleteWarning />}
         />
       }
