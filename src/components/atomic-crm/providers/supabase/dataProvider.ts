@@ -1,8 +1,10 @@
 import { supabaseDataProvider } from "ra-supabase-core";
 import {
   withLifecycleCallbacks,
+  HttpError,
   type DataProvider,
   type GetListParams,
+  type GetManyParams,
   type GetManyReferenceParams,
   type Identifier,
   type ResourceCallbacks,
@@ -143,7 +145,21 @@ const dataProviderWithCustomMethods = {
       return baseDataProvider.getOne("contract_payment_schedule_view", params);
     }
 
-    return baseDataProvider.getOne(resource, params);
+    const result = await baseDataProvider.getOne(resource, params);
+    if (SOFT_DELETE_RESOURCES.has(resource) && (result.data as any)?.deleted_at) {
+      throw new HttpError("Not found", 404);
+    }
+    return result;
+  },
+  async getMany(resource: string, params: GetManyParams) {
+    const result = await baseDataProvider.getMany(resource, params);
+    if (SOFT_DELETE_RESOURCES.has(resource)) {
+      return {
+        ...result,
+        data: result.data.filter((record: any) => !record.deleted_at),
+      };
+    }
+    return result;
   },
 
   async signUp({ email, password, first_name, last_name }: SignUpData) {
