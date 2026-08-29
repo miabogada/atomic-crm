@@ -56,6 +56,7 @@ export const Task = ({
   const [update, { isPending: isUpdatePending, isSuccess, variables }] =
     useUpdate();
   const { handleDelete } = useDeleteWithUndoController({
+    resource: "tasks",
     record: task,
     redirect: false,
     mutationOptions: {
