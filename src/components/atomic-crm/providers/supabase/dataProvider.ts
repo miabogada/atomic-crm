@@ -3,6 +3,7 @@ import {
   withLifecycleCallbacks,
   type DataProvider,
   type GetListParams,
+  type GetManyReferenceParams,
   type Identifier,
   type ResourceCallbacks,
 } from "ra-core";
@@ -115,6 +116,18 @@ const dataProviderWithCustomMethods = {
     }
 
     return baseDataProvider.getList(resource, params);
+  },
+  async getManyReference(resource: string, params: GetManyReferenceParams) {
+    // For soft-delete resources, inject deleted_at IS NULL filter so
+    // ReferenceManyField/ReferenceManyCount don't show/count deleted rows
+    if (SOFT_DELETE_RESOURCES.has(resource)) {
+      return baseDataProvider.getManyReference(resource, {
+        ...params,
+        filter: { ...params.filter, "deleted_at@is": null },
+      });
+    }
+
+    return baseDataProvider.getManyReference(resource, params);
   },
   async getOne(resource: string, params: any) {
     if (resource === "companies") {
