@@ -1,9 +1,25 @@
 ---
 name: project_payment_delete_bug
-description: Four independent bugs made soft-deletes look/behave broken — premature onClick handler, missing getManyReference filter, missing resource="tasks" hitting wrong table, and missing getOne/getMany filters leaking deleted rows into activity feeds. Found/fixed 2026-08-26 to 2026-08-29 on crm-dev.
+description: Five independent bugs — premature onClick handler, missing getManyReference/getOne/getMany filters, missing resource="tasks" hitting wrong table, and the PWA service worker never reloading clients on new deploys (masking that all the other fixes had actually shipped). Found/fixed 2026-08-26 to 2026-08-30.
 metadata:
   type: project
 ---
+
+## Bug 5: PWA service worker never reloads clients on a new deploy (found + fixed 2026-08-30, on PRODUCTION)
+
+After bugs 1-4 were fixed, committed as 4 separate commits, and pushed to `dev` — which is production's actual deploy branch on Cloudflare Pages (custom domain `crm.tanoclark.com`, auto-deploys on push to `dev`; the repo's `.github/workflows/deploy.yml` triggering on `main` is a red herring, unrelated to the real Cloudflare Pages deployment) — the user tried deleting payment 3885 on prod for real. It still didn't work: no confirm dialog appeared at all (single click did nothing), even after a hard refresh, and even after opening a brand new tab following an unrelated Cloudflare Access hang.
+
+Confirmed via direct prod DB query that zero delete attempts ever reached the database (`updated_at` still equals `created_at`) — meaning the browser was still running the **old, pre-fix JS bundle**, not the newly deployed one (verified the deploy itself was healthy: the exact Cloudflare Pages deployment URL for commit `6e3aff3` returned HTTP 200 directly).
+
+**Root cause:** `vite.config.ts` sets `VitePWA({ registerType: "autoUpdate", ... })`, whose docs claim it will "reload all browser windows/tabs with the application open automatically" when a new version activates. But that reload behavior is implemented entirely inside `vite-plugin-pwa`'s `virtual:pwa-register` client helper (`wb.addEventListener("activated", ...) => window.location.reload()`), which the app never imported anywhere. With no explicit import, `injectRegister` (default `"auto"`) fell back to injecting a bare-bones `registerSW.js` that only calls `navigator.serviceWorker.register(...)` — no update detection, no reload, nothing. So `registerType: "autoUpdate"` had been silently inert since the PWA plugin was added: every deploy left already-open (and sometimes freshly-opened, if the new SW hadn't finished activating yet) tabs running stale cached code indefinitely, with zero user-facing signal and no self-healing path short of manually unregistering the service worker in DevTools.
+
+This means **bugs 1-4 were likely working correctly in production the whole time** — the user just could never observe it, because their browser kept re-running the old broken bundle no matter how many times they reloaded.
+
+**Fix:** `src/main.tsx` now imports `registerSW` from `virtual:pwa-register` and calls `registerSW({ immediate: true })`; `src/vite-env.d.ts` adds the `vite-plugin-pwa/client` type reference. Verified via a local `vite build` that (a) the redundant auto-injected `registerSW.js` script tag disappeared from `dist/index.html` (confirming `injectRegister: "auto"` correctly detected the explicit import), and (b) the built JS bundle now actually contains the `workbox-window`/`window.location.reload()` reload-on-activate logic. All 51 unit tests still pass. Typecheck clean.
+
+**Committed separately:** `459b36c` — "fix: service worker never reloads clients on new deploy".
+
+**Important operational note going forward:** any future deploy will, for the *first* time each user visits after that deploy, briefly show old content before the tab auto-reloads once (this is normal and expected — it's the same one-reload lag inherent to service worker activation, just now self-resolving instead of hanging forever). If a bug fix ever again "doesn't seem to work" in production right after a deploy, hard-refreshing twice or waiting a few seconds for the auto-reload should now be sufficient — if it still doesn't self-resolve, treat that as a new, separate incident, not a recurrence of this one.
 
 ## Bug 4: getOne/getMany also missing the deleted_at filter — leaked into "All Activity" panel (found + fixed 2026-08-29)
 
