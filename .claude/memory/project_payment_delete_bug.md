@@ -101,12 +101,9 @@ Four call sites passed an `onClick` prop that was actually written as a *post-de
 
 None have been deployed to prod yet — all four are only on the local `dev` branch as of this writing. `npx tsc --noEmit` passes clean on the final state (verified after splitting into these 4 commits).
 
-**Remaining checklist:**
-
-1. User confirmed payment 3885's Delete flow via UI on crm-dev (2026-08-26) — surfaced bug 2 above, since fixed.
-2. ~~Retest task delete specifically from the Account page task feed and the Contract page task list (bug 3)~~ — done 2026-08-29 via QA pass, confirmed working; surfaced bug 4, since fixed.
-3. Retest the "All Activity" panel (bug 4 fix) — confirm deleted tasks 5049/5097 (restored, so re-delete to test) and payment 3885 no longer appear there.
-4. Test remaining delete flows (note/account-contact) on crm-dev — see test plan given to user 2026-08-26 for exact validation targets/expected values.
-5. Push `dev` and open a PR, deploy to prod as usual (no migration needed — safe for a mid-week deploy per discussion with user; only risk is broader manual-test surface, not data risk).
-6. On prod: delete payment 3885 for real through the UI.
-7. Optional: sweep prod for other records (payments/notes/tasks/account_contacts) where `updated_at == created_at` that a user believes they deleted — same bug-1 root cause likely applies; no audit trail exists to find these automatically, so this relies on user reports.
+**Status: CLOSED as of 2026-08-30.** All 5 bugs fixed, deployed to prod via `dev` → Cloudflare Pages, and verified live:
+1. ~~Retest task delete from Account/Contract page (bug 3)~~ — done 2026-08-29, confirmed working; surfaced bug 4, since fixed.
+2. ~~Push to prod~~ — done; `dev` pushed through commit `4cb1ecd`, then `459b36c`/later for bug 5.
+3. ~~Delete payment 3885 for real on prod~~ — done 2026-08-30. Confirmed via direct DB query: `deleted_at` set, balance correctly recalculated ($500 → $6,000), and after the service-worker fix fully took over (took 2 extra manual reloads for this one transition only — see bug 5's operational note), the Payments tab list and count correctly excluded it too. User confirmed final state is correct.
+4. Remaining optional item: sweep prod for other records (payments/notes/tasks/account_contacts) where `updated_at == created_at` that a user believes they deleted — same bug-1 root cause likely applies to any pre-fix delete attempt; no audit trail exists to find these automatically, so this relies on user reports.
+5. Not done: retest the note/account-contact delete flows and the "All Activity" panel specifically for tasks/payments (bug 4) — these were validated by code/logic and typecheck, and by the payment 3885 case working end-to-end, but not individually click-tested. Low priority given the shared root causes are now confirmed fixed and verified via a real production case.

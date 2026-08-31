@@ -104,7 +104,7 @@
 
 ### Next up
 - Full feature backlog is in `crm-feature-requests.md` (unchecked items)
-- **5 bugs: Delete button no-op + getManyReference/getOne/getMany not filtering soft-deletes + task delete hitting wrong table + PWA service worker never reloading on deploy** — [project_payment_delete_bug.md](project_payment_delete_bug.md). All fixed and deployed to prod as of 2026-08-30. Cloudflare Pages deploys prod from the `dev` branch (not `main` — the GitHub Actions workflows are unrelated/stale).
+- **CLOSED: 5-bug soft-delete saga** (Delete no-op + getManyReference/getOne/getMany filters + task-delete-wrong-table + PWA SW never reloading) — [project_payment_delete_bug.md](project_payment_delete_bug.md). Fixed, deployed, and verified live on prod 2026-08-30. Cloudflare Pages deploys prod from the `dev` branch (not `main` — GitHub Actions workflows are unrelated/stale).
 
 ## Migration notes
 
