@@ -10,7 +10,9 @@ Migrated 4 legacy accounts. Pre-migration: synced prod → dev (full refresh, al
 - Brandon Martinez — 14101601 (no contracts or payments in Exchange or Access; contact, 25 tasks, 64 activities only — billing status pending confirmation from the attorney)
 
 **Totals imported:** 4 accounts, 6 contracts, 54 payment-to-contract links, 78 payment schedule allocations. 5 imported tasks are still open (3 overdue).
-**Deployed to prod:** all 3 SQL phases applied; prod/dev row counts match exactly. Prod sequences were verified to match dev before applying, so the dev-generated IDs were valid on prod. `--apply` in `associate_payments.py` / `link_payment_schedule.py` still targets the removed local container, so the generated SQL was applied with `psql` instead.
+**Deployed to prod:** all 3 SQL phases applied; prod/dev row counts match exactly. Prod sequences were verified to match dev before applying, so the dev-generated IDs were valid on prod. `--apply` in `associate_payments.py` / `link_payment_schedule.py` still targeted the removed local container, so the generated SQL was applied with `psql` instead (`--apply` fixed afterwards, see below).
+
+**Fix — migration `--apply` targets the dev LXC:** `associate_payments.py` and `link_payment_schedule.py` `--apply` were hard-coded to `docker exec supabase_db_atomic-crm-demo`, a local container that no longer exists, so they failed without applying anything. Both now call a shared `apply_sql_to_dev()` in `fetch_sample.py`, which runs `psql` against the dev LXC with the same settings as `scripts/db-sync-prod-to-local.sh` and `ON_ERROR_STOP=1`. Also updated `fetch_sample.py`'s "Next steps" output, which still pointed at localhost.
 
 ## 2026-08-02 — Data: Import 3 accounts from Exchange/Access
 

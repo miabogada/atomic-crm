@@ -58,9 +58,11 @@ python3 migration/fetch_sample.py --account <account_numbers...>
 # Dry run — generates CSVs + SQL, no DB changes
 python3 migration/associate_payments.py
 
-# Apply to dev LXC (SUPABASE_REST_URL in migration/.env)
+# Apply to dev LXC (psql via docker; reads SUPABASE_DEV_PW from env or .env.development.local)
 python3 migration/associate_payments.py --apply
 ```
+
+**`--apply` (Phases 2 and 3) is dev-only.** It applies the generated SQL to the dev LXC with the same connection settings as `scripts/db-sync-prod-to-local.sh` (`DEV_LXC_HOST`/`DEV_LXC_PORT`/`DEV_LXC_USER` override the defaults). It never touches prod — Phase 4 applies the SQL files to prod by hand.
 
 **Validation (mandatory before applying):**
 1. Review `migration/output/associate_payments_report.csv` — per-payment rule/reason assignments

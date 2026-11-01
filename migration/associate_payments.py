@@ -27,7 +27,7 @@ from typing import Optional
 
 # Reuse shared infrastructure from fetch_sample.py
 sys.path.insert(0, str(Path(__file__).parent))
-from fetch_sample import OUTPUT_DIR, _supabase_get, sql_str
+from fetch_sample import OUTPUT_DIR, _supabase_get, apply_sql_to_dev, sql_str
 
 
 # ---------------------------------------------------------------------------
@@ -636,19 +636,7 @@ def main():
     print()
 
     if args.apply:
-        import subprocess
-        print("Applying SQL via docker psql...")
-        result = subprocess.run(
-            ["docker", "exec", "-i", "supabase_db_atomic-crm-demo",
-             "psql", "-U", "postgres", "-f", "-"],
-            input=sql.encode(),
-            capture_output=True,
-        )
-        print(result.stdout.decode())
-        if result.returncode != 0:
-            print("STDERR:", result.stderr.decode())
-            sys.exit(1)
-        print("Done.")
+        apply_sql_to_dev(sql)
     else:
         print("Next steps:")
         print(f"  1. Review  {report_path}")

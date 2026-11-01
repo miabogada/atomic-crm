@@ -90,6 +90,39 @@ except ImportError:
 OUTPUT_DIR = Path(__file__).parent / "output"
 OUTPUT_DIR.mkdir(exist_ok=True)
 
+
+def apply_sql_to_dev(sql: str) -> None:
+    """
+    Apply generated SQL to the dev LXC database (used by --apply in the
+    Phase 2/3 scripts). Same connection settings and env vars as
+    scripts/db-sync-prod-to-local.sh. Dev only — prod is applied by hand.
+    SUPABASE_DEV_PW comes from the environment or .env.development.local.
+    """
+    host = os.environ.get("DEV_LXC_HOST", "10.0.10.229")
+    port = os.environ.get("DEV_LXC_PORT", "54322")
+    user = os.environ.get("DEV_LXC_USER", "supabase_admin")
+    pw = os.environ.get("SUPABASE_DEV_PW") or _load_env(
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".env.development.local")
+    ).get("SUPABASE_DEV_PW", "")
+    if not pw:
+        print("ERROR: SUPABASE_DEV_PW is not set (env or .env.development.local).")
+        sys.exit(1)
+
+    print(f"Applying SQL to dev LXC ({host}:{port}) via docker psql...")
+    result = subprocess.run(
+        ["docker", "run", "--rm", "-i", "-e", "PGPASSWORD", "postgres:15",
+         "psql", "-v", "ON_ERROR_STOP=1", "-h", host, "-p", port, "-U", user,
+         "-d", "postgres", "-f", "-"],
+        input=sql.encode(),
+        capture_output=True,
+        env={**os.environ, "PGPASSWORD": pw},
+    )
+    print(result.stdout.decode())
+    if result.returncode != 0:
+        print("STDERR:", result.stderr.decode())
+        sys.exit(1)
+    print("Done.")
+
 EXCHANGE_AUTH = (EXCHANGE_USER, EXCHANGE_PASS)
 
 # ---------------------------------------------------------------------------
@@ -1434,9 +1467,10 @@ def main():
 
     print("Next steps:")
     print(f"  1. Review  {sql_path}")
-    print(f"  2. Apply:  psql postgresql://postgres:postgres@localhost:54322/postgres \\")
-    print(f"               -f {sql_path}")
-    print("  3. Verify: open http://localhost:5173 and check the 5 accounts")
+    print(f"  2. Apply to dev LXC:  export $(grep SUPABASE_DEV_PW .env.development.local) && \\")
+    print(f"       docker run --rm -i -e PGPASSWORD=$SUPABASE_DEV_PW postgres:15 psql -v ON_ERROR_STOP=1 \\")
+    print(f"       -h 10.0.10.229 -p 54322 -U postgres -d postgres < {sql_path}")
+    print("  3. Verify: open http://10.0.10.229:5173 and check the imported accounts")
     print()
 
 
