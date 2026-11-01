@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-11-01 — Data: Import 4 accounts from Exchange/Access
+
+Migrated 4 legacy accounts. Pre-migration: synced prod → dev (full refresh, all row counts and migrations matched). The request listed Sabas Carrillo Lopez under `22082901` (David Chavez & Elisa Lopez's number) and repeated two entries; confirmed the correct number `25011701` via an Exchange WebDAV name search of the Account Tracking folder before importing.
+
+- David Chavez & Elisa Lopez — 22082901 (1 contract, 30 payments, $12,000 — paid)
+- Sabas Carrillo Lopez — 25011701 (1 contract, 9 payments, $3,500 — paid)
+- Mario Contreras Gonzalez — 21101101 (4 contracts, 21 payments, $10,000 — all paid)
+- Brandon Martinez — 14101601 (no contracts or payments in Exchange or Access; contact, 25 tasks, 64 activities only — billing status pending confirmation from the attorney)
+
+**Totals imported:** 4 accounts, 6 contracts, 54 payment-to-contract links, 78 payment schedule allocations. 5 imported tasks are still open (3 overdue).
+**Deployed to prod:** all 3 SQL phases applied; prod/dev row counts match exactly. Prod sequences were verified to match dev before applying, so the dev-generated IDs were valid on prod. `--apply` in `associate_payments.py` / `link_payment_schedule.py` still targets the removed local container, so the generated SQL was applied with `psql` instead.
+
 ## 2026-08-02 — Data: Import 3 accounts from Exchange/Access
 
 Migrated 3 legacy accounts. Pre-migration: synced prod → dev (full refresh, all row counts and migrations matched). Luis Portillo's account number was given as `2013101` (7 digits, missing the leading "4"); confirmed the correct number `24013101` via an Exchange WebDAV name search across the Account Tracking and Billing Contacts folders before importing.

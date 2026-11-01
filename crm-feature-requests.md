@@ -72,6 +72,11 @@ date: 2026-02-18T01:06:00
 1. Luz Elizabeth Lopez - 23122701
 2. Michelle Serrato - 23121301
 3. Luis Portillo- 24013101
+- [x] migrate accounts 11/1/26
+- David Chavez & Elisa Lopez: 22082901
+- Sabas Carrillo Lopez: 25011701
+- Mario Contreras Gonzalez: 21101101
+- Brandon Martinez 14101601
 ### LMC feedback
 /accounts/create
 - [x] remove or hide Date first consult
