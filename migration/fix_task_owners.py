@@ -24,6 +24,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from fetch_sample import (
     OUTPUT_DIR,
     _supabase_get,
+    apply_sql_to_dev,
     fetch_exchange_items,
     fetch_users_map,
     resolve_user_id,
@@ -196,24 +197,11 @@ def main():
     print()
 
     if args.apply:
-        import subprocess
-        print("Applying SQL via docker psql...")
-        result = subprocess.run(
-            ["docker", "exec", "-i", "supabase_db_atomic-crm-demo",
-             "psql", "-U", "postgres", "-f", "-"],
-            input=sql.encode(),
-            capture_output=True,
-        )
-        print(result.stdout.decode())
-        if result.returncode != 0:
-            print("STDERR:", result.stderr.decode())
-            sys.exit(1)
-        print("Done.")
+        apply_sql_to_dev(sql)
     else:
         print("Next steps:")
         print(f"  1. Review  {sql_path}")
-        print(f"  2. Apply:  docker exec -i supabase_db_atomic-crm-demo psql -U postgres < {sql_path}")
-        print(f"  3. Or rerun with --apply to apply directly")
+        print(f"  2. Rerun with --apply to apply to the dev LXC")
 
 
 if __name__ == "__main__":

@@ -46,6 +46,9 @@ EXCHANGE_PASS    = _env.get("EXCHANGE_PASS") or os.environ.get("EXCHANGE_PASS", 
 
 import requests
 
+sys.path.insert(0, str(Path(__file__).parent))
+from fetch_sample import run_dev_psql
+
 EXCHANGE_FOLDER       = EXCHANGE_URL.rstrip("/") + "/public/Account%20Tracking/"
 EXCHANGE_FOLDER_SCOPE = EXCHANGE_URL.rstrip("/") + "/public/Account Tracking/"
 EXCHANGE_AUTH         = (EXCHANGE_USER, EXCHANGE_PASS)
@@ -235,11 +238,11 @@ def parse_search_response(xml_text: str) -> list:
 
 
 # ---------------------------------------------------------------------------
-# CRM (local Supabase)
+# CRM (dev LXC)
 # ---------------------------------------------------------------------------
 
 def get_crm_payments(account_numbers: list) -> dict:
-    """Get payments from local CRM database."""
+    """Get payments from the dev LXC CRM database."""
     acct_list = ",".join(f"'{a}'" for a in account_numbers)
     query = f"""
     SELECT a.account_number, ap.date_received, ap.amount, ap.payment_method,
@@ -251,10 +254,8 @@ def get_crm_payments(account_numbers: list) -> dict:
       AND ap.deleted_at IS NULL
     ORDER BY a.account_number, ap.date_received;
     """
-    result_text = subprocess.run(
-        ["docker", "exec", "supabase_db_atomic-crm-demo",
-         "psql", "-U", "postgres", "-t", "-A", "-F", "|", "-c", query],
-        capture_output=True, text=True, check=True,
+    result_text = run_dev_psql(
+        ["-t", "-A", "-F", "|", "-c", query], check=True,
     ).stdout.strip()
 
     result = {acct: [] for acct in account_numbers}

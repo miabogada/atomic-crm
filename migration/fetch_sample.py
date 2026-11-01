@@ -91,35 +91,42 @@ OUTPUT_DIR = Path(__file__).parent / "output"
 OUTPUT_DIR.mkdir(exist_ok=True)
 
 
-def apply_sql_to_dev(sql: str) -> None:
+DEV_LXC_HOST = os.environ.get("DEV_LXC_HOST", "10.0.10.229")
+DEV_LXC_PORT = os.environ.get("DEV_LXC_PORT", "54322")
+DEV_LXC_USER = os.environ.get("DEV_LXC_USER", "supabase_admin")
+
+
+def run_dev_psql(psql_args: list, input: Optional[str] = None, check: bool = False) -> subprocess.CompletedProcess:
     """
-    Apply generated SQL to the dev LXC database (used by --apply in the
-    Phase 2/3 scripts). Same connection settings and env vars as
-    scripts/db-sync-prod-to-local.sh. Dev only — prod is applied by hand.
+    Run psql (via docker) against the dev LXC database. Same connection
+    settings and env vars as scripts/db-sync-prod-to-local.sh. Dev only.
     SUPABASE_DEV_PW comes from the environment or .env.development.local.
     """
-    host = os.environ.get("DEV_LXC_HOST", "10.0.10.229")
-    port = os.environ.get("DEV_LXC_PORT", "54322")
-    user = os.environ.get("DEV_LXC_USER", "supabase_admin")
     pw = os.environ.get("SUPABASE_DEV_PW") or _load_env(
         os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".env.development.local")
     ).get("SUPABASE_DEV_PW", "")
     if not pw:
         print("ERROR: SUPABASE_DEV_PW is not set (env or .env.development.local).")
         sys.exit(1)
-
-    print(f"Applying SQL to dev LXC ({host}:{port}) via docker psql...")
-    result = subprocess.run(
+    return subprocess.run(
         ["docker", "run", "--rm", "-i", "-e", "PGPASSWORD", "postgres:15",
-         "psql", "-v", "ON_ERROR_STOP=1", "-h", host, "-p", port, "-U", user,
-         "-d", "postgres", "-f", "-"],
-        input=sql.encode(),
-        capture_output=True,
+         "psql", "-v", "ON_ERROR_STOP=1", "-h", DEV_LXC_HOST, "-p", DEV_LXC_PORT,
+         "-U", DEV_LXC_USER, "-d", "postgres", *psql_args],
+        input=input, capture_output=True, text=True, check=check,
         env={**os.environ, "PGPASSWORD": pw},
     )
-    print(result.stdout.decode())
+
+
+def apply_sql_to_dev(sql: str) -> None:
+    """
+    Apply generated SQL to the dev LXC database (used by --apply in the
+    migration scripts). Dev only — prod is applied by hand.
+    """
+    print(f"Applying SQL to dev LXC ({DEV_LXC_HOST}:{DEV_LXC_PORT}) via docker psql...")
+    result = run_dev_psql(["-f", "-"], input=sql)
+    print(result.stdout)
     if result.returncode != 0:
-        print("STDERR:", result.stderr.decode())
+        print("STDERR:", result.stderr)
         sys.exit(1)
     print("Done.")
 
