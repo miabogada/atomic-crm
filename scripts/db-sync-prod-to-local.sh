@@ -95,10 +95,10 @@ dev_psql() {
 
 echo "Step 2/7: Applying any pending migrations (schema only)..."
 if [ "$DEV_MODE" = "lxc" ]; then
-  PGSSLMODE=disable npx supabase migration up \
+  PGSSLMODE=disable npx -y supabase@2 migration up \
     --db-url "postgresql://${DEV_LXC_USER}:${DEV_LXC_PW}@${DEV_LXC_HOST}:${DEV_LXC_PORT}/postgres"
 else
-  npx supabase migration up
+  npx -y supabase@2 migration up
 fi
 
 echo "Step 3/7: Disabling on_auth_user_created trigger..."

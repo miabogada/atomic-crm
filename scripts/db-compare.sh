@@ -48,5 +48,5 @@ docker run --rm -e PGPASSWORD="$PROD_PW" postgres:15 \
 
 echo ""
 echo "=== Migration status ==="
-PGSSLMODE=disable npx supabase migration list \
+PGSSLMODE=disable npx -y supabase@2 migration list \
   --db-url "postgresql://${PROD_USER}:${PROD_PW}@${PROD_HOST}:${PROD_PORT}/postgres"

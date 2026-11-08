@@ -45,7 +45,7 @@ docker exec -e PGPASSWORD=postgres "$LOCAL_CONTAINER" pg_dump \
 echo "  Dumped to $DUMP_FILE ($(wc -l < "$DUMP_FILE") lines)"
 
 echo "Step 2/6: Pushing any pending migrations to prod..."
-PGSSLMODE=disable npx supabase db push --db-url "postgresql://$PROD_USER:$PROD_PW@$PROD_HOST:$PROD_PORT/postgres"
+PGSSLMODE=disable npx -y supabase@2 db push --db-url "postgresql://$PROD_USER:$PROD_PW@$PROD_HOST:$PROD_PORT/postgres"
 
 echo "Step 3/6: Disabling on_auth_user_created trigger on prod..."
 docker run --rm -e PGPASSWORD="$PROD_PW" postgres:15 psql \
