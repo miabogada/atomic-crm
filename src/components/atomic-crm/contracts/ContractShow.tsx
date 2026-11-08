@@ -126,10 +126,10 @@ const ContractShowContent = () => {
                 )}
               </div>
               <div className="text-sm text-muted-foreground">
-                {record.case_type && <span>{record.case_type}</span>}
+                {record.case_types_label && <span>{record.case_types_label}</span>}
                 {record.date_opened && (
                   <span>
-                    {record.case_type && " \u00b7 "}
+                    {record.case_types_label && " \u00b7 "}
                     Opened {record.date_opened}
                   </span>
                 )}

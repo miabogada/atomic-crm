@@ -9,6 +9,8 @@ import {
 import fakeRestDataProvider from "ra-data-fakerest";
 
 import type {
+  AccountContract,
+  CaseType,
   Company,
   Contact,
   ContactNote,
@@ -25,6 +27,7 @@ import { mergeContacts } from "../commons/mergeContacts";
 import type { CrmDataProvider } from "../types";
 import { authProvider, USER_STORAGE_KEY } from "./authProvider";
 import generateData from "./dataGenerator";
+import { caseTypeViewFields } from "./dataGenerator/case_types";
 import { withSupabaseFilterAdapter } from "./internal/supabaseAdapter";
 
 const baseDataProvider = fakeRestDataProvider(generateData(), true, 300);
@@ -285,6 +288,25 @@ async function updateCompany(
 export const dataProvider = withLifecycleCallbacks(
   withSupabaseFilterAdapter(dataProviderWithCustomMethod),
   [
+    {
+      // Emulate account_contracts_summary: keep case type names/label in sync
+      resource: "account_contracts",
+      beforeSave: async (data: AccountContract, dataProvider) => {
+        if (!data.case_type_ids) return data;
+        const { data: caseTypes } = await dataProvider.getList<CaseType>(
+          "case_types",
+          {
+            pagination: { page: 1, perPage: 1000 },
+            sort: { field: "name", order: "ASC" },
+            filter: {},
+          },
+        );
+        return {
+          ...data,
+          ...caseTypeViewFields(caseTypes, data.case_type_ids, data.case_type),
+        };
+      },
+    } satisfies ResourceCallbacks<AccountContract>,
     {
       resource: "users",
       beforeCreate: async (params) => {

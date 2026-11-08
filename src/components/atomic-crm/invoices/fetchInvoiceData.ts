@@ -82,7 +82,7 @@ export async function fetchInvoiceData(
 
   // 2. Fetch contracts
   const { data: contracts, error: contractsErr } = await supabase
-    .from("account_contracts")
+    .from("account_contracts_summary")
     .select("*")
     .eq("account_id", accountId)
     .is("deleted_at", null)
@@ -121,7 +121,7 @@ export async function fetchInvoiceData(
     (c: Record<string, unknown>) => ({
       date: (c.date_opened as string) ?? "",
       contractNumber: `${(c.contract_number as string) ?? ""}`,
-      description: (c.case_type as string) ?? "",
+      description: (c.case_types_label as string) ?? "",
       fee: (c.fee as number) ?? 0,
     }),
   );

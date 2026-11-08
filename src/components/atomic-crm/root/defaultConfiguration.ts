@@ -58,26 +58,6 @@ export const defaultTaskTypes = [
   "Document Request",
 ];
 
-export const defaultCaseTypes = [
-  "Adjustment of Status",
-  "Consular Processing",
-  "Naturalization",
-  "Removal Defense",
-  "Asylum",
-  "VAWA",
-  "U-Visa",
-  "T-Visa",
-  "DACA",
-  "TPS",
-  "Employment Authorization",
-  "Family Petition",
-  "Labor Certification",
-  "H-1B",
-  "L-1",
-  "O-1",
-  "Other",
-];
-
 export const defaultTaskStatuses = [
   "To do",
   "In Process",

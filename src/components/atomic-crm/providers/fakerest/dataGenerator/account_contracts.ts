@@ -1,9 +1,7 @@
 import { datatype, lorem, random } from "faker/locale/en_US";
 
-import {
-  defaultCaseTypes,
-  defaultContractStatuses,
-} from "../../../root/defaultConfiguration";
+import { defaultContractStatuses } from "../../../root/defaultConfiguration";
+import { caseTypeViewFields } from "./case_types";
 import type { AccountContract } from "../../../types";
 import type { Db } from "./types";
 import { randomDate, randomFloat } from "./utils";
@@ -28,11 +26,21 @@ export const generateAccountContracts = (db: Db): AccountContract[] => {
         (remaining - monthly * (numPayments - 1)).toFixed(2),
       );
 
+      // 1-2 case types per contract
+      const case_type_ids = [
+        ...new Set(
+          Array.from({ length: datatype.number({ min: 1, max: 2 }) }, () =>
+            random.arrayElement(db.case_types).id,
+          ),
+        ),
+      ];
+
       contracts.push({
         id: id++,
         account_id: account.id,
         contract_number: `${account.account_number}${String.fromCharCode(65 + i)}`,
-        case_type: random.arrayElement(defaultCaseTypes),
+        case_type_ids,
+        ...caseTypeViewFields(db.case_types, case_type_ids),
         status: random.arrayElement(defaultContractStatuses),
         fee,
         retainer,

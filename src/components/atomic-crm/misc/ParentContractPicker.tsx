@@ -69,7 +69,9 @@ export function ParentContractPicker() {
           {contracts?.map((contract) => (
             <SelectItem key={contract.id} value={String(contract.id)}>
               {contract.contract_number ?? `#${contract.id}`}
-              {contract.case_type ? ` · ${contract.case_type}` : ""}
+              {contract.case_types_label
+                ? ` · ${contract.case_types_label}`
+                : ""}
             </SelectItem>
           ))}
         </SelectContent>

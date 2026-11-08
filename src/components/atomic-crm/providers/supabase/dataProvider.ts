@@ -65,8 +65,95 @@ const SOFT_DELETE_RESOURCES = new Set([
   "tasks",
 ]);
 
+// Resources read through a view that adds computed columns. Writes still go
+// to the underlying table.
+const READ_VIEWS: Record<string, string> = {
+  account_contracts: "account_contracts_summary",
+};
+const readResource = (resource: string) => READ_VIEWS[resource] ?? resource;
+
+// Computed (view-only) contract fields that must never be written to the table
+const CONTRACT_VIEW_FIELDS = [
+  "case_type_ids",
+  "case_type_names",
+  "case_types_label",
+] as const;
+
+/**
+ * Replace a contract's case types in the account_contract_case_types join table.
+ * Inserts new links before deleting removed ones, so a failure part-way never
+ * leaves the contract with fewer case types than it started with.
+ */
+const syncContractCaseTypes = async (
+  contractId: Identifier,
+  caseTypeIds: Identifier[],
+) => {
+  const ids = [...new Set(caseTypeIds.map(Number))];
+  if (ids.length > 0) {
+    const { error } = await supabase
+      .from("account_contract_case_types")
+      .upsert(
+        ids.map((case_type_id) => ({ contract_id: contractId, case_type_id })),
+        { onConflict: "contract_id,case_type_id", ignoreDuplicates: true },
+      );
+    if (error) throw new Error(`Failed to save case types: ${error.message}`);
+  }
+  let del = supabase
+    .from("account_contract_case_types")
+    .delete()
+    .eq("contract_id", contractId);
+  if (ids.length > 0) del = del.not("case_type_id", "in", `(${ids.join(",")})`);
+  const { error } = await del;
+  if (error) throw new Error(`Failed to save case types: ${error.message}`);
+};
+
+/** Split contract form data into table columns and the case type ids (if present). */
+const splitContractData = (data: Record<string, any>) => {
+  const tableData = { ...data };
+  const caseTypeIds = tableData.case_type_ids as Identifier[] | undefined;
+  for (const field of CONTRACT_VIEW_FIELDS) delete tableData[field];
+  return { tableData, caseTypeIds };
+};
+
+/** baseDataProvider with view routing for reads, for internal helpers like the activity log. */
+const baseReadProvider: DataProvider = {
+  ...baseDataProvider,
+  getList: (resource, params) =>
+    baseDataProvider.getList(readResource(resource), params),
+};
+
 const dataProviderWithCustomMethods = {
   ...baseDataProvider,
+  async create(resource: string, params: any) {
+    if (resource === "account_contracts") {
+      const { tableData, caseTypeIds } = splitContractData(params.data);
+      const result = await baseDataProvider.create(resource, {
+        ...params,
+        data: tableData,
+      });
+      if (caseTypeIds) await syncContractCaseTypes(result.data.id, caseTypeIds);
+      return baseDataProvider.getOne(readResource(resource), {
+        id: result.data.id,
+      });
+    }
+    return baseDataProvider.create(resource, params);
+  },
+  async update(resource: string, params: any) {
+    if (resource === "account_contracts") {
+      const { tableData, caseTypeIds } = splitContractData(params.data);
+      const { tableData: previousData } = splitContractData(
+        params.previousData ?? {},
+      );
+      await baseDataProvider.update(resource, {
+        ...params,
+        data: tableData,
+        previousData,
+      });
+      if (caseTypeIds) await syncContractCaseTypes(params.id, caseTypeIds);
+      return baseDataProvider.getOne(readResource(resource), { id: params.id });
+    }
+    return baseDataProvider.update(resource, params);
+  },
   async delete(resource: string, params: any) {
     // Soft delete: set deleted_at instead of hard delete
     if (SOFT_DELETE_RESOURCES.has(resource)) {
@@ -111,25 +198,25 @@ const dataProviderWithCustomMethods = {
     // For soft-delete resources queried directly (not via views),
     // inject deleted_at IS NULL filter
     if (SOFT_DELETE_RESOURCES.has(resource)) {
-      return baseDataProvider.getList(resource, {
+      return baseDataProvider.getList(readResource(resource), {
         ...params,
         filter: { ...params.filter, "deleted_at@is": null },
       });
     }
 
-    return baseDataProvider.getList(resource, params);
+    return baseDataProvider.getList(readResource(resource), params);
   },
   async getManyReference(resource: string, params: GetManyReferenceParams) {
     // For soft-delete resources, inject deleted_at IS NULL filter so
     // ReferenceManyField/ReferenceManyCount don't show/count deleted rows
     if (SOFT_DELETE_RESOURCES.has(resource)) {
-      return baseDataProvider.getManyReference(resource, {
+      return baseDataProvider.getManyReference(readResource(resource), {
         ...params,
         filter: { ...params.filter, "deleted_at@is": null },
       });
     }
 
-    return baseDataProvider.getManyReference(resource, params);
+    return baseDataProvider.getManyReference(readResource(resource), params);
   },
   async getOne(resource: string, params: any) {
     if (resource === "companies") {
@@ -145,14 +232,14 @@ const dataProviderWithCustomMethods = {
       return baseDataProvider.getOne("contract_payment_schedule_view", params);
     }
 
-    const result = await baseDataProvider.getOne(resource, params);
+    const result = await baseDataProvider.getOne(readResource(resource), params);
     if (SOFT_DELETE_RESOURCES.has(resource) && (result.data as any)?.deleted_at) {
       throw new HttpError("Not found", 404);
     }
     return result;
   },
   async getMany(resource: string, params: GetManyParams) {
-    const result = await baseDataProvider.getMany(resource, params);
+    const result = await baseDataProvider.getMany(readResource(resource), params);
     if (SOFT_DELETE_RESOURCES.has(resource)) {
       return {
         ...result,
@@ -282,10 +369,10 @@ const dataProviderWithCustomMethods = {
     );
   },
   async getActivityLog(companyId?: Identifier) {
-    return getActivityLog(baseDataProvider, companyId);
+    return getActivityLog(baseReadProvider, companyId);
   },
   async getAccountActivityLog(accountId: Identifier) {
-    return getActivityLog(baseDataProvider, undefined, undefined, accountId);
+    return getActivityLog(baseReadProvider, undefined, undefined, accountId);
   },
   async isInitialized() {
     return getIsInitialized();
@@ -407,7 +494,9 @@ const lifeCycleCallbacks: ResourceCallbacks[] = [
   {
     resource: "account_contracts",
     beforeGetList: async (params) => {
-      return applyFullTextSearch(["contract_number", "case_type"])(params);
+      return applyFullTextSearch(["contract_number", "case_types_label"])(
+        params,
+      );
     },
   },
   {

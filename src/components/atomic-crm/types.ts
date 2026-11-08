@@ -337,7 +337,13 @@ export type AccountContact = {
 export type AccountContract = {
   account_id: Identifier;
   contract_number?: string;
+  /** Legacy free-text case type from the old system (read-only; see case_type_ids) */
   case_type?: string;
+  /** Case types (join table account_contract_case_types; read via account_contracts_summary) */
+  case_type_ids?: Identifier[];
+  case_type_names?: string[];
+  /** Comma-joined case type names, falling back to legacy case_type */
+  case_types_label?: string | null;
   status?: string;
   fee?: number;
   retainer?: number;
@@ -352,6 +358,11 @@ export type AccountContract = {
   user_id?: Identifier | null;
 } & Pick<RaRecord, "id">;
 
+export type CaseType = {
+  name: string;
+  active: boolean;
+  created_at: string;
+} & Pick<RaRecord, "id">;
 
 export type ContractPaymentSchedule = {
   contract_id: Identifier;
@@ -366,6 +377,7 @@ export type ContractPaymentSchedule = {
   // Denormalized from view / FakeRest generator
   contract_number?: string;
   case_type?: string;
+  case_types_label?: string | null;
   account_name?: string;
   account_number?: string;
   status?: 'upcoming' | 'due' | 'late' | 'partial' | 'paid';

@@ -78,10 +78,10 @@ export const AccountContractsList = () => {
                     )}
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    {contract.case_type && <span>{contract.case_type}</span>}
+                    {contract.case_types_label && <span>{contract.case_types_label}</span>}
                     {contract.date_opened && (
                       <span>
-                        {contract.case_type && " \u00b7 "}
+                        {contract.case_types_label && " \u00b7 "}
                         Opened {contract.date_opened}
                       </span>
                     )}

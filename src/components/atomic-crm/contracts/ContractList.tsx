@@ -50,7 +50,7 @@ const ContractListLayout = () => {
 
 const ContractListActions = () => (
   <TopToolbar>
-    <SortButton fields={["contract_number", "case_type", "fee", "created_at"]} />
+    <SortButton fields={["contract_number", "case_types_label", "fee", "created_at"]} />
     <CreateButton />
   </TopToolbar>
 );

@@ -156,8 +156,8 @@ export const AccountAside = ({
                 >
                   <span className="truncate text-left">
                     {label}
-                    {c.case_type && (
-                      <span className="text-muted-foreground font-normal"> · {c.case_type}</span>
+                    {c.case_types_label && (
+                      <span className="text-muted-foreground font-normal"> · {c.case_types_label}</span>
                     )}
                   </span>
                   {isSelected && <CircleX className="opacity-50 shrink-0" />}

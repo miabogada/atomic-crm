@@ -3,7 +3,6 @@ import { createContext, useContext, type ReactNode } from "react";
 import type { ContactGender, DealStage, NoteStatus } from "../types";
 import {
   defaultAccountCategories,
-  defaultCaseTypes,
   defaultCompanySectors,
   defaultContactGender,
   defaultContractStatuses,
@@ -22,7 +21,6 @@ import {
 // Define types for the context value
 export interface ConfigurationContextValue {
   accountCategories: string[];
-  caseTypes: string[];
   companySectors: string[];
   contractStatuses: string[];
   dealCategories: string[];
@@ -48,7 +46,6 @@ export interface ConfigurationProviderProps extends ConfigurationContextValue {
 // eslint-disable-next-line react-refresh/only-export-components
 export const ConfigurationContext = createContext<ConfigurationContextValue>({
   accountCategories: defaultAccountCategories,
-  caseTypes: defaultCaseTypes,
   companySectors: defaultCompanySectors,
   contractStatuses: defaultContractStatuses,
   dealCategories: defaultDealCategories,
@@ -68,7 +65,6 @@ export const ConfigurationContext = createContext<ConfigurationContextValue>({
 export const ConfigurationProvider = ({
   children,
   accountCategories,
-  caseTypes,
   companySectors,
   contractStatuses,
   dealCategories,
@@ -88,7 +84,6 @@ export const ConfigurationProvider = ({
   <ConfigurationContext.Provider
     value={{
       accountCategories,
-      caseTypes,
       companySectors,
       contractStatuses,
       dealCategories,

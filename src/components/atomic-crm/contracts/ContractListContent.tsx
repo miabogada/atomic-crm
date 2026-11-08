@@ -124,7 +124,7 @@ const ContractItemContent = ({ contract }: { contract: AccountContract }) => {
             >
               <TextField source="name" />
             </ReferenceField>
-            {contract.case_type && ` \u00b7 ${contract.case_type}`}
+            {contract.case_types_label && ` \u00b7 ${contract.case_types_label}`}
             {contract.date_opened && ` \u00b7 Opened ${contract.date_opened}`}
           </div>
           {contract.fee != null && (

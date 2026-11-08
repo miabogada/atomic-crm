@@ -27,8 +27,8 @@ export function ActivityLogContractCreated({ activity }: Props) {
             <Link to={link} className="text-foreground hover:underline font-medium">
               {contract.contract_number ?? `#${contract.id}`}
             </Link>
-            {contract.case_type && (
-              <span className="text-muted-foreground"> · {contract.case_type}</span>
+            {contract.case_types_label && (
+              <span className="text-muted-foreground"> · {contract.case_types_label}</span>
             )}{" "}
             <RelativeDate date={activity.date} />
           </span>

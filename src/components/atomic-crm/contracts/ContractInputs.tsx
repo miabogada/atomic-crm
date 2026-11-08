@@ -1,51 +1,23 @@
-import { required } from "ra-core";
+import { required, useRecordContext } from "ra-core";
 import { useFormContext, useWatch } from "react-hook-form";
 import { useEffect, useRef } from "react";
 import { Separator } from "@/components/ui/separator";
 import { ReferenceInput } from "@/components/admin/reference-input";
 import { AutocompleteInput } from "@/components/admin/autocomplete-input";
+import { AutocompleteArrayInput } from "@/components/admin/autocomplete-array-input";
+import { ReferenceArrayInput } from "@/components/admin/reference-array-input";
 import { SelectInput } from "@/components/admin/select-input";
 import { TextInput } from "@/components/admin/text-input";
 import { NumberInput } from "@/components/admin/number-input";
 import { DateInput } from "@/components/admin/date-input";
 
-import type { Account } from "../types";
+import type { Account, AccountContract } from "../types";
 import { useConfigurationContext } from "../root/ConfigurationContext";
 
 const accountOptionText = (record: Account) =>
   record?.name
     ? `${record.name} (${record.account_number})`
     : record?.account_number || "";
-
-export const defaultCaseTypes = [
-  "Adjustment of Status",
-  "Asylum",
-  "BIA Appeal",
-  "Cancellation of Removal",
-  "Citizenship Inquiry",
-  "Consular Processing",
-  "Deportation",
-  "FBI",
-  "FOIA",
-  "I-130",
-  "I-601 Waiver",
-  "Inquiry",
-  "K Visa",
-  "Late Amnesty",
-  "Legalization",
-  "Letter",
-  "Motion to Close",
-  "MTR",
-  "N-400",
-  "NACARA",
-  "Non-Client Consult",
-  "Review File",
-  "Suspension of Deportation",
-  "TPS",
-  "V Visa",
-];
-
-const caseTypeChoices = defaultCaseTypes.map((c) => ({ id: c, name: c }));
 
 export const ContractInputs = () => {
   const { contractStatuses } = useConfigurationContext();
@@ -58,12 +30,7 @@ export const ContractInputs = () => {
           <AccountSelector />
         </div>
         <div className="flex-1">
-          <SelectInput
-            source="case_type"
-            label="Case Type"
-            choices={caseTypeChoices}
-            helperText={false}
-          />
+          <CaseTypesInput />
         </div>
         <div className="flex-1">
           <SelectInput
@@ -96,6 +63,37 @@ export const ContractInputs = () => {
         </div>
       </div>
     </div>
+  );
+};
+
+/**
+ * Pick one or more case types (from the case_types table).
+ * Contracts imported from the old system may only have legacy free text in
+ * `case_type`; it is shown as a hint until case types are picked.
+ */
+const CaseTypesInput = () => {
+  const record = useRecordContext<AccountContract>();
+  const legacy =
+    record?.case_type && !record.case_type_ids?.length
+      ? record.case_type
+      : null;
+
+  return (
+    <ReferenceArrayInput
+      source="case_type_ids"
+      reference="case_types"
+      filter={{ active: true }}
+      sort={{ field: "name", order: "ASC" }}
+      perPage={200}
+    >
+      <AutocompleteArrayInput
+        label="Case Types"
+        optionText="name"
+        validate={required()}
+        helperText={legacy ? `Old system: ${legacy}` : false}
+        filterToQuery={(text: string) => ({ "name@ilike": `%${text}%` })}
+      />
+    </ReferenceArrayInput>
   );
 };
 

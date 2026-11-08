@@ -41,7 +41,6 @@ import type { ConfigurationContextValue } from "./ConfigurationContext";
 import { ConfigurationProvider } from "./ConfigurationContext";
 import {
   defaultAccountCategories,
-  defaultCaseTypes,
   defaultCompanySectors,
   defaultContactGender,
   defaultContractStatuses,
@@ -120,7 +119,6 @@ export type CRMProps = {
  */
 export const CRM = ({
   accountCategories = defaultAccountCategories,
-  caseTypes = defaultCaseTypes,
   contactGender = defaultContactGender,
   companySectors = defaultCompanySectors,
   contractStatuses = defaultContractStatuses,
@@ -163,7 +161,6 @@ export const CRM = ({
   return (
     <ConfigurationProvider
       accountCategories={accountCategories}
-      caseTypes={caseTypes}
       contactGender={contactGender}
       companySectors={companySectors}
       contractStatuses={contractStatuses}

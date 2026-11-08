@@ -396,8 +396,8 @@ const ContractPickerDialog = ({
             <span className="font-medium">
               {c.contract_number ?? `Contract #${c.id}`}
             </span>
-            {c.case_type && (
-              <span className="text-muted-foreground"> · {c.case_type}</span>
+            {c.case_types_label && (
+              <span className="text-muted-foreground"> · {c.case_types_label}</span>
             )}
             {c.status && (
               <span

@@ -3,6 +3,7 @@ import { generateAccountContacts } from "./account_contacts";
 import { generateAccountContracts } from "./account_contracts";
 import { generateAccountPayments } from "./account_payments";
 import { generateAccounts } from "./accounts";
+import { generateCaseTypes } from "./case_types";
 import { generateCompanies } from "./companies";
 import { generateContactNotes } from "./contactNotes";
 import { generateContactTypes } from "./contact_types";
@@ -29,6 +30,7 @@ export default (): Db => {
   db.contact_types = generateContactTypes(db);
   db.accounts = generateAccounts(db);
   db.account_contacts = generateAccountContacts(db);
+  db.case_types = generateCaseTypes(db);
   db.account_contracts = generateAccountContracts(db);
   db.account_payments = generateAccountPayments(db);
   db.account_activities = generateAccountActivities(db);
