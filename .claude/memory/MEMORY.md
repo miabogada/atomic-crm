@@ -105,6 +105,7 @@
 ### Next up
 - Full feature backlog is in `crm-feature-requests.md` (unchecked items)
 - **OPEN: deleted payments still count toward schedule "paid"** — [project_deleted_payment_allocations_bug.md](project_deleted_payment_allocations_bug.md). Soft-delete leaves payment_allocations rows; schedule view + link_payment_schedule.py don't check deleted_at. Live on prod: payment 3885 / account 26012501 (17 rows, $5,500). Found 2026-10-25, not fixed.
+- **OPEN: imported contracts have invalid status "In progress" (blank Status dropdown) + `&amp;` in work_description**: [project_import_contract_status_entities_bug.md](project_import_contract_status_entities_bug.md). 289 + 93 contracts, both caused by `migration/fetch_sample.py`. Found 2026-11-08, not fixed.
 - **CLOSED: 5-bug soft-delete saga** (Delete no-op + getManyReference/getOne/getMany filters + task-delete-wrong-table + PWA SW never reloading) — [project_payment_delete_bug.md](project_payment_delete_bug.md). Fixed, deployed, and verified live on prod 2026-08-30. Cloudflare Pages deploys prod from the `dev` branch (not `main` — GitHub Actions workflows are unrelated/stale).
 
 ## Migration notes

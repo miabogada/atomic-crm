@@ -77,6 +77,9 @@ date: 2026-02-18T01:06:00
 - Sabas Carrillo Lopez: 25011701
 - Mario Contreras Gonzalez: 21101101
 - Brandon Martinez 14101601
+- [ ] bug: observed Status blank on most imported contracts (e.g. /account_contracts/192 ROMAN, DAVID), expected their status shown. Import set "In progress", which is not a valid status ("In process"). 289 contracts. See .claude/memory/project_import_contract_status_entities_bug.md
+- [ ] bug: observed "&amp;" in contract Work Description (e.g. "I-130 &amp; I-601A"), expected "&". Import didn't decode Exchange XML. 93 contracts. Same write-up.
+
 ### LMC feedback
 /accounts/create
 - [x] remove or hide Date first consult
@@ -158,6 +161,13 @@ account_contracts?create
 - [x] when creating a contract, need an auto calculated field for final payment amount if different from monthly payment
 - [x] generate a schedule of payments once amount fields are filled
 - [ ] a payment?create item should be opened when saving the account_contract the first time if the Retainer field is non-zero amount
+- [ ] add case types (proposal: allow multiple case types per contract — see docs/plan-multiple-case-types.md)
+- I-130/I601A
+-  I-601A
+-  U Visa
+-  VAWA
+-  T Visa
+-  DACA
 
 account_contracts/1/show
 - [x] Task items should display Assignee
