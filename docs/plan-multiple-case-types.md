@@ -1,6 +1,6 @@
 # Plan: Multiple Case Types per Contract
 
-**Status:** Implemented on dev 2026-11-08 (migration `20261108000000_case_types.sql` applied to the dev LXC; frontend uncommitted). Not on prod. Legacy contracts have no case types linked yet; they show their old-system text until the mapping step.
+**Status:** Live on prod since 2026-11-08. Legacy contracts mapped to case types on dev and prod 2026-11-15 (see "Legacy contract mapping" below).
 
 ## Context
 
@@ -84,7 +84,9 @@ The main reason is finding every past client with a given case type when the law
 
 50 types, sorted alphabetically: Adjustment of Status · Adjustment of Status (No Representation) · Advance Parole · Asylum · BIA Appeal · Cancellation of Removal · Citizenship Inquiry · Court Representation · DACA · DACA Renewal · Deportation · EAD · EAD Renewal · FBI · FOIA · Humanitarian Parole · I-130 · I-131F / Family Reunification Parole · I-192 · I-212 · I-601 Waiver · I-601A · I-751 · I-824 · Inquiry · K Visa · Late Amnesty · Legalization · Letter · Military Parole in Place · Motion to Close · Motion to Reopen (was "MTR") · Motion to Terminate · N-400 · N-400 (No Representation) · NACARA · Non-Client Consult · NVC & Consular Processing (replaces "Consular Processing") · Review File · Suspension of Deportation · T Visa · T-2 Visa · T-4 Visa · TPS · TPS Renewal · U Visa · U-2 Visa · U-4 Visa · V Visa · VAWA
 
-Approved as listed: "MTR" becomes "Motion to Reopen". I-90, I-918B and Motion to Recalendar are not added for now (add on request).
+Approved as listed: "MTR" becomes "Motion to Reopen". I-918B and Motion to Recalendar are not added for now (add on request).
+
+**Added 2026-11-15** (migration `20261115000000_case_types_i90_birth_certificate.sql`): I-90 and Birth Certificate Amendment, found in the legacy mapping. Staff also entered a new I-90 contract on 2026-11-11. 52 types in total.
 
 ## Future
 - **Family law (divorce, etc.):** the firm plans to add these case types eventually; not needed now. The design already handles it (they're just new rows in `case_types`). If the non-immigration list grows, a `category` column on `case_types` (immigration / family) could group or filter the dropdown.
@@ -99,3 +101,10 @@ Approved as listed: "MTR" becomes "Motion to Reopen". I-90, I-918B and Motion to
 - FakeRest: `dataGenerator/case_types.ts` (copy of the seed list). Contracts get 1-2 random types; a `beforeSave` callback recomputes names/label.
 - Verified on dev as the `authenticated` role, in a rolled-back transaction: link/unlink, view label, search, payment schedule label, and the FK blocking deletion of an in-use type. **Not yet clicked through in the browser.**
 - Not done: a dedicated case-type filter on the contract list (search covers it for now); legacy mapping; prod deploy.
+
+## Legacy contract mapping (2026-11-15)
+- Each hand-typed `case_type` value from the old system was mapped to one or more types from the list. 282 contracts, 142 distinct values. The attorney reviewed every value that wasn't already an exact match (ignoring case) and approved the list, including the 15 rows flagged for confirmation.
+- Script: `migration/apply_legacy_case_types.sql`. It only inserts links into `account_contract_case_types`, skips contracts that already have case types from the new form, and can be run again safely. Work descriptions and the legacy `case_type` column are untouched.
+- Result: 368 links on 282 contracts, 77 of them with more than one type.
+- Also linked by hand: two contracts created on prod 2026-11-09/11 with no case type, where the type was typed in the work description: 14101601A → DACA Renewal, 23120601B → I-90. Probably a browser tab still running the pre-2026-11-08 form, where case type was optional. Not confirmed.
+- The legacy `case_type` column can be dropped in a later migration once nothing reads it.

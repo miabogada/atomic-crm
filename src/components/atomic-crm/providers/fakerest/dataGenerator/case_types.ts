@@ -1,7 +1,8 @@
 import type { CaseType } from "../../../types";
 import type { Db } from "./types";
 
-// Demo copy of the case_types seed in supabase/migrations/20261108000000_case_types.sql.
+// Demo copy of the case_types seed in supabase/migrations/20261108000000_case_types.sql
+// and 20261115000000_case_types_i90_birth_certificate.sql.
 // In production the list lives in the case_types table.
 export const caseTypeNames = [
   "Adjustment of Status",
@@ -9,6 +10,7 @@ export const caseTypeNames = [
   "Advance Parole",
   "Asylum",
   "BIA Appeal",
+  "Birth Certificate Amendment",
   "Cancellation of Removal",
   "Citizenship Inquiry",
   "Court Representation",
@@ -28,6 +30,7 @@ export const caseTypeNames = [
   "I-601A",
   "I-751",
   "I-824",
+  "I-90",
   "Inquiry",
   "K Visa",
   "Late Amnesty",
